@@ -2,13 +2,18 @@ import { defineConfig } from "astro/config";
 import preact from "@astrojs/preact";
 import sitemap from "@astrojs/sitemap";
 import swup from "@swup/astro";
+import mdx from "@astrojs/mdx";
+import {
+  transformerNotationHighlight,
+  transformerNotationDiff,
+} from "@shikijs/transformers";
 
 import tailwindcss from "@tailwindcss/vite";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://djsiddz.github.io",
-  base: "/space-ahead",
+  site: "https://chaelsoo.me",
+  base: "/",
   integrations: [
     swup({
       theme: ["overlay", { direction: "to-top" }],
@@ -17,7 +22,24 @@ export default defineConfig({
     }),
     preact(),
     sitemap(),
+    mdx(),
   ],
+
+  markdown: {
+    shikiConfig: {
+      theme: "github-dark",
+      transformers: [
+        transformerNotationHighlight(),
+        transformerNotationDiff(),
+        {
+          name: "inject-language-data",
+          pre(node) {
+            node.properties["data-language"] = this.options?.lang ?? "text";
+          },
+        },
+      ],
+    },
+  },
 
   image: {
     responsiveStyles: true,

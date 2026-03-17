@@ -1,0 +1,72 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+
+// Strip trailing slash so we can append /pagefind/... cleanly
+const pagefindBase =
+  import.meta.env.BASE_URL.replace(/\/$/, "") + "/pagefind";
+---
+
+<MainLayout
+  pageTitle="Search"
+  activePage="search"
+  showSubscribeForm={false}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href={`${pagefindBase}/pagefind-ui.css`} />
+  </Fragment>
+
+  <div class="page-content">
+    <h1 class="sigmar-ff text-center">Search</h1>
+    <div id="search" class="my-8"></div>
+  </div>
+</MainLayout>
+
+<!-- pagefind-ui.js is an IIFE bundle — load via <script>, not import() -->
+<script is:inline define:vars={{ pagefindBase }}>
+  function initSearch() {
+    // Avoid double-injecting the script on Swup transitions
+    if (document.getElementById("pagefind-ui-script")) {
+      if (typeof PagefindUI !== "undefined") {
+        new PagefindUI({ element: "#search", showSubResults: true, resetStyles: false });
+      }
+      return;
+    }
+
+    const s = document.createElement("script");
+    s.id = "pagefind-ui-script";
+    s.src = `${pagefindBase}/pagefind-ui.js`;
+    s.onload = () => {
+      new PagefindUI({ element: "#search", showSubResults: true, resetStyles: false });
+    };
+    s.onerror = () => {
+      const el = document.getElementById("search");
+      if (el)
+        el.innerHTML =
+          '<p class="font-light text-center">Search index not built yet. Run <code>npm run build</code> first.</p>';
+    };
+    document.head.appendChild(s);
+  }
+
+  initSearch();
+  document.addEventListener("swup:contentReplaced", initSearch);
+</script>
+
+<style is:global>
+  :root {
+    --pagefind-ui-font: var(--font-sans, "Kanit", sans-serif);
+    --pagefind-ui-primary: var(--space-red);
+    --pagefind-ui-text: inherit;
+    --pagefind-ui-background: transparent;
+    --pagefind-ui-border: #30363d;
+    --pagefind-ui-tag: #30363d;
+  }
+  html.dark {
+    --pagefind-ui-primary: var(--space-yellow);
+  }
+  .pagefind-ui__search-input {
+    border-radius: 0.5rem !important;
+  }
+  .pagefind-ui__result-link {
+    font-weight: 700;
+  }
+</style>

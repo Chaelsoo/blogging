@@ -14,7 +14,7 @@ const allPosts = (await getCollection("blogs")).sort(sortItemsByDateDesc);
 
 <MainLayout
   activePage="home"
-  pageTitle={siteConfig.title + " | An Astro Personal Blog Template"}
+  pageTitle="kanyo | Home"
 >
   <div
     class="jumbo-banner flex flex-col sm:flex-row sm:items-center sm:justify-between w-full px-4 my-12 gap-6"
@@ -59,7 +59,7 @@ const allPosts = (await getCollection("blogs")).sort(sortItemsByDateDesc);
       />
     </div>
   </div>
-  <div class="page-content">
+  <div class="page-content pb-8">
     <div id="posts" class="flex flex-col items-center justify-center w-full">
       <h2 class="sigmar-ff text-balance pt-0! pb-8!">Recent Stories</h2>
       <div class="flex flex-col gap-8 max-w-full text-left">

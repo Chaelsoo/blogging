@@ -9,9 +9,11 @@ import {
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import Button from "../../components/Button.astro";
 import MainLayout from "../../layouts/MainLayout.astro";
+import TableOfContents from "../../components/TableOfContents.astro";
 import ArrowLeft from "../../icons/ArrowLeft.astro";
 import ArrowRight from "../../icons/ArrowRight.astro";
 import siteConfig from "../../site.config";
+import { getReadingTime } from "../../utils/helpers";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("blogs")).sort(sortItemsByDateDesc);
@@ -33,23 +35,32 @@ type Props = {
 };
 
 const { post, prevPost, nextPost } = Astro.props;
-const { title, pubDate, author, tags = [], image } = post.data;
-const { Content } = await render(post);
+const { title, pubDate, author, tags = [], image, description } = post.data;
+const { Content, headings } = await render(post);
+const readingTime = getReadingTime(post.body ?? "");
 ---
 
-<MainLayout pageTitle={siteConfig.title + " | " + title}>
+<MainLayout
+  pageTitle={siteConfig.title + " | " + title}
+  description={description}
+  ogType="article"
+  ogImage={image?.url ? (image.url as unknown as { src: string }).src : undefined}
+  pubDate={new Date(pubDate)}
+  author={author}
+>
   <div class="page-content">
     <h1 class="sigmar-ff text-center text-balance">{title}</h1>
     <p class="leading-8 text-center kanit-regular text-balance text-xs">
       by 🧑‍🚀 <span class="kanit-bold">{author}</span> on <span class="kanit-bold"
         >{new Date(pubDate).toDateString()}</span
-      >
+      > · <span class="opacity-75">{readingTime}</span>
     </p>
     {
       image && image.url && (
         <Image class="mb-8 my-6" src={image?.url} alt={image?.alt || ""} />
       )
     }
+    <TableOfContents headings={headings} />
     <div class="font-light text-left">
       <Content />
     </div>

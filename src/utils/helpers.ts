@@ -32,4 +32,18 @@ export function getPostsByTag(posts: CollectionEntry<'blogs'>[], tagId: string) 
     return filteredPosts;
 }
 
-export const withBase = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+export const withBase = (path: string) => `${import.meta.env.BASE_URL.replace(/\/$/, '')}${path}`;
+
+export function getReadingTime(body: string): string {
+  const wordsPerMinute = 200;
+  const text = body
+    .replace(/```[\s\S]*?```/g, "") // strip fenced code blocks
+    .replace(/`[^`]*`/g, "") // strip inline code
+    .replace(/!\[.*?\]\(.*?\)/g, "") // strip images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // strip link URLs
+    .replace(/#{1,6}\s/g, "") // strip heading markers
+    .replace(/[*_~>]/g, ""); // strip emphasis / blockquote markers
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+  return `${minutes} min read`;
+}

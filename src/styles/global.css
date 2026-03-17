@@ -45,7 +45,7 @@ html.dark body {
 
 html.light body {
   /* background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
-  background-image: linear-gradient(180deg, #fdfcfb 0%, #e2d1c3 100%);
+  background-image: linear-gradient(180deg, #eae4dc 0%, #d6c9b8 100%);
   @apply bg-space-sand bg-cover bg-no-repeat text-black;
 }
 
@@ -70,15 +70,15 @@ main {
 }
 
 footer {
-  @apply mx-auto mt-12 flex w-full max-w-3xl flex-col flex-wrap items-center justify-center gap-4;
+  @apply mx-auto mt-0 flex w-full max-w-3xl flex-col flex-wrap items-center justify-center gap-4;
 }
 
 h1 {
-  @apply py-4 text-2xl sm:py-6 sm:text-6xl;
+  @apply py-4 text-2xl font-bold sm:py-6 sm:text-6xl;
 }
 
 h2 {
-  @apply py-2 text-xl sm:py-4 sm:text-3xl;
+  @apply py-2 text-xl font-bold sm:py-4 sm:text-3xl;
 }
 
 p {
@@ -120,7 +120,7 @@ html.dark a:not(.button-link):hover {
 }
 
 .page-content {
-  @apply my-12 w-full px-4 text-center;
+  @apply mt-12 mb-0 w-full px-4 text-center;
 }
 
 @keyframes cursor-blink {
@@ -143,4 +143,139 @@ html.dark a:not(.button-link):hover {
   section {
     gap: 3rem;
   }
+}
+
+/* ── Code block enhancements ─────────────────────────────────── */
+
+pre[data-language] {
+  position: relative;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 2.25rem 1.25rem 1.25rem !important;
+  border-radius: 0.5rem;
+  border: 1px solid #30363d;
+  overflow-x: auto;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace,
+    monospace;
+  font-size: 0.85em;
+  line-height: 1.6;
+  background-color: #1c2128 !important; /* github-dark base */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* language label – top left */
+pre[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.65rem;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8b949e;
+  background-color: #161b22;
+  border-bottom-right-radius: 0.35rem;
+  border-top-left-radius: 0.5rem;
+  border-right: 1px solid #30363d;
+  border-bottom: 1px solid #30363d;
+  pointer-events: none;
+  line-height: 1.8;
+}
+
+/* copy button – injected by script, top right */
+.code-copy-btn {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.65rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: #8b949e;
+  background-color: transparent;
+  border: 1px solid #30363d;
+  border-radius: 0.3rem;
+  line-height: 1.8;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+.code-copy-btn:hover {
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+.code-copy-btn.copied {
+  color: #3fb950;
+  border-color: #3fb950;
+}
+
+/* right padding at scroll end */
+pre[data-language] code {
+  display: block;
+  min-width: max-content;
+  padding-right: 2.5rem;
+}
+
+/* Shiki line styles */
+.line {
+  display: inline-block;
+  width: 100%;
+}
+
+/* diff highlights from transformerNotationDiff */
+.line.diff.add {
+  background-color: rgba(63, 185, 80, 0.12);
+}
+.line.diff.add::before {
+  content: "+";
+  color: #3fb950;
+  margin-right: 0.5ch;
+}
+.line.diff.remove {
+  background-color: rgba(248, 81, 73, 0.12);
+  opacity: 0.75;
+}
+.line.diff.remove::before {
+  content: "-";
+  color: #f85149;
+  margin-right: 0.5ch;
+}
+
+/* highlighted lines from transformerNotationHighlight */
+.line.highlighted {
+  background-color: rgba(255, 255, 133, 0.08);
+  border-left: 2px solid var(--space-yellow);
+  margin-left: -2px;
+  padding-left: 2px;
+}
+
+/* list styles (reset by Tailwind preflight) */
+.page-content ul {
+  list-style: disc !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 1rem;
+}
+
+.page-content ol {
+  list-style: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-bottom: 1rem;
+}
+
+.page-content li {
+  display: list-item !important;
+  margin-bottom: 0.25rem;
+}
+
+/* inline code (not inside pre) */
+:not(pre) > code {
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 0.25rem;
+  padding: 0.1em 0.35em;
+  font-size: 0.85em;
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  color: #e6edf3;
 }

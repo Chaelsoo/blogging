@@ -2,7 +2,7 @@
 import { type CollectionEntry } from "astro:content";
 import ArrowRight from "../icons/ArrowRight.astro";
 import FormattedDate from "./FormattedDate.astro";
-import { withBase } from "../utils/helpers";
+import { withBase, getReadingTime } from "../utils/helpers";
 
 type Props = {
   post: CollectionEntry<"blogs">;
@@ -12,6 +12,7 @@ type Props = {
 
 const { post, class: className, headingLevel = "h2" } = Astro.props;
 const { title, pubDate, description } = post.data;
+const readingTime = getReadingTime(post.body ?? "");
 const TitleTag = headingLevel;
 ---
 
@@ -21,7 +22,9 @@ const TitleTag = headingLevel;
 >
   <div class="grow">
     <TitleTag class="sigmar-ff">{title}</TitleTag>
-    <FormattedDate date={pubDate} />
+    <span class="text-xs font-light opacity-75">
+      <FormattedDate date={pubDate} /> · {readingTime}
+    </span>
     {description && <p>{description}</p>}
   </div>
   <div

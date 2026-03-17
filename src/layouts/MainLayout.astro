@@ -3,20 +3,57 @@ import "../styles/global.css";
 
 import Footer from "../components/Footer.astro";
 import Nav from "../components/Nav.astro";
-import Subscribe from "../components/Subscribe.astro";
 import { withBase } from "../utils/helpers";
 import siteConfig from "../site.config";
 
 type LayoutProps = {
   pageTitle: string;
-  activePage: string;
-  showSubscribeForm?: boolean;
+  activePage?: string;
+  description?: string;
+  ogImage?: string;
+  ogType?: "website" | "article";
+  pubDate?: Date;
+  author?: string;
 };
 const {
   pageTitle,
   activePage,
-  showSubscribeForm = true,
+  description = siteConfig.description,
+  ogImage = siteConfig.image?.src,
+  ogType = "website",
+  pubDate,
+  author,
 } = Astro.props as LayoutProps;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? siteConfig.website);
+const ogImageAbsolute = ogImage
+  ? new URL(ogImage.startsWith("/") ? ogImage : `/${ogImage}`, Astro.site ?? siteConfig.website).href
+  : undefined;
+
+const jsonLd =
+  ogType === "article"
+    ? JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: pageTitle,
+        description,
+        datePublished: pubDate?.toISOString(),
+        author: author ? { "@type": "Person", name: author } : undefined,
+        image: ogImageAbsolute,
+        url: canonicalURL.href,
+        publisher: {
+          "@type": "Organization",
+          name: siteConfig.title,
+          url: siteConfig.website,
+        },
+      })
+    : JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: siteConfig.title,
+        description: siteConfig.description,
+        url: siteConfig.website,
+      });
 ---
 
 <!doctype html>
@@ -40,13 +77,74 @@ const {
       href={new URL(withBase("/rss.xml"), Astro.site)}
     />
     <title>{pageTitle}</title>
+
+    <!-- SEO -->
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
+
+    <!-- OpenGraph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL.href} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content={siteConfig.title} />
+    {ogImageAbsolute && <meta property="og:image" content={ogImageAbsolute} />}
+    {pubDate && (
+      <meta property="article:published_time" content={pubDate.toISOString()} />
+    )}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    {ogImageAbsolute && <meta name="twitter:image" content={ogImageAbsolute} />}
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json" set:html={jsonLd} />
+
+    <!-- extra head content (pagefind CSS, etc.) -->
+    <slot name="head" />
   </head>
   <body>
     <main class="max-w-3xl mx-auto min-h-screen">
       <Nav activePage={activePage} />
       <slot />
-      {showSubscribeForm && <Subscribe class="my-12 w-full" />}
       <Footer />
     </main>
   </body>
 </html>
+
+<script is:inline>
+  /** Inject copy buttons on every <pre data-language> block. */
+  function enhanceCodeBlocks() {
+    document.querySelectorAll("pre[data-language]").forEach((pre) => {
+      if (pre.querySelector(".code-copy-btn")) return;
+      const btn = document.createElement("button");
+      btn.className = "code-copy-btn";
+      btn.textContent = "Copy";
+      btn.setAttribute("aria-label", "Copy code");
+      btn.addEventListener("click", () => {
+        const code = pre.querySelector("code");
+        const text = code ? code.innerText : pre.innerText;
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            btn.textContent = "Copied!";
+            btn.classList.add("copied");
+            setTimeout(() => {
+              btn.textContent = "Copy";
+              btn.classList.remove("copied");
+            }, 2000);
+          })
+          .catch(() => {
+            btn.textContent = "Error";
+            setTimeout(() => (btn.textContent = "Copy"), 2000);
+          });
+      });
+      pre.appendChild(btn);
+    });
+  }
+
+  enhanceCodeBlocks();
+  document.addEventListener("swup:contentReplaced", enhanceCodeBlocks);
+</script>

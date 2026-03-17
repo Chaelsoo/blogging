@@ -2,11 +2,12 @@
 import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import FormattedDate from "./FormattedDate.astro";
-import { withBase } from "../utils/helpers";
+import { withBase, getReadingTime } from "../utils/helpers";
 
 type Props = { post: CollectionEntry<"blogs"> };
 const { post } = Astro.props;
 const { title, pubDate, description, image } = post.data;
+const readingTime = getReadingTime(post.body ?? "");
 ---
 
 <a class="font-bold" href={withBase("/blog/" + post.id)}>
@@ -26,7 +27,9 @@ const { title, pubDate, description, image } = post.data;
     }
     <div class="flex flex-col max-w-fit">
       <h2 class="mb-1">{title}</h2>
-      <FormattedDate date={new Date(pubDate)} />
+      <span class="text-xs font-light opacity-75">
+        <FormattedDate date={new Date(pubDate)} /> · {readingTime}
+      </span>
       {
         description && (
           <p class="font-light text-base text-balance">{description}</p>

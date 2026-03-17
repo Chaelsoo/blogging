@@ -68,8 +68,8 @@ export type SiteConfig = {
 };
 
 const siteConfig: SiteConfig = {
-    website: 'https://example.com',
-    title: 'Space Ahead',
+    website: 'https://kanyo.com',
+    title: 'kanyo',
     description: 'A minimal space-inspired personal blog template built with Astro.js and Tailwind CSS, by Siddhesh Thadeshwar',
     image: {
         src: '/space-ahead-preview.jpeg',
@@ -81,7 +81,7 @@ const siteConfig: SiteConfig = {
             href: withBase('/')
         },
         {
-            text: 'Blog',
+            text: 'Blogs',
             href: withBase('/blog')
         },
         {
@@ -117,12 +117,12 @@ const siteConfig: SiteConfig = {
     ],
     socialLinks: [
         {
-            text: 'Dribbble',
-            href: 'https://dribbble.com/'
+            text: 'GitHub',
+            href: 'https://github.com/Chaelsoo'
         },
         {
-            text: 'Instagram',
-            href: 'https://instagram.com/'
+            text: 'LinkedIn',
+            href: 'https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/'
         },
         {
             text: 'X/Twitter',
@@ -130,9 +130,9 @@ const siteConfig: SiteConfig = {
         }
     ],
     hero: {
-        eyebrowText: 'Galaxy of Adventures',
-        title: 'Space Ahead ✨',
-        text: "Written by Astro-naut Sid, a space explorer at Beyond Earth.",
+        eyebrowText: 'cybersec · cloud · automation',
+        title: 'a work in progress',
+        text: "I write about things so they stick around, maybe they will for you too.",
         image: {
             src: '/assets/images/pixeltrue-space-discovery.svg',
             alt: 'A person sitting at a desk in front of a computer'
@@ -143,8 +143,8 @@ const siteConfig: SiteConfig = {
                 href: withBase('/blog')
             },
             {
-                text: 'Subscribe',
-                href: '#subscribe'
+                text: 'View on Github',
+                href: 'https://github.com/Chaelsoo'
             }
         ]
     },
@@ -161,18 +161,18 @@ const siteConfig: SiteConfig = {
             email: "example@example.com"
         },
         socialProfiles: [
-            {
-                text: "LinkedIn",
-                href: "https://www.linkedin.com/"
-            },
-            {
-                text: "Peerlist",
-                href: "https://www.peerlist.io/"
-            },
-            {
-                text: "GitHub",
-                href: "https://github.com/"
-            }
+        {
+            text: 'GitHub',
+            href: 'https://github.com/Chaelsoo'
+        },
+        {
+            text: 'LinkedIn',
+            href: 'https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/'
+        },
+        {
+            text: 'X/Twitter',
+            href: 'https://twitter.com/'
+        }
         ]
     },
     subscribe: {
@@ -181,9 +181,9 @@ const siteConfig: SiteConfig = {
         formUrl: '#'
     },
     blog: {
-        description: "Read about my space adventures, explorations and the aliens I've met on my journeys."
+        description: ""
     },
-    postsPerPage: 2,
+    postsPerPage: 3,
     recentPostLimit: 3
 };
 
