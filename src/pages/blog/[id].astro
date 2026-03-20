@@ -51,9 +51,7 @@ const readingTime = getReadingTime(post.body ?? "");
   <div class="page-content">
     <h1 class="sigmar-ff text-center text-balance">{title}</h1>
     <p class="leading-8 text-center kanit-regular text-balance text-xs">
-      by 🧑‍🚀 <span class="kanit-bold">{author}</span> on <span class="kanit-bold"
-        >{new Date(pubDate).toDateString()}</span
-      > · <span class="opacity-75">{readingTime}</span>
+      🧑‍🚀 published on <span class="kanit-bold">{new Date(pubDate).toDateString()}</span> · <span class="opacity-75">{readingTime}</span>
     </p>
     {
       image && image.url && (

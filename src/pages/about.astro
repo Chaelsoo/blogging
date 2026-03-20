@@ -1,21 +1,15 @@
 ---
-import { Image } from "astro:assets";
 import MainLayout from "../layouts/MainLayout.astro";
 import siteConfig from "../site.config";
-import coverImage from "../assets/images/1.png";
 ---
 
 <MainLayout activePage="about" pageTitle="kanyo | About">
   <div class="page-content">
     <h1 class="sigmar-ff text-balance">{siteConfig.about?.title}</h1>
-    <Image
-      width={1024}
-      height={600}
-      loading="eager"
-      layout="constrained"
-      class="rounded-4xl mb-8 mx-auto"
-      src={coverImage}
-      alt="An Astronaut walking on a terrain"
+    <img
+      class="rounded-4xl mb-8 mx-auto max-h-[500px] object-cover w-full"
+      src="/nightfury.jpg"
+      alt="Night Fury"
     />
     <p class="kanit-light text-left">
       {siteConfig.about?.text}

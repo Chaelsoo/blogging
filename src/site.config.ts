@@ -150,15 +150,15 @@ const siteConfig: SiteConfig = {
     },
     about: {
         title: 'About',
-        text: 'Space Ahead is a blog about space exploration and travel. It is written by Astro-naut Sid, a space explorer at Beyond Earth. Sid is known for his love of adventure and his insatiable curiosity about the universe. He has explored countless planets, discovered new life forms, and made friends with aliens along the way. 🚀',
+        text: 'this is a collection of things I worked through. figured if it was hard enough to figure out, it was worth writing down. hope you find it useful.',
     },
     contactInfo: {
         title: 'Contact',
         text: "Hi! Whether you have a question, a suggestion, or just want to share your thoughts, I'm all ears. Feel free to get in touch through any of the methods below:",
         email: {
             text: "Drop me an email and I’ll do my best to respond as soon as possible.",
-            href: "mailto:example@example.com",
-            email: "example@example.com"
+            href: "mailto:abderrahmendel@gmail.com",
+            email: "abderrahmendel@gmail.com"
         },
         socialProfiles: [
         {
