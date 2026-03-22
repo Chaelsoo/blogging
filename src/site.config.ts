@@ -68,12 +68,12 @@ export type SiteConfig = {
 };
 
 const siteConfig: SiteConfig = {
-    website: 'https://kanyo.com',
+    website: 'https://chaelsoo.me',
     title: 'kanyo',
-    description: 'A minimal space-inspired personal blog template built with Astro.js and Tailwind CSS, by Siddhesh Thadeshwar',
+    description: 'I write about things so they stick around, maybe they will for you too.',
     image: {
         src: '/space-ahead-preview.jpeg',
-        alt: 'Space Ahead ✨ - A minimal space-inspired personal blog template, created by Siddhesh Thadeshwar.'
+        alt: 'kanyo — cybersec, cloud, and automation writeups by Abderrahmen.'
     },
     headerNavLinks: [
         {
