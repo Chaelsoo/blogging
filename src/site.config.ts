@@ -163,7 +163,7 @@ const siteConfig: SiteConfig = {
     },
     about: {
         title: 'About',
-        text: 'this is a collection of things I worked through. figured if it was hard enough to figure out, it was worth writing down. hope you find it useful.',
+        text: "I'm Dellaa Abderrahmen, a cybersecurity student and researcher. I like to do many things. this is a collection of things I worked through. figured if it was hard enough to figure out, it was worth writing down. hope you find it useful.",
     },
     contactInfo: {
         title: 'Contact',
