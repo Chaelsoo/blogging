@@ -1,0 +1,35 @@
+---
+import type { GetStaticPathsOptions, Page } from "astro";
+import siteConfig, { type Project } from "../../site.config";
+import MainLayout from "../../layouts/MainLayout.astro";
+import Pagination from "../../components/Pagination.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  const projects = (siteConfig.projects ?? [])
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return paginate(projects, { pageSize: siteConfig.projectsPerPage ?? 3 });
+}
+
+type Props = { page: Page<Project> };
+const { page } = Astro.props as Props;
+const projects = page.data;
+---
+
+<MainLayout activePage="projects" pageTitle="kanyo | Projects">
+  <div class="page-content pt-8 pb-4 text-center">
+    <h1 class="sigmar-ff">Projects</h1>
+    <p class="font-light text-balance">
+      A small collection of things I built, broke, and learned from.
+    </p>
+
+    <div class="flex flex-col text-left gap-8 mb-4 text-sm sm:text-base max-w-fit mx-auto mt-8">
+      {projects.map((project) => (
+        <ProjectCard project={project} />
+      ))}
+    </div>
+
+    <Pagination page={page} class="mb-0 sm:mb-1" />
+  </div>
+</MainLayout>

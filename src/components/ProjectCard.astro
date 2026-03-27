@@ -1,0 +1,63 @@
+---
+import type { Project } from "../site.config";
+import ArrowRight from "../icons/ArrowRight.astro";
+
+type Props = {
+  project: Project;
+  headingLevel?: "h2" | "h3";
+};
+
+const { project, headingLevel = "h2" } = Astro.props as Props;
+const TitleTag = headingLevel;
+const isExternal = /^https?:\/\//.test(project.href);
+const monthYear = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  year: "numeric",
+}).format(new Date(`${project.date}-01T00:00:00Z`));
+
+const hiddenTagSet = new Set([
+  "linux",
+  "bash",
+  "security",
+  "devops",
+  "cli",
+  "pentest",
+  "c",
+  "python",
+]);
+const visibleTags = (project.tags ?? []).filter((tag) => {
+  const normalized = tag.trim().toLowerCase();
+  if (hiddenTagSet.has(normalized)) return false;
+  if (normalized.startsWith("afl")) return false; // afl, afl++, etc.
+  return true;
+});
+---
+
+<a
+  class="flex justify-between items-start gap-8 group"
+  href={project.href}
+  target={isExternal ? "_blank" : undefined}
+  rel={isExternal ? "noreferrer" : undefined}
+>
+  <div class="grow">
+    <TitleTag class="sigmar-ff">{project.name}</TitleTag>
+    <span class="text-xs font-light opacity-75">{monthYear}</span>
+    {project.description && <p class="font-light">{project.description}</p>}
+    {
+      visibleTags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mt-2">
+          {visibleTags.map((tag) => (
+            <span class="rounded-full text-xs px-2 py-0 border border-gray-500 kanit-light">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
+  </div>
+  <div
+    class="hidden opacity-0 transition group-hover:opacity-100 sm:inline-flex sm:gap-4 sm:items-center sm:self-center sm:shrink-0"
+  >
+    View <ArrowRight class="fill-current w-4 h-4" />
+  </div>
+</a>

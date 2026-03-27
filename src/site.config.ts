@@ -11,6 +11,14 @@ export type Link = {
     href: string;
 };
 
+export type Project = {
+    name: string;
+    description?: string;
+    date: string; // YYYY-MM
+    href: string;
+    tags?: string[];
+};
+
 export type Hero = {
     eyebrowText?: string;
     title?: string;
@@ -62,6 +70,7 @@ export type SiteConfig = {
     contactInfo?: ContactInfo;
     subscribe?: Subscribe;
     blog?: Blog;
+    projects?: Project[];
     postsPerPage?: number;
     recentPostLimit: number;
     projectsPerPage?: number;
@@ -89,6 +98,10 @@ const siteConfig: SiteConfig = {
             href: withBase('/tags')
         },
         {
+            text: 'Projects',
+            href: withBase('/projects')
+        },
+        {
             text: 'About',
             href: withBase('/about')
         },
@@ -110,7 +123,7 @@ const siteConfig: SiteConfig = {
             text: 'RSS Feed',
             href: withBase('/rss.xml')
         },
-                {
+        {
             text: 'Sitemap',
             href: withBase('/sitemap-index.xml')
         }
@@ -183,8 +196,46 @@ const siteConfig: SiteConfig = {
     blog: {
         description: ""
     },
+    projects: [
+        {
+            name: 'rshade',
+            description: 'Passive recon for initial sweeps using Shodan, so you learn a lot without sending a single packet to the target.',
+            date: '2026-03',
+            href: 'https://github.com/Chaelsoo/rshade',
+            tags: ['recon', 'shodan']
+        },
+        {
+            name: 'BugScope',
+            description: 'A GitHub commit monitor that flags security-relevant changes and pings you on Telegram with a short triage summary.',
+            date: '2026-03',
+            href: 'https://github.com/Chaelsoo/bugscope',
+            tags: ['monitoring', 'supply-chain']
+        },
+        {
+            name: 'eBPF-Toolkit',
+            description: 'Kernel level network visibility with eBPF, TCP lifecycle tracing plus optional TLS plaintext capture via OpenSSL uprobes.',
+            date: '2026-02',
+            href: 'https://github.com/Chaelsoo/eBPF-Toolkit',
+            tags: ['ebpf', 'network']
+        },
+        {
+            name: 'Kfuzz',
+            description: 'A coverage guided fuzzer for black box binaries, built around AFL++ QEMU mode with crash triage helpers.',
+            date: '2025-12',
+            href: 'https://github.com/Chaelsoo/Kfuzz',
+            tags: ['fuzzing', 'ctf', 'binary']
+        },
+        {
+            name: 'SSH Key Doctor',
+            description: 'A tiny bash utility to validate SSH keys and fix the usual footguns like CRLF, bad perms, and malformed headers.',
+            date: '2026-03',
+            href: 'https://github.com/Chaelsoo/SSH-Key-Doctor',
+            tags: ['ssh', 'tooling']
+        }
+    ],
     postsPerPage: 3,
-    recentPostLimit: 3
+    recentPostLimit: 3,
+    projectsPerPage: 3
 };
 
 export default siteConfig;
