@@ -2,7 +2,7 @@
 title: "eBPF Dive"
 description: "A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace."
 pubDate: 2026-03-27
-tags: ["linux", "ebpf", "security"]
+tags: ["linux", "ebpf", "network-security"]
 draft: false
 ---
 
