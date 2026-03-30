@@ -333,4 +333,3 @@ Before we wrap up, here's a quick visual to anchor the flow.
 
 ![eBPF overview](/eBPF.png)
 
-## My project
