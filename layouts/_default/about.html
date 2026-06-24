@@ -1,0 +1,13 @@
+{{ define "main" }}
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <header class="header">
+            <h1 class="header-title">{{ .Title }}</h1>
+        </header>
+        <img src="/nightfury.jpg" alt="Night Fury" style="width:100%;max-height:500px;object-fit:cover;border-radius:1rem;margin:1.5rem 0 2rem;" />
+        <div class="about-content">
+            {{ .Content }}
+        </div>
+    </main>
+</div>
+{{ end }}

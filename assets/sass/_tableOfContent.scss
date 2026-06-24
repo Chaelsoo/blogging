@@ -1,0 +1,394 @@
+/* Table of contents */
+
+.toc-container {
+    margin: 1.5rem 0 2rem;
+    background: $toc-bg;
+    border: 1px solid rgba(128, 128, 128, 0.18);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.toc-toggle {
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    padding: 0.85rem 1rem;
+    color: inherit;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.toc-toggle:hover {
+    background: rgba(127, 127, 127, 0.08);
+}
+
+.toc-toggle:focus,
+.toc-toggle:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.toc-toggle::after {
+    content: '\203A';
+    font-weight: 400;
+    font-size: 1.2rem;
+    line-height: 1;
+    opacity: 0.6;
+    transition: transform 0.25s ease;
+    transform: rotate(90deg);
+}
+
+.toc-toggle.expanded::after {
+    transform: rotate(270deg);
+}
+
+.toc-content {
+    display: none;
+    padding: 0.25rem 1rem 1rem;
+    border-top: 1px solid rgba(128, 128, 128, 0.14);
+}
+
+.toc-content.expanded {
+    display: block;
+    animation: tocSlideDown 0.25s ease-out;
+}
+
+@keyframes tocSlideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.toc-container nav#TableOfContents {
+    font-size: 0.95rem;
+}
+
+.toc-container a {
+    color: $text-link-blue;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.toc-container a:hover {
+    text-decoration: underline;
+}
+
+.toc-container ol,
+.toc-container ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    line-height: 1.55;
+}
+
+.toc-container li {
+    margin: 0.3rem 0;
+}
+
+/* Floating mini-TOC */
+.mini-toc {
+    position: fixed;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 19rem;
+    max-height: 75vh;
+    background: rgba(245, 245, 245, 0.92);
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 0.6rem;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease, width 0.25s ease, height 0.25s ease;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
+    display: flex;
+    flex-direction: column;
+}
+
+.mini-toc.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mini-toc.minimized {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    max-height: none;
+    overflow: hidden;
+}
+
+.mini-toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.16);
+    flex-shrink: 0;
+}
+
+.mini-toc.minimized .mini-toc-header {
+    padding: 0.4rem;
+    border-bottom: none;
+    justify-content: center;
+}
+
+.mini-toc-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(128, 128, 128, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0;
+}
+
+.mini-toc.minimized .mini-toc-title {
+    display: none;
+}
+
+.mini-toc-minimize {
+    background: none;
+    border: none;
+    color: rgba(128, 128, 128, 0.8);
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 0.25rem;
+    transition: color 0.2s ease, background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.mini-toc-minimize:hover {
+    color: inherit;
+    background: rgba(127, 127, 127, 0.1);
+}
+
+.mini-toc-minimize:focus,
+.mini-toc-minimize:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.mini-toc-minimize svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    transition: transform 0.3s ease;
+}
+
+.mini-toc.minimized .mini-toc-minimize svg {
+    transform: rotate(180deg);
+}
+
+.mini-toc-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.6rem 0.9rem 0.9rem;
+}
+
+.mini-toc.minimized .mini-toc-content {
+    display: none;
+}
+
+.mini-toc ul,
+.mini-toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mini-toc li {
+    margin: 0;
+    padding: 0;
+}
+
+.mini-toc .mini-toc-content a {
+    display: block;
+    color: $black;
+    text-decoration: none;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    padding: 0.4rem 0 0.4rem 0.75rem;
+    margin-left: -0.75rem;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, padding-left 0.15s ease;
+    border-left: 2px solid transparent;
+    border-radius: 0 0.25rem 0.25rem 0;
+    outline: none;
+}
+
+.mini-toc .mini-toc-content a:focus,
+.mini-toc .mini-toc-content a:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.mini-toc .mini-toc-content a:hover {
+    color: $black;
+    border-left-color: rgba(128, 128, 128, 0.45);
+    background: rgba(127, 127, 127, 0.05);
+    padding-left: 0.9rem;
+}
+
+.mini-toc .mini-toc-content a.active {
+    color: $text-link-blue;
+    border-left-color: $text-link-blue;
+    background: rgba(127, 127, 127, 0.08);
+    padding-left: 0.9rem;
+    font-weight: 600;
+}
+
+.mini-toc ul ul,
+.mini-toc ol ol,
+.mini-toc ul ol,
+.mini-toc ol ul {
+    margin: 0.2rem 0 0.2rem 0.9rem;
+    border-left: 1px solid rgba(128, 128, 128, 0.18);
+    padding-left: 0.5rem;
+}
+
+.mini-toc ul ul a,
+.mini-toc ol ol a,
+.mini-toc ul ol a,
+.mini-toc ol ul a {
+    font-size: 0.86rem;
+}
+
+.mini-toc ul ul ul a,
+.mini-toc ol ol ol a,
+.mini-toc ul ol ol a,
+.mini-toc ol ul ul a {
+    font-size: 0.82rem;
+}
+
+.mini-toc-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.mini-toc-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mini-toc-content::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.4);
+    border-radius: 2px;
+}
+
+.mini-toc-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.6);
+}
+
+/* Hide on narrower viewports — kept high enough that the floating panel
+   never overlaps the wider .wrapper.post content area */
+@media (max-width: 1500px) {
+    .mini-toc {
+        display: none;
+    }
+}
+
+@media (max-width: 962px) {
+    .toc-container {
+        margin: 1rem 0 1.5rem;
+    }
+
+    .toc-toggle {
+        padding: 0.7rem 0.85rem;
+    }
+
+    .toc-content {
+        padding: 0.25rem 0.85rem 0.85rem;
+    }
+}
+
+/* Dark mode */
+@mixin toc-dark-mode {
+    .toc-container {
+        background: $dark-toc-bg;
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .toc-content {
+        border-top-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .toc-container a {
+        color: $dark-text-link-blue;
+    }
+
+    .toc-container a:hover {
+        color: $dark-text-link-blue-active;
+    }
+
+    .mini-toc {
+        background: rgba(28, 30, 36, 0.92);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .mini-toc-header {
+        border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .mini-toc-title {
+        color: rgba(180, 180, 180, 0.85);
+    }
+
+    .mini-toc-minimize {
+        color: rgba(180, 180, 180, 0.7);
+    }
+
+    .mini-toc-minimize:hover {
+        color: $dark-white;
+    }
+
+    .mini-toc .mini-toc-content a {
+        color: $dark-white;
+    }
+
+    .mini-toc .mini-toc-content a:hover {
+        color: $dark-white;
+        border-left-color: rgba(255, 255, 255, 0.28);
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .mini-toc .mini-toc-content a.active {
+        color: $dark-text-link-blue;
+        border-left-color: $dark-text-link-blue;
+        background: rgba(119, 168, 253, 0.08);
+    }
+
+    .mini-toc ul ul,
+    .mini-toc ol ol,
+    .mini-toc ul ol,
+    .mini-toc ol ul {
+        border-left-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .mini-toc-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    .mini-toc-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.32);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not(.light) {
+        @include toc-dark-mode;
+    }
+}
+
+html.dark {
+    @include toc-dark-mode;
+}

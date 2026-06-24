@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+{{- $defaultColor := .Site.Params.defaultColor | default "auto" -}}
+
+{{- if eq $defaultColor "dark" -}}
+<html lang="{{ .Site.LanguageCode }}" class="dark">
+{{- else if eq $defaultColor "light" -}}
+<html lang="{{ .Site.LanguageCode }}" class="light">
+{{- else -}}
+<html lang="{{ .Site.LanguageCode }}">
+{{- end -}}
+
+{{- partial "head.html" . -}}
+
+<body data-theme="{{ $defaultColor }}" class="notransition">
+    {{- partial "scriptsBodyStart.html" . -}}
+    {{- partial "header.html" . -}}
+    <div class="wrapper home">
+        {{ partial "bio" . }}
+        <main aria-label="Content">
+            {{ $posts := (where .Site.RegularPages "Type" "blogs").ByDate.Reverse }}
+
+            <div class="home-section">
+                <div class="home-section-header">
+                    <h2 class="home-section-title">Recent Writing</h2>
+                    <span class="home-section-count">{{ len $posts }} post{{ if ne (len $posts) 1 }}s{{ end }}</span>
+                </div>
+
+                <ol class="home-posts">
+                    {{ $configDateFormat := .Site.Params.dateFormat | default "2 Jan 2006" }}
+                    {{ $ISO_date := "2006-01-02T15:04:05Z0700" }}
+                    {{ range first 3 $posts }}
+                    <li class="home-post">
+                        <a class="home-post-link" href="{{ .RelPermalink }}">
+                            <div class="home-post-meta">
+                                <time datetime="{{ dateFormat $ISO_date .Date }}">{{ .Date.Format $configDateFormat }}</time>
+                                {{ if .Params.isStarred }}
+                                <span class="home-post-star" aria-label="Featured">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" class="icon-star"><path d="M16 23.027L24.24 28l-2.187-9.373 7.28-6.307-9.587-.827-3.747-8.827-3.747 8.827-9.587.827 7.267 6.307L7.759 28l8.24-4.973z"></path></svg>
+                                </span>
+                                {{ end }}
+                            </div>
+                            <h3 class="home-post-title">{{ .Title }}</h3>
+                            {{ with .Summary }}
+                            <p class="home-post-summary">{{ . | plainify | truncate 180 }}</p>
+                            {{ end }}
+                        </a>
+                    </li>
+                    {{ end }}
+                </ol>
+
+                {{ if gt (len $posts) 5 }}
+                {{ range $firstSection := (where .Site.Sections "Section" "in" (first 1 (.Site.Params.mainSections))) }}
+                <a class="home-more" href="{{ $firstSection.Permalink }}">View all posts<span aria-hidden="true"> &rarr;</span></a>
+                {{ end }}
+                {{ end }}
+            </div>
+        </main>
+    </div>
+    {{- partial "footer.html" . -}}
+    {{- partial "scriptsBodyEnd.html" . -}}
+</body>
+
+</html>

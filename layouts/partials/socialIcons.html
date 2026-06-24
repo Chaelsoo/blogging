@@ -1,0 +1,10 @@
+{{- range . }}
+<a href="{{ trim .url " " }}" target="_blank" rel="noopener noreferrer me"
+    title="{{ (.title | default .name) | title }}">
+    {{- if eq (trim .name " " | lower) "hackthebox" -}}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg>
+    {{- else -}}
+    {{ partial "svgs/svgs.html" . }}
+    {{- end -}}
+</a>
+{{- end }}

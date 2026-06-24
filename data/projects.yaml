@@ -1,0 +1,29 @@
+- name: rshade
+  description: Passive recon for initial sweeps using Shodan, so you learn a lot without sending a single packet to the target.
+  date: 2026-03
+  url: https://github.com/Chaelsoo/rshade
+  tags: [recon, shodan]
+
+- name: BugScope
+  description: A GitHub commit monitor that flags security-relevant changes and pings you on Telegram with a short triage summary.
+  date: 2026-03
+  url: https://github.com/Chaelsoo/bugscope
+  tags: [monitoring, supply-chain]
+
+- name: eBPF-Toolkit
+  description: Kernel level network visibility with eBPF, TCP lifecycle tracing plus optional TLS plaintext capture via OpenSSL uprobes.
+  date: 2026-02
+  url: https://github.com/Chaelsoo/eBPF-Toolkit
+  tags: [ebpf, network]
+
+- name: Kfuzz
+  description: A coverage guided fuzzer for black box binaries, built around AFL++ QEMU mode with crash triage helpers.
+  date: 2025-12
+  url: https://github.com/Chaelsoo/Kfuzz
+  tags: [fuzzing, ctf, binary]
+
+- name: SSH Key Doctor
+  description: A tiny bash utility to validate SSH keys and fix the usual footguns like CRLF, bad perms, and malformed headers.
+  date: 2026-03
+  url: https://github.com/Chaelsoo/SSH-Key-Doctor
+  tags: [ssh, tooling]

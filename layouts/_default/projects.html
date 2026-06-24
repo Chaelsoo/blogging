@@ -1,0 +1,23 @@
+{{ define "main" }}
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <header class="header">
+            <h1 class="header-title">Projects</h1>
+        </header>
+        <div class="projects-list">
+            {{ range sort site.Data.projects "date" "desc" }}
+            <div class="project-item">
+                <div class="project-header">
+                    <a class="project-name" href="{{ .url }}" target="_blank" rel="noopener">{{ .name }}</a>
+                    <span class="project-date">{{ .date }}</span>
+                </div>
+                <p class="project-desc">{{ .description }}</p>
+                <div class="project-tags">
+                    {{ range .tags }}<span class="project-tag">{{ . }}</span>{{ end }}
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </main>
+</div>
+{{ end }}

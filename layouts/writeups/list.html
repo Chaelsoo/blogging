@@ -1,0 +1,55 @@
+{{- define "main" -}}
+<div class="wrapper home">
+    <header class="header">
+        <h1 class="header-title">Writeups</h1>
+        <p class="header-subtitle">Machine and challenge writeups from HTB, CTFs, and bug bounty. Mostly offensive security.</p>
+    </header>
+    <main aria-label="Content">
+        {{ $paginator := .Paginator }}
+
+        {{ range $paginator.Pages.GroupByDate "January 2006" }}
+        <div class="home-section">
+            <div class="home-section-header">
+                <h2 class="home-section-title">{{ .Key }}</h2>
+                <span class="home-section-count">{{ len .Pages }} writeup{{ if ne (len .Pages) 1 }}s{{ end }}</span>
+            </div>
+
+            <ol class="home-posts">
+                {{ $configDateFormat := $.Site.Params.dateFormat | default "2 Jan 2006" }}
+                {{ $ISO_date := "2006-01-02T15:04:05Z0700" }}
+                {{ range .Pages }}
+                <li class="home-post">
+                    <a class="home-post-link" href="{{ .RelPermalink }}">
+                        <div class="home-post-meta">
+                            <time datetime="{{ dateFormat $ISO_date .Date }}">{{ .Date.Format $configDateFormat }}</time>
+                        </div>
+                        <h3 class="home-post-title">{{ .Title }}</h3>
+                        {{ with .Params.description }}
+                        <p class="home-post-summary">{{ . | truncate 180 }}</p>
+                        {{ end }}
+                        {{ with .Params.tags }}
+                        <div class="writeup-tags">
+                            {{ range . }}<span class="writeup-tag">{{ . }}</span>{{ end }}
+                        </div>
+                        {{ end }}
+                    </a>
+                </li>
+                {{ end }}
+            </ol>
+        </div>
+        {{ end }}
+
+        {{ if gt $paginator.TotalPages 1 }}
+        <nav class="pagination">
+            {{ if $paginator.HasPrev }}
+            <a class="pagination-item" href="{{ $paginator.Prev.URL }}">&larr; Newer</a>
+            {{ end }}
+            <span class="pagination-info">{{ $paginator.PageNumber }} / {{ $paginator.TotalPages }}</span>
+            {{ if $paginator.HasNext }}
+            <a class="pagination-item" href="{{ $paginator.Next.URL }}">Older &rarr;</a>
+            {{ end }}
+        </nav>
+        {{ end }}
+    </main>
+</div>
+{{- end -}}

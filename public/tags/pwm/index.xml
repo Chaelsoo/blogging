@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pwm on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/pwm/</link>
+    <description>Recent content in Pwm on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 02 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/pwm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Authority</title>
+      <link>http://localhost:1313/writeups/htb-authority/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-authority/</guid>
+      
+      <description>&lt;p&gt;Windows box, Medium. The foothold here isn&amp;rsquo;t a CVE or a spray. It&amp;rsquo;s an Ansible deployment someone left readable on an SMB share with no credentials required. Three vault-encrypted credential blobs in the configs looked protected. They weren&amp;rsquo;t, because all three used the same master password. Once you crack those, you land on a PWM service on port 8443: a self-service password management portal backed by an LDAP directory. The interesting part is that PWM&amp;rsquo;s configuration file specifies which LDAP server to authenticate against. Change that URL to point at your own machine, upload the config back through the portal, and the service helpfully connects to your Responder listener using the LDAP service account in cleartext.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

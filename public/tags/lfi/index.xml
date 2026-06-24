@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Lfi on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/lfi/</link>
+    <description>Recent content in Lfi on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Mon, 08 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/lfi/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Trick</title>
+      <link>http://localhost:1313/writeups/htb-trick/</link>
+      <pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-trick/</guid>
+      
+      <description>&lt;p&gt;An Easy box but one that makes you work for it in an unexpected direction. Port 80 is a static placeholder page with nothing on it. The real surface is DNS: zone transfer hands you a subdomain, that subdomain has a login form with a time-based blind SQLi, you get credentials, but the LFI on that same app is filtered. The actual LFI is on a second subdomain you only find by fuzzing a prefix pattern. That subdomain reads michael&amp;rsquo;s SSH key, you get in, and the privilege escalation is a clean abuse of fail2ban&amp;rsquo;s action config combined with &lt;code&gt;sudo&lt;/code&gt; restart rights. The credentials from payroll end up being almost irrelevant to the root path, which is a bit annoying in hindsight, but the DNS zone transfer and the fail2ban trick are both things worth keeping in your toolkit.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

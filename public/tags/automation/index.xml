@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Automation on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/automation/</link>
+    <description>Recent content in Automation on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Fri, 20 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/automation/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Self-hosted VPN</title>
+      <link>http://localhost:1313/blogs/wireguard-vps/</link>
+      <pubDate>Fri, 20 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/wireguard-vps/</guid>
+      
+      <description>&lt;p&gt;Instead of relying on a commercial VPN provider, I wanted to see how far I could get by building my own on a VPS. The goal was simple: connect my laptop and phone over WireGuard, optionally route all traffic through it.&lt;/p&gt;
+&lt;p&gt;The real value came from debugging actual issues. This post goes through all of it.&lt;/p&gt;
+&lt;h2 id=&#34;why-wireguard&#34;&gt;Why WireGuard&lt;/h2&gt;
+&lt;p&gt;Simpler than OpenVPN, kernel-based, and the mental model is clean. Each machine has its own private key, each knows the other&amp;rsquo;s public key, peers get assigned internal VPN IPs. No certificate infrastructure to deal with.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

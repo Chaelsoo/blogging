@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Rfi on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/rfi/</link>
+    <description>Recent content in Rfi on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Wed, 03 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/rfi/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: StreamIO</title>
+      <link>http://localhost:1313/writeups/htb-streamio/</link>
+      <pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-streamio/</guid>
+      
+      <description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability - it&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

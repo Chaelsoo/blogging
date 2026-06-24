@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Psafe on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/psafe/</link>
+    <description>Recent content in Psafe on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 02 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/psafe/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Administrator</title>
+      <link>http://localhost:1313/writeups/htb-administrator/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-administrator/</guid>
+      
+      <description>&lt;p&gt;Windows box, Medium. They gave you credentials to start: &lt;code&gt;Olivia:ichliebedich&lt;/code&gt;. WinRM open, SMB open, LDAP accessible. The whole box is BloodHound ACL chain work. What made it stick was the dead end near the finish. Emily has GenericWrite over Ethan, and the natural move is Shadow Credentials. But ADCS isn&amp;rsquo;t configured on this domain. That null result pushed toward something I use less often: targeted Kerberoasting. You don&amp;rsquo;t need an account to already have an SPN. If you have GenericWrite over it, you can write one yourself, and now it&amp;rsquo;s kerberoastable on demand.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

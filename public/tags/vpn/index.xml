@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Vpn on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/vpn/</link>
+    <description>Recent content in Vpn on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Fri, 20 Feb 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/vpn/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Expressway</title>
+      <link>http://localhost:1313/writeups/htb-expressway/</link>
+      <pubDate>Fri, 20 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-expressway/</guid>
+      
+      <description>&lt;p&gt;Expressway is the kind of machine that makes you second-guess your recon. You scan it, get one TCP port, and think you must have missed something. You didn&amp;rsquo;t. There&amp;rsquo;s no web app here, no API, no admin panel to poke at. Just SSH and a VPN service sitting on UDP that most people walk right past.&lt;/p&gt;
+&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+&lt;p&gt;TCP scan first, as always.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nmap -sV -O MACHINE_IP -T5
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 10.0p2 Debian 8 (protocol 2.0)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;One result: port 22, OpenSSH 10.0. That&amp;rsquo;s it. At this point you either assume the box is broken or you scan UDP.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

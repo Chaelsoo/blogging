@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ntlm-Disabled on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/ntlm-disabled/</link>
+    <description>Recent content in Ntlm-Disabled on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 09 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/ntlm-disabled/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: VulnCicada</title>
+      <link>http://localhost:1313/writeups/htb-vulncicada/</link>
+      <pubDate>Tue, 09 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-vulncicada/</guid>
+      
+      <description>&lt;p&gt;This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note - an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&amp;rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &amp;ldquo;NTLM is disabled&amp;rdquo; doesn&amp;rsquo;t mean relay attacks are impossible - it means you have to do it with Kerberos instead, which is a completely different mechanism that&amp;rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&amp;rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Voleur</title>
+      <link>http://localhost:1313/writeups/htb-voleur/</link>
+      <pubDate>Sun, 07 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-voleur/</guid>
+      
+      <description>&lt;p&gt;Windows AD box where NTLM authentication is completely disabled. That single constraint changes everything about how you operate: no pass-the-hash, no NTLM relay, every tool needs a TGT and Kerberos must be properly configured. The box hands you starting credentials upfront but then makes you earn the rest through a chain that&amp;rsquo;s worth understanding. A spreadsheet locked in an SMB share leaks passwords for accounts you can&amp;rsquo;t use yet. A service account with WriteSPN lets you kerberoast your way to WinRM. A group called Restore_Users hints at a deleted employee. And once you bring that employee back from tombstone, his archived DPAPI blobs hand you the next account&amp;rsquo;s credentials without any cracking at all.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

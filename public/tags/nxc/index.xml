@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nxc on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/nxc/</link>
+    <description>Recent content in Nxc on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Mon, 01 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/nxc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Cicada</title>
+      <link>http://localhost:1313/writeups/htb-cicada/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-cicada/</guid>
+      
+      <description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake - a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script - cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

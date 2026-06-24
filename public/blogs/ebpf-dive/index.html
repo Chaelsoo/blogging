@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">eBPF Dive | Chaelsoo&#39;s blog</title>
+<meta property="og:title" content="eBPF Dive | Chaelsoo&#39;s blog" />
+<meta name="twitter:title" content="eBPF Dive | Chaelsoo&#39;s blog" />
+<meta itemprop="name" content="eBPF Dive | Chaelsoo&#39;s blog" />
+<meta name="application-name" content="eBPF Dive | Chaelsoo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace.">
+<meta itemprop="description" content="A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace." />
+<meta property="og:description" content="A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace." />
+<meta name="twitter:description" content="A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/blogs/ebpf-dive/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/blogs/ebpf-dive/">
+  <meta property="og:site_name" content="Chaelsoo&#39;s blog">
+  <meta property="og:title" content="eBPF Dive">
+  <meta property="og:description" content="A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="blogs">
+    <meta property="article:published_time" content="2026-03-27T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-03-27T00:00:00+00:00">
+    <meta property="article:tag" content="Linux">
+    <meta property="article:tag" content="Ebpf">
+    <meta property="article:tag" content="Network-Security">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="eBPF Dive">
+  <meta name="twitter:description" content="A practical intro to eBPF programs, hook points, CO-RE, and getting events back to userspace.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/blogs/ebpf-dive/">
+    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">eBPF Dive</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-03-27T00:00:00&#43;00:00" itemprop="datePublished"> 27 Mar 2026 </time>
+                </div>
+                
+            </header>
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#what-is-ebpf">What is eBPF</a></li>
+    <li><a href="#hook-points">Hook points</a></li>
+    <li><a href="#a-real-example-tracing-execve">A real example: tracing execve</a>
+      <ul>
+        <li><a href="#kernel-side">Kernel side</a></li>
+      </ul>
+    </li>
+    <li><a href="#how-context-flows-from-kernel-to-ebpf">How context flows from kernel to eBPF</a></li>
+    <li><a href="#reading-function-arguments-directly">Reading function arguments directly</a></li>
+    <li><a href="#co-re-write-once-run-anywhere">CO-RE: write once, run anywhere</a></li>
+    <li><a href="#perf-buffer-vs-ring-buffer">Perf buffer vs ring buffer</a>
+      <ul>
+        <li><a href="#perf-buffer">Perf buffer</a></li>
+        <li><a href="#ring-buffer">Ring buffer</a></li>
+      </ul>
+    </li>
+    <li><a href="#the-skeleton-how-userspace-ties-it-together">The skeleton: how userspace ties it together</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Ever wanted to run your own code inside the Linux kernel without writing a kernel
+module, without rebooting, and without breaking everything? That&rsquo;s eBPF.</p>
+<p>This post is a practical intro. I&rsquo;ll cover how eBPF programs actually work, walk
+through a real example, explain the two ways to get data out of the kernel, and
+show how the userspace side ties it all together. At the end I&rsquo;ll touch on the
+network security toolkit I&rsquo;ve been building on top of this.</p>
+<h2 id="what-is-ebpf">What is eBPF</h2>
+<p>eBPF stands for extended Berkeley Packet Filter. The name is historical baggage.
+Today it has nothing to do with packet filtering specifically. It&rsquo;s a virtual
+machine embedded in the Linux kernel that lets you load and run sandboxed
+programs at specific hook points, without touching kernel source code.</p>
+<p>The killer property is that it&rsquo;s safe by design. Before your program runs, the
+kernel passes it through a verifier that checks for things like out-of-bounds
+memory access, unbounded loops, and null pointer dereferences. If it doesn&rsquo;t
+pass, it doesn&rsquo;t load. No crashes, no kernel panics.</p>
+<p>Once verified, the JIT compiler converts the BPF bytecode to native machine
+code and attaches it to a hook. From that point on, every time that hook fires,
+your code runs at near-native speed, inside the kernel.</p>
+<h2 id="hook-points">Hook points</h2>
+<p>eBPF programs don&rsquo;t run on their own. They attach to events. The main ones you&rsquo;ll
+use in practice:</p>
+<ul>
+<li><strong>kprobe / kretprobe</strong>: fires on entry or return of any kernel function</li>
+<li><strong>uprobe / uretprobe</strong>: same, but for userspace functions (think <code>SSL_write</code>)</li>
+<li><strong>tracepoint</strong>: stable, documented kernel trace events</li>
+<li><strong>XDP</strong>: packet processing at the NIC, before the kernel networking stack even
+sees the packet</li>
+<li><strong>TC hook</strong>: traffic control, slightly later in the network path</li>
+</ul>
+<p>The hook type you pick determines what context your program gets and what it&rsquo;s
+allowed to do.</p>
+<h2 id="a-real-example-tracing-execve">A real example: tracing execve</h2>
+<p>Let&rsquo;s walk through something concrete. Every time a process executes a binary,
+the kernel calls <code>sys_execve</code>. We&rsquo;ll attach a kprobe to it and log the PID,
+UID, and process name.</p>
+<p>The eBPF program lives in two files: the kernel-side BPF C code, and the
+userspace loader that loads it and reads the output.</p>
+<h3 id="kernel-side">Kernel side</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;linux/bpf.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;bpf/bpf_helpers.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;bpf/bpf_tracing.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">event</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="n">pid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__u32</span> <span class="n">uid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span>  <span class="n">comm</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">__uint</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">BPF_MAP_TYPE_RINGBUF</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">__uint</span><span class="p">(</span><span class="n">max_entries</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">events</span> <span class="nf">SEC</span><span class="p">(</span><span class="s">&#34;.maps&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">SEC</span><span class="p">(</span><span class="s">&#34;kprobe/sys_execve&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">trace_execve</span><span class="p">(</span><span class="k">struct</span> <span class="n">pt_regs</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="nf">bpf_ringbuf_reserve</span><span class="p">(</span><span class="o">&amp;</span><span class="n">events</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">e</span><span class="p">),</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">e</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">e</span><span class="o">-&gt;</span><span class="n">pid</span> <span class="o">=</span> <span class="nf">bpf_get_current_pid_tgid</span><span class="p">()</span> <span class="o">&gt;&gt;</span> <span class="mi">32</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">e</span><span class="o">-&gt;</span><span class="n">uid</span> <span class="o">=</span> <span class="nf">bpf_get_current_uid_gid</span><span class="p">()</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">bpf_get_current_comm</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">bpf_ringbuf_submit</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">char</span> <span class="n">LICENSE</span><span class="p">[]</span> <span class="nf">SEC</span><span class="p">(</span><span class="s">&#34;license&#34;</span><span class="p">)</span> <span class="o">=</span> <span class="s">&#34;GPL&#34;</span><span class="p">;</span>
+</span></span></code></pre></div><p>A few things to notice. The function signature takes <code>struct pt_regs *ctx</code>.
+That&rsquo;s the CPU register state at the moment the hook fired. It&rsquo;s how the kernel
+passes context into your program. The <code>SEC()</code> macro tells the compiler which ELF
+section to put this symbol in, which is how the loader knows what type of program
+it is and where to attach it.</p>
+<p>The <code>bpf_ringbuf_reserve</code> / <code>bpf_ringbuf_submit</code> pair is how we ship data to
+userspace. More on that below.</p>
+<h2 id="how-context-flows-from-kernel-to-ebpf">How context flows from kernel to eBPF</h2>
+<p>When a kprobe fires, the kernel saves the full CPU register state into a
+<code>pt_regs</code> struct and hands your BPF program a pointer to it. That struct is your
+window into what was happening at the exact moment the hook fired.</p>
+<pre tabindex="0"><code>sys_execve(filename, argv, envp)
+                |
+         CPU registers:
+         rdi = filename   ← PT_REGS_PARM1(ctx)
+         rsi = argv       ← PT_REGS_PARM2(ctx)
+         rdx = envp       ← PT_REGS_PARM3(ctx)
+                |
+         pt_regs struct
+                |
+         your BPF program receives *ctx
+</code></pre><p>From there you can read the function&rsquo;s arguments using macros like
+<code>PT_REGS_PARM1(ctx)</code>, <code>PT_REGS_PARM2(ctx)</code>, etc. These are architecture-aware
+so they map to the right registers on x86-64, arm64, and so on.</p>
+<p>One critical rule: if any argument is a pointer into userspace memory, you cannot
+dereference it directly. The verifier will reject it. You have to use
+<code>bpf_probe_read_user()</code> to safely copy the data into your BPF stack. Kernel
+pointers you can access directly through the CO-RE helpers (more on that below).</p>
+<h2 id="reading-function-arguments-directly">Reading function arguments directly</h2>
+<p>The <code>pt_regs</code> approach works, but there&rsquo;s a cleaner way. The <code>BPF_KPROBE</code> macro
+lets you declare your BPF function with the exact same signature as the kernel
+function you&rsquo;re hooking.</p>
+<p>Take <code>tcp_sendmsg</code>. In the kernel it looks like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">tcp_sendmsg</span><span class="p">(</span><span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">sk</span><span class="p">,</span> <span class="k">struct</span> <span class="n">msghdr</span> <span class="o">*</span><span class="n">msg</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">);</span>
+</span></span></code></pre></div><p>With <code>BPF_KPROBE</code> you just mirror that signature directly:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">SEC</span><span class="p">(</span><span class="s">&#34;kprobe/tcp_sendmsg&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">BPF_KPROBE</span><span class="p">(</span><span class="n">tcp_sendmsg</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">sk</span><span class="p">,</span> <span class="k">struct</span> <span class="n">msghdr</span> <span class="o">*</span><span class="n">msg</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">tcp_event</span> <span class="n">ev</span> <span class="o">=</span> <span class="p">{};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">fill_event</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ev</span><span class="p">,</span> <span class="n">sk</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">EVENT_TX</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">bpf_perf_event_output</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">events</span><span class="p">,</span> <span class="n">BPF_F_CURRENT_CPU</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ev</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ev</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>At the moment <code>tcp_sendmsg</code> is called, those arguments, <code>sk</code>, <code>msg</code>, <code>size</code>, are
+live in CPU registers. <code>BPF_KPROBE</code> expands into the boilerplate that reads
+them from <code>pt_regs</code> and hands them to your function as proper typed C variables.</p>
+<p>So <code>sk</code> is a real <code>struct sock *</code> pointing to the socket that&rsquo;s sending data.
+You can pull fields off it directly, source and destination IP, ports, socket
+state, whatever you need. <code>size</code> tells you exactly how many bytes are being sent
+in this call.</p>
+<p>This is the core idea: you hook a function, you get its arguments, you inspect
+the kernel&rsquo;s own live data structures at the exact moment they&rsquo;re being used. No
+guessing at offsets, no manual register math.</p>
+<p>The only rule remains: if an argument points to userspace memory, use
+<code>bpf_probe_read_user()</code>. Kernel structs like <code>struct sock *</code> you can access
+directly, but keep reading for why that works reliably across kernel versions.</p>
+<h2 id="co-re-write-once-run-anywhere">CO-RE: write once, run anywhere</h2>
+<p>Here&rsquo;s a problem. Kernel structs like <code>struct sock</code> change between kernel
+versions. A field might be at offset 24 in kernel 5.15 and offset 32 in 6.1.
+If you hardcode struct offsets at compile time, your BPF program breaks the
+moment someone runs it on a different kernel.</p>
+<p>CO-RE (Compile Once, Run Everywhere) solves this. It&rsquo;s a combination of three
+things working together:</p>
+<p><strong>BTF (BPF Type Format)</strong> is debug information the kernel embeds about its own
+types, every struct, every field, every offset. Modern kernels ship with BTF
+built in, exposed at <code>/sys/kernel/btf/vmlinux</code>.</p>
+<p><strong><code>vmlinux.h</code></strong> is a single header generated from that BTF data. Instead of
+including dozens of kernel headers, you include one file that has the exact type
+definitions for the kernel you&rsquo;re running on.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
+</span></span></code></pre></div><p><strong>CO-RE relocations</strong> are annotations the compiler embeds in your <code>.o</code> file.
+When libbpf loads your program, it reads those annotations, checks the target
+kernel&rsquo;s BTF, and rewrites the field offsets to match. Your program compiled on
+kernel 5.15 loads correctly on kernel 6.1 because libbpf fixed the offsets at
+load time.</p>
+<p>In practice it looks like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;vmlinux.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;bpf/bpf_core_read.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">SEC</span><span class="p">(</span><span class="s">&#34;kprobe/tcp_sendmsg&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">BPF_KPROBE</span><span class="p">(</span><span class="n">tcp_sendmsg</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sock</span> <span class="o">*</span><span class="n">sk</span><span class="p">,</span> <span class="k">struct</span> <span class="n">msghdr</span> <span class="o">*</span><span class="n">msg</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// BPF_CORE_READ handles the offset relocation automatically
+</span></span></span><span class="line"><span class="cl">    <span class="n">__u16</span> <span class="n">family</span> <span class="o">=</span> <span class="nf">BPF_CORE_READ</span><span class="p">(</span><span class="n">sk</span><span class="p">,</span> <span class="n">__sk_common</span><span class="p">.</span><span class="n">skc_family</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__u16</span> <span class="n">dport</span>  <span class="o">=</span> <span class="nf">BPF_CORE_READ</span><span class="p">(</span><span class="n">sk</span><span class="p">,</span> <span class="n">__sk_common</span><span class="p">.</span><span class="n">skc_dport</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><code>BPF_CORE_READ</code> looks like a normal struct field access but it goes through the
+CO-RE machinery. The compiler marks it as a relocatable access, and libbpf
+resolves it against the target kernel&rsquo;s BTF at load time.</p>
+<p>Without CO-RE you&rsquo;d be shipping pre-compiled BPF objects per kernel version, or
+compiling on the target machine. With CO-RE you compile once and distribute a
+single <code>.o</code> that works everywhere with BTF support.</p>
+<h2 id="perf-buffer-vs-ring-buffer">Perf buffer vs ring buffer</h2>
+<p>There are two main ways to stream events from your BPF program to userspace.</p>
+<h3 id="perf-buffer">Perf buffer</h3>
+<p><code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code> is the original mechanism. It creates one
+per-CPU circular buffer. Each CPU writes to its own buffer and userspace polls
+all of them.</p>
+<p>The problem: per-CPU allocation is wasteful. If you allocate 1MB per CPU on a
+32-core machine you&rsquo;ve committed 32MB even if most cores are idle. You also get
+events out of order across CPUs because you&rsquo;re merging multiple independent
+streams.</p>
+<h3 id="ring-buffer">Ring buffer</h3>
+<p><code>BPF_MAP_TYPE_RINGBUF</code>, added in kernel 5.8, uses a single shared buffer. All
+CPUs write to it, userspace reads from one place.</p>
+<p>The advantages are real:</p>
+<ul>
+<li>one allocation shared across all CPUs</li>
+<li>events are ordered by submission time</li>
+<li>supports a reserve/commit pattern so you fill the struct in place without an
+extra copy</li>
+<li>userspace can be notified via epoll instead of busy-polling</li>
+</ul>
+<pre tabindex="0"><code>Perf buffer:
+  CPU0 → [buf0] ─┐
+  CPU1 → [buf1] ─┼─→ userspace merges all
+  CPU2 → [buf2] ─┘
+
+Ring buffer:
+  CPU0 ─┐
+  CPU1 ─┼─→ [shared buf] ─→ userspace
+  CPU2 ─┘
+</code></pre><p>Unless you&rsquo;re on a kernel older than 5.8, use ring buffer.</p>
+<h2 id="the-skeleton-how-userspace-ties-it-together">The skeleton: how userspace ties it together</h2>
+<p>Compiling your BPF C file with clang gives you a <code>.o</code> ELF object. But you still
+need to load it into the kernel, set up the maps, and attach to the hook.</p>
+<p>With libbpf, the modern approach is the skeleton pattern. You run:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># compile BPF code to BPF bytecode</span>
+</span></span><span class="line"><span class="cl">clang -O2 -target bpf -g -c execve_trace.bpf.c -o execve_trace.bpf.o
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># generate the skeleton header</span>
+</span></span><span class="line"><span class="cl">bpftool gen skeleton execve_trace.bpf.o &gt; execve_trace.skel.h
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># compile the userspace loader</span>
+</span></span><span class="line"><span class="cl">gcc execve_trace.c -o execve_trace -lbpf
+</span></span></code></pre></div><p>The skeleton header has a struct representing your entire BPF program, maps,
+programs, links, and generated functions to manage it. Your userspace code then
+follows a clean three-step sequence:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;execve_trace.skel.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">handle_event</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;pid=%-6d uid=%-6d comm=%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">uid</span><span class="p">,</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 1. open: parse the .o, prepare internal state
+</span></span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">execve_trace_bpf</span> <span class="o">*</span><span class="n">skel</span> <span class="o">=</span> <span class="nf">execve_trace_bpf__open</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 2. load: verify and load into kernel via bpf() syscall
+</span></span></span><span class="line"><span class="cl">    <span class="nf">execve_trace_bpf__load</span><span class="p">(</span><span class="n">skel</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 3. attach: create the kprobe and wire the program to it
+</span></span></span><span class="line"><span class="cl">    <span class="nf">execve_trace_bpf__attach</span><span class="p">(</span><span class="n">skel</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// consume events from the ring buffer
+</span></span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">ring_buffer</span> <span class="o">*</span><span class="n">rb</span> <span class="o">=</span> <span class="nf">ring_buffer__new</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">bpf_map__fd</span><span class="p">(</span><span class="n">skel</span><span class="o">-&gt;</span><span class="n">maps</span><span class="p">.</span><span class="n">events</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">handle_event</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span>
+</span></span><span class="line"><span class="cl">    <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ring_buffer__poll</span><span class="p">(</span><span class="n">rb</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Open, Load, Attach. That&rsquo;s the whole thing. Under the hood <code>__load</code> calls
+<code>bpf(BPF_PROG_LOAD, ...)</code> which triggers the verifier, and <code>__attach</code> calls
+<code>bpf(BPF_LINK_CREATE, ...)</code> which installs the kprobe. After that your program
+is live.</p>
+<p>The skeleton handles all the boilerplate so you&rsquo;re not manually calling the
+<code>bpf()</code> syscall with magic integers and hand-rolled structs.</p>
+<p>Before we wrap up, here&rsquo;s a quick visual to anchor the flow.</p>
+<p><img src="/eBPF.png" alt="eBPF overview"></p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

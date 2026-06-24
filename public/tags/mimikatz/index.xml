@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mimikatz on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/mimikatz/</link>
+    <description>Recent content in Mimikatz on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 26 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/mimikatz/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HackINI 2026: IT Workstation</title>
+      <link>http://localhost:1313/writeups/hackini-it-workstation/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-it-workstation/</guid>
+      
+      <description>&lt;p&gt;The second machine in the chain. A Windows workstation with WinRM exposed and nothing else obviously interesting until you&amp;rsquo;re inside. Autologon credentials stored in plaintext in the registry handed over local Administrator, then Mimikatz pulled a cleartext domain password out of Credential Manager. That opened the door to the Active Directory machine.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Ran through this one with &lt;a href=&#34;https://www.linkedin.com/in/aymen-drid-36bba4243/&#34;&gt;Aymen&lt;/a&gt;. Two people piecing together a chain like this makes a real difference: every dead end gets shorter when someone&amp;rsquo;s right there with you. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

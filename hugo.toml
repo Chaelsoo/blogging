@@ -1,0 +1,88 @@
+baseURL = 'https://chaelsoo.me/'
+title = "Chaelsoo's blog"
+languageCode = 'en-gb'
+defaultContentLanguage = "en-gb"
+enableEmoji = true
+ignoreErrors = ["additional-script-loading-error"]
+
+paginate = 10
+
+[params]
+goToTop = true
+toc = true
+
+[module]
+[[module.imports]]
+path = "github.com/hugo-sid/hugo-blog-awesome"
+
+[markup]
+[markup.highlight]
+noClasses = false
+[markup.goldmark.renderer]
+unsafe = true
+[markup.tableOfContents]
+startLevel = 2
+endLevel = 4
+ordered = false
+
+[Languages.en-gb]
+languageName = "English"
+languageCode = "en-gb"
+contentDir = "content/"
+weight = 1
+
+[Languages.en-gb.menu]
+[[Languages.en-gb.menu.main]]
+pageRef = "/"
+name = 'Home'
+url = '/'
+weight = 10
+[[Languages.en-gb.menu.main]]
+pageRef = "blogs"
+name = 'Blogs'
+url = '/blogs/'
+weight = 20
+[[Languages.en-gb.menu.main]]
+pageRef = "writeups"
+name = 'Writeups'
+url = '/writeups/'
+weight = 30
+[[Languages.en-gb.menu.main]]
+name = 'About'
+url = '/about/'
+weight = 50
+[[Languages.en-gb.menu.main]]
+name = 'Cheatsheet'
+url = 'https://notes.chaelsoo.me'
+weight = 60
+
+[Languages.en-gb.params]
+sitename = ""
+defaultColor = "dark"
+description = "I write about things so they stick around, maybe they will for you too."
+mainSections = ['blogs', 'writeups']
+goToTop = true
+dateFormat = ""
+rssFeedDescription = "summary"
+
+[Languages.en-gb.params.author]
+avatar = "avatar.jpg"                       # /assets/avatar.jpg
+intro = "Chaelsoo's blog"
+description = "a work in progress"
+
+[[params.socialIcons]]
+name = "discord"
+url = "https://discord.com/users/kanyo._"
+
+[[params.socialIcons]]
+name = "github"
+url = "https://github.com/Chaelsoo"
+
+
+[[params.socialIcons]]
+name = "linkedin"
+url = "https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/"
+
+[[params.socialIcons]]
+name = "hackthebox"
+url = "https://app.hackthebox.com/users/1490281"

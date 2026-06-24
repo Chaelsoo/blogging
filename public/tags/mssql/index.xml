@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mssql on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/mssql/</link>
+    <description>Recent content in Mssql on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 02 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/mssql/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Escape</title>
+      <link>http://localhost:1313/writeups/htb-escape/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-escape/</guid>
+      
+      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most - you&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Scrambled</title>
+      <link>http://localhost:1313/writeups/htb-scrambled/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-scrambled/</guid>
+      
+      <description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
+&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely - you forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: EscapeTwo</title>
+      <link>http://localhost:1313/writeups/htb-escapetwo/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-escapetwo/</guid>
+      
+      <description>&lt;p&gt;Windows box, same domain name as the original Escape (&lt;code&gt;sequel.htb&lt;/code&gt;), but a different environment. The ESC1 from that box shows up again here, except this time it&amp;rsquo;s locked behind an ACL chain: you need WriteOwner over a service account, then full control, then a template write that turns a non-vulnerable template into one you can exploit. The ESC4-to-ESC1 chain is the thing worth taking away from this box.&lt;/p&gt;
+&lt;p&gt;We were given credentials upfront: &lt;code&gt;rose / KxEPkKe6R8su&lt;/code&gt;.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

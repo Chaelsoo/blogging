@@ -1,0 +1,26 @@
+{{- $toc := .Site.Params.toc -}}
+
+{{- if isset .Params "toc" -}}
+    {{ $toc = .Params.toc }}
+{{- end -}}
+
+{{- if and $toc .TableOfContents -}}
+<div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">{{ T "single.table_of_contents" | default "Table of Contents" }}</button>
+    <div class="toc-content" id="tocContent">
+        {{ .TableOfContents }}
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+{{- end -}}

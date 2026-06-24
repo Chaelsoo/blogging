@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Htb on Chaelsoo&#39;s blog</title>
+    <link>http://localhost:1313/tags/htb/</link>
+    <description>Recent content in Htb on Chaelsoo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Sat, 07 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/htb/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB Season 10: CCTV</title>
+      <link>http://localhost:1313/writeups/htb-cctv/</link>
+      <pubDate>Sat, 07 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-cctv/</guid>
+      
+      <description>&lt;p&gt;CCTV is a Linux Easy box with a network flavor you don&amp;rsquo;t see as often on Easy rated machines. The surveillance theme is consistent throughout. You&amp;rsquo;re watching the system, and the system is watching you back. Passive analysis plays a bigger role here than brute force.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;A surveillance software stack with a web interface worth poking around&lt;/li&gt;
+&lt;li&gt;Network traffic that reveals more than the UI does&lt;/li&gt;
+&lt;li&gt;A hidden service that only shows up once you&amp;rsquo;re listening in the right place&lt;/li&gt;
+&lt;li&gt;A short pivot from that service to a root shell&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: MonitorsFour</title>
+      <link>http://localhost:1313/writeups/htb-monitorsfour/</link>
+      <pubDate>Mon, 02 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-monitorsfour/</guid>
+      
+      <description>&lt;p&gt;MonitorsFour is a Hard box and earns it, but not through obscurity. Each step is logical and builds on the last. The Docker escape at the end is the most interesting part, built around a real CVE with a CVSS of 9.3 that was still pretty fresh when this box dropped.&lt;/p&gt;
+&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+&lt;p&gt;Web app at &lt;code&gt;monitorsfour.htb&lt;/code&gt;. Nothing immediately obvious on the landing page, so I started fuzzing endpoints.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -u http://monitorsfour.htb/FUZZ
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;One endpoint stood out: &lt;code&gt;/user&lt;/code&gt;. It accepted a &lt;code&gt;token&lt;/code&gt; parameter, which immediately looked interesting. The question was what it actually did with that token.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB Season 10: Pirate</title>
+      <link>http://localhost:1313/writeups/htb-pirate/</link>
+      <pubDate>Sat, 28 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-pirate/</guid>
+      
+      <description>&lt;p&gt;Pirate is a Windows Hard box and earns the rating. It&amp;rsquo;s a multi stage Active Directory environment where no single step gets you very far on its own. The path to Domain Admin is built from several smaller wins stacked on top of each other. The kind of machine you want to take notes on.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;A realistic Active Directory environment with multiple users, groups, and services in play&lt;/li&gt;
+&lt;li&gt;Early enumeration that rewards thoroughness over speed&lt;/li&gt;
+&lt;li&gt;At least two distinct AD misconfigurations that each open a new door&lt;/li&gt;
+&lt;li&gt;A final escalation that ties the chain together, satisfying when it clicks&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB Season 10: Interpreter</title>
+      <link>http://localhost:1313/writeups/htb-interpreter/</link>
+      <pubDate>Sat, 21 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-interpreter/</guid>
+      
+      <description>&lt;p&gt;Interpreter is a Linux Medium that puts a healthcare integration platform in the spotlight. The domain context adds some flavor. Think HL7, FHIR adjacent tooling, the kind of software that runs hospitals and rarely sees a pentest. Getting in is one thing; what happens after is the more memorable part.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;A web facing integration platform with an exploitable component&lt;/li&gt;
+&lt;li&gt;Enough context clues in the app to understand what you&amp;rsquo;re targeting&lt;/li&gt;
+&lt;li&gt;A foothold that requires reading the application&amp;rsquo;s behavior carefully&lt;/li&gt;
+&lt;li&gt;A privilege escalation involving code execution in an unexpected context. This one sticks with you&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Expressway</title>
+      <link>http://localhost:1313/writeups/htb-expressway/</link>
+      <pubDate>Fri, 20 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-expressway/</guid>
+      
+      <description>&lt;p&gt;Expressway is the kind of machine that makes you second-guess your recon. You scan it, get one TCP port, and think you must have missed something. You didn&amp;rsquo;t. There&amp;rsquo;s no web app here, no API, no admin panel to poke at. Just SSH and a VPN service sitting on UDP that most people walk right past.&lt;/p&gt;
+&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+&lt;p&gt;TCP scan first, as always.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nmap -sV -O MACHINE_IP -T5
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 10.0p2 Debian 8 (protocol 2.0)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;One result: port 22, OpenSSH 10.0. That&amp;rsquo;s it. At this point you either assume the box is broken or you scan UDP.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB Season 10: WingData</title>
+      <link>http://localhost:1313/writeups/htb-wingdata/</link>
+      <pubDate>Sat, 14 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-wingdata/</guid>
+      
+      <description>&lt;p&gt;WingData is a Linux Easy box that keeps things straightforward. Exposed service, weak credentials, misconfigured sudo. It&amp;rsquo;s the kind of machine that teaches good enumeration habits more than anything else.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;An FTP service running a version worth looking up&lt;/li&gt;
+&lt;li&gt;Credentials that need a bit of offline work to crack&lt;/li&gt;
+&lt;li&gt;A foothold that requires patience more than cleverness&lt;/li&gt;
+&lt;li&gt;A sudo misconfiguration that closes things out quickly once you&amp;rsquo;re in&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Conversor</title>
+      <link>http://localhost:1313/writeups/htb-conversor/</link>
+      <pubDate>Fri, 13 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-conversor/</guid>
+      
+      <description>&lt;p&gt;Conversor is a Linux Medium that gives you the source code upfront. That&amp;rsquo;s not a gift so much as a heads up. You&amp;rsquo;re expected to actually read it. The machine is built around a file conversion web app, and the foothold hinges on understanding what the app does under the hood before you can abuse it.&lt;/p&gt;
+&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+&lt;p&gt;Standard nmap scan. Two ports open, everything else closed or filtered.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;┌──(kanyo㉿GIGABYTE)-[~]
+└─$ nmap -T4 -sV -sC 10.129.238.31
+Starting Nmap 7.98 ( https://nmap.org ) at 2026-02-13 14:12 +0100
+Nmap scan report for 10.129.238.31
+Host is up (0.15s latency).
+Not shown: 993 closed tcp ports (reset)
+PORT     STATE    SERVICE        VERSION
+22/tcp   open     ssh            OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   256 01:74:26:39:47:bc:6a:e2:cb:12:8b:71:84:9c:f8:5a (ECDSA)
+|_  256 3a:16:90:dc:74:d8:e3:c4:51:36:e2:08:06:26:17:ee (ED25519)
+80/tcp   open     http           Apache httpd 2.4.52
+|_http-server-header: Apache/2.4.52 (Ubuntu)
+|_http-title: Did not follow redirect to http://conversor.htb/
+1083/tcp filtered ansoft-lm-1
+2260/tcp filtered apc-2260
+3918/tcp filtered pktcablemmcops
+5718/tcp filtered dpm
+7025/tcp filtered vmsvc-2
+Service Info: Host: conversor.htb; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Port 80 redirects to &lt;code&gt;conversor.htb&lt;/code&gt;, so add that to &lt;code&gt;/etc/hosts&lt;/code&gt; and move on. The web app is a file converter: you upload something, it spits back a transformed version. There&amp;rsquo;s a file upload input on the main page. That&amp;rsquo;s your surface right there.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB Season 10: Pterodactyl</title>
+      <link>http://localhost:1313/writeups/htb-pterodactyl/</link>
+      <pubDate>Sat, 07 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-pterodactyl/</guid>
+      
+      <description>&lt;p&gt;Pterodactyl is a Linux Medium that puts a popular open source game server panel front and center. If you&amp;rsquo;ve ever set up a Minecraft or game hosting environment, the interface will feel familiar, which makes spotting what&amp;rsquo;s wrong with it a bit more satisfying.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;A known vulnerability in a widely deployed panel. Enumeration pays off here&lt;/li&gt;
+&lt;li&gt;Database access as a stepping stone, not the final goal&lt;/li&gt;
+&lt;li&gt;Credential reuse across services (classic, but it works)&lt;/li&gt;
+&lt;li&gt;A privilege escalation that builds naturally on what you already have&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB Season 10: Facts</title>
+      <link>http://localhost:1313/writeups/htb-facts/</link>
+      <pubDate>Sat, 31 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-facts/</guid>
+      
+      <description>&lt;p&gt;Facts is a Linux Easy box with a clean, grounded feel. The kind of machine where the attack surface is right in front of you if you bother to look carefully at the web app.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;A content management system doing more than it should be&lt;/li&gt;
+&lt;li&gt;Some cloud storage integration that leaks more than intended&lt;/li&gt;
+&lt;li&gt;Credentials hiding in places people forget to clean up&lt;/li&gt;
+&lt;li&gt;A privilege escalation that&amp;rsquo;s more creative than your typical SUID hunt&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>
