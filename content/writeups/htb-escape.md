@@ -8,11 +8,11 @@ draft: false
 ---
 
 
-Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most - you're not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.
+Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You're not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.
 
 ## Recon
 
-10.129.228.253, domain `sequel.htb`, DC hostname `dc`. Standard AD ports up - Kerberos, LDAP, SMB, WinRM - plus MSSQL 2019 on 1433. No web server, which narrows down where to start.
+10.129.228.253, domain `sequel.htb`, DC hostname `dc`. Standard AD ports up, Kerberos, LDAP, SMB, WinRM, plus MSSQL 2019 on 1433. No web server, which narrows down where to start.
 
 ```bash
 sudo nmap -sV -sC -T4 10.129.228.253
@@ -50,7 +50,7 @@ nxc mssql 10.129.228.253 -u PublicUser -p GuestUserCantWrite1 --local-auth
 
 ## NTLM Hash Coercion via xp_dirtree
 
-Logged into MSSQL as PublicUser - low-privilege guest account with no `xp_cmdshell` access. But there's a different stored procedure worth trying: `xp_dirtree`. It makes SQL Server enumerate a directory path, which can be a remote UNC path over SMB. When SQL Server reaches out over SMB to resolve a UNC path like `\\<attacker>\share`, it authenticates using the NTLM hash of whatever account the SQL service is running as.
+Logged into MSSQL as PublicUser, a low-privilege guest account with no `xp_cmdshell` access. But there's a different stored procedure worth trying: `xp_dirtree`. It makes SQL Server enumerate a directory path, which can be a remote UNC path over SMB. When SQL Server reaches out over SMB to resolve a UNC path like `\\<attacker>\share`, it authenticates using the NTLM hash of whatever account the SQL service is running as.
 
 Responder sat on tun0, waiting:
 
@@ -87,7 +87,7 @@ Once inside as sql_svc, I poked around the filesystem. `C:\SQLServer\Logs\` had 
 2022-11-18 13:43:07.48 Logon  Logon failed for user 'NuclearMosquito3'. Reason: Password did not match.
 ```
 
-Classic. Someone opened a login prompt for MSSQL, typed their domain username in the first field, then when the cursor jumped to the password field they typed the password - but they'd apparently typed the password in the username field and the username in the password field, in reverse order. Two consecutive failed logins: one for the username and one for the password entered as a username.
+Classic. Someone opened a login prompt for MSSQL, typed their domain username in the first field, then when the cursor jumped to the password field they typed the password. But they'd apparently typed the password in the username field and the username in the password field, in reverse order. Two consecutive failed logins: one for the username and one for the password entered as a username.
 
 The plaintext password is sitting in the MSSQL error log: `Ryan.Cooper:NuclearMosquito3`. Tested it:
 
@@ -110,7 +110,7 @@ Running certipy as sql_svc earlier showed no certificate templates. The importan
 }
 ```
 
-ESC1 is the combination of two flags on a certificate template. The first is "Enrollee Supplies Subject" - normally the CA controls what identity goes into the certificate's Subject field. With this flag set, the person requesting the certificate gets to specify the subject, including the UPN (user principal name). The second requirement is that the template enables Client Authentication, meaning the resulting certificate can be used to prove identity to Kerberos. Put those two together and any user who can enroll in the template can request a certificate that says they're Administrator.
+ESC1 is the combination of two flags on a certificate template. The first is "Enrollee Supplies Subject." Normally the CA controls what identity goes into the certificate's Subject field. With this flag set, the person requesting the certificate gets to specify the subject, including the UPN (user principal name). The second requirement is that the template enables Client Authentication, meaning the resulting certificate can be used to prove identity to Kerberos. Put those two together and any user who can enroll in the template can request a certificate that says they're Administrator.
 
 Domain Users can enroll in UserAuthentication. Ryan is a domain user.
 
@@ -125,7 +125,7 @@ certipy req -u ryan.cooper@sequel.htb -p 'NuclearMosquito3' \
 [*] Saving certificate and private key to 'administrator.pfx'
 ```
 
-Then authenticate with the certificate to get the Administrator NT hash. The nmap output flagged an 8-hour clock skew between my machine and the DC - Kerberos rejects tickets more than 5 minutes off, so I needed to account for that:
+Then authenticate with the certificate to get the Administrator NT hash. The nmap output flagged an 8-hour clock skew between my machine and the DC. Kerberos rejects tickets more than 5 minutes off, so I needed to account for that:
 
 ```bash
 faketime -f '+8h2s' certipy auth -pfx administrator.pfx -dc-ip 10.129.228.253

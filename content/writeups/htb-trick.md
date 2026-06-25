@@ -35,7 +35,7 @@ PORT   STATE SERVICE VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-Four ports. Port 80 is a "coming soon" placeholder. Port 53 is BIND, which is notable - a DNS server running on a box like this usually means there are zones to enumerate. Port 25 is SMTP but didn't respond to connection. I checked SMTP first to see if VRFY enumeration would work:
+Four ports. Port 80 is a "coming soon" placeholder. Port 53 is BIND, which is notable. A DNS server running on a box like this usually means there are zones to enumerate. Port 25 is SMTP but didn't respond to connection. I checked SMTP first to see if VRFY enumeration would work:
 
 ```bash
 VRFY root
@@ -50,7 +50,7 @@ VRFY www-data
 
 `root` and `www-data` exist. Useful context, but no direct attack path from here.
 
-Vhost fuzzing on port 80 found nothing useful. Port 53 is the more interesting angle. DNS servers that are misconfigured to allow zone transfers will hand you the complete DNS record set for a zone - every hostname, every subdomain - in a single query. `dig axfr` sends a zone transfer request:
+Vhost fuzzing on port 80 found nothing useful. Port 53 is the more interesting angle. DNS servers that are misconfigured to allow zone transfers will hand you the complete DNS record set for a zone, every hostname, every subdomain, in a single query. `dig axfr` sends a zone transfer request:
 
 ```bash
 …/labs/trick ❯ dig axfr @$DC trick.htb
@@ -78,7 +78,7 @@ Added it to `/etc/hosts` and opened it:
 
 ![preprod-payroll.trick.htb login page with username and password fields](/images/writeups/htb-trick/web-preprod-payroll-login.png)
 
-A login form. Time-based blind SQL injection is the type where the database pauses execution for a set number of seconds when the condition is true - the attacker infers data character by character from whether the response is delayed. It's slow but reliable when error-based injection is suppressed. I saved the login request from Burp and pointed sqlmap at it:
+A login form. Time-based blind SQL injection is the type where the database pauses execution for a set number of seconds when the condition is true. The attacker infers data character by character from whether the response is delayed. It's slow but reliable when error-based injection is suppressed. I saved the login request from Burp and pointed sqlmap at it:
 
 ```bash
 …/labs/trick ❯ sqlmap -r login_req 
@@ -201,7 +201,7 @@ Two things: member of `security` group, and can restart fail2ban as root without
 
 *Reference: [juggernaut-sec.com/fail2ban-lpe](https://juggernaut-sec.com/fail2ban-lpe/)*
 
-fail2ban monitors log files for brute-force patterns and responds by executing a configured *action* - typically an iptables rule to block the offending IP. Those actions are shell commands defined in config files under `/etc/fail2ban/action.d/`. When fail2ban is restarted it re-reads all config from disk. The `security` group controls the `action.d/` directory:
+fail2ban monitors log files for brute-force patterns and responds by executing a configured *action*, typically an iptables rule to block the offending IP. Those actions are shell commands defined in config files under `/etc/fail2ban/action.d/`. When fail2ban is restarted it re-reads all config from disk. The `security` group controls the `action.d/` directory:
 
 ```bash
 michael@trick:~$ ls -la /etc/fail2ban/
@@ -237,7 +237,7 @@ banaction = iptables-multiport
 banaction_allports = iptables-allports
 ```
 
-`bantime = 10s` and `banaction = iptables-multiport`. The `iptables-multiport.conf` action file is what gets executed when fail2ban decides to ban an IP. The `actionban` directive in that file is the shell command that runs - as root, because fail2ban runs as root.
+`bantime = 10s` and `banaction = iptables-multiport`. The `iptables-multiport.conf` action file is what gets executed when fail2ban decides to ban an IP. The `actionban` directive in that file is the shell command that runs, as root, because fail2ban runs as root.
 
 The exploit:
 
@@ -291,4 +291,4 @@ kanyo-5.0# cd /root
 
 Root flag.
 
-The fail2ban abuse is one of those privescs that feels inevitable once you see the setup. Write access to action configs plus a NOPASSWD service restart is a complete chain: you control what runs as root and you control when it runs. The 10-second ban time is tight but hydra hammers fast enough that it trips the threshold. Worth keeping in mind any time you see a user in a group with names like `security`, `monitoring`, or `log` - those often have write access to config files that feed into services running as root.
+The fail2ban abuse is one of those privescs that feels inevitable once you see the setup. Write access to action configs plus a NOPASSWD service restart is a complete chain: you control what runs as root and you control when it runs. The 10-second ban time is tight but hydra hammers fast enough that it trips the threshold. Worth keeping in mind any time you see a user in a group with names like `security`, `monitoring`, or `log`. Those often have write access to config files that feed into services running as root.

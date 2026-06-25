@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it's the only initial foothold surface. What makes this box interesting is the AS-REP roasting step - it's a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.
+Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it's the only initial foothold surface. What makes this box interesting is the AS-REP roasting step, a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.
 
 ## Recon
 
@@ -20,7 +20,7 @@ The bank's site had a staff page listing employee names with their photos:
 
 ![Egotistical Bank "Meet The Team" page showing six staff members: Fergus Smith, Shaun Coins, Hugo Bear, Bowie Taylor, Sophie Driver, and Steven Kerb](/images/writeups/htb-sauna/web-meet-the-team.png)
 
-Six names. Real AD environments use all kinds of username conventions - first initial + last name, full name with dots, first name only. I generated every realistic variant for all six:
+Six names. Real AD environments use all kinds of username conventions, first initial + last name, full name with dots, first name only. I generated every realistic variant for all six:
 
 ```
 fsmith, fergus.smith, f.smith, fergussmith, smithf
@@ -35,11 +35,11 @@ Thirty names total. Not every one will exist, but you only need one to hit.
 
 ## AS-REP Roasting
 
-With a list of potential usernames, AS-REP roasting is worth trying before anything else. In normal Kerberos authentication, when a client requests a ticket (AS-REQ), it proves it knows the password by encrypting a timestamp with the user's key - this is Kerberos pre-authentication. The DC verifies the timestamp and only then issues the AS-REP.
+With a list of potential usernames, AS-REP roasting is worth trying before anything else. In normal Kerberos authentication, when a client requests a ticket (AS-REQ), it proves it knows the password by encrypting a timestamp with the user's key. This is Kerberos pre-authentication. The DC verifies the timestamp and only then issues the AS-REP.
 
-If an account has pre-authentication disabled, the DC skips that verification step and issues the AS-REP to anyone who asks - no password required. The AS-REP contains a session key encrypted with the user's NT hash. You can't log in with it directly, but you can take it offline and crack it the same way you'd crack a Kerberoasting hash.
+If an account has pre-authentication disabled, the DC skips that verification step and issues the AS-REP to anyone who asks, no password required. The AS-REP contains a session key encrypted with the user's NT hash. You can't log in with it directly, but you can take it offline and crack it the same way you'd crack a Kerberoasting hash.
 
-Pre-auth disabled is usually an oversight - legacy applications sometimes required it, administrators enabled it and forgot to turn it back on.
+Pre-auth disabled is usually an oversight. Legacy applications sometimes required it, administrators enabled it and forgot to turn it back on.
 
 ```bash
 GetNPUsers.py EGOTISTICAL-BANK.LOCAL/ \
@@ -51,7 +51,7 @@ GetNPUsers.py EGOTISTICAL-BANK.LOCAL/ \
 $krb5asrep$23$fsmith@EGOTISTICAL-BANK.LOCAL:4e3dd9817...
 ```
 
-`fsmith` - Fergus Smith - had pre-authentication disabled. Everything else in the list came back with `KDC_ERR_C_PRINCIPAL_UNKNOWN` (username not found) or a standard pre-auth required error.
+`fsmith`, Fergus Smith, had pre-authentication disabled. Everything else in the list came back with `KDC_ERR_C_PRINCIPAL_UNKNOWN` (username not found) or a standard pre-auth required error.
 
 ```bash
 hashcat -m 18200 fsmith.hash /usr/share/wordlists/rockyou.txt
@@ -70,13 +70,13 @@ User flag on his desktop.
 
 ## svc_loanmgr from the Winlogon Registry Key
 
-Inside fsmith's session, I checked the filesystem. `C:\Users\` showed a `svc_loanmgr` directory alongside Administrator and FSmith. That name showed up in BloodHound as having something interesting attached to it - I checked before digging through the filesystem:
+Inside fsmith's session, I checked the filesystem. `C:\Users\` showed a `svc_loanmgr` directory alongside Administrator and FSmith. That name showed up in BloodHound as having something interesting attached to it. I checked before digging through the filesystem:
 
 ![BloodHound graph showing SVC_LOANMGR@EGOTISTICAL-BANK.LOCAL has DCSync, GetChangesAll, and GetChanges rights over the EGOTISTICAL-BANK.LOCAL domain](/images/writeups/htb-sauna/bloodhound-svc-loanmgr-dcsync.png)
 
 DCSync. `svc_loanmgr` can replicate all domain credentials. That's essentially a Domain Admin in terms of what damage you can do with it.
 
-The question was: how to get svc_loanmgr's password? Before running WinPEAS or anything noisy, I checked the Windows Autologon registry key. Autologon stores credentials in plaintext so Windows can log in automatically at boot without a user present - useful for kiosks, service machines, dedicated systems. The downside is those credentials sit in a readable registry location:
+The question was: how to get svc_loanmgr's password? Before running WinPEAS or anything noisy, I checked the Windows Autologon registry key. Autologon stores credentials in plaintext so Windows can log in automatically at boot without a user present, useful for kiosks, service machines, dedicated systems. The downside is those credentials sit in a readable registry location:
 
 ```
 HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
@@ -89,7 +89,7 @@ DefaultUserName    REG_SZ    EGOTISTICALBANK\svc_loanmanager
 DefaultPassword    REG_SZ    Moneymakestheworldgoround!
 ```
 
-`svc_loanmanager:Moneymakestheworldgoround!`. Note the slight naming discrepancy - the registry key says `svc_loanmanager` (with an 'a' at the end), but the AD account is `svc_loanmgr`. Same account, two different references.
+`svc_loanmanager:Moneymakestheworldgoround!`. Note the slight naming discrepancy. The registry key says `svc_loanmanager` (with an 'a' at the end), but the AD account is `svc_loanmgr`. Same account, two different references.
 
 ## DCSync
 

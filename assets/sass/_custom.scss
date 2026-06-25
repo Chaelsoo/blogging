@@ -111,6 +111,31 @@
 .highlight .gd             { color: #f38ba8; }
 .highlight .gh             { color: #a6e3a1; font-weight: bold; }
 
+/* Lightbox */
+#lb-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.88);
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+
+    &.active {
+        display: flex;
+    }
+
+    #lb-img {
+        max-width: 92vw;
+        max-height: 92vh;
+        object-fit: contain;
+        border-radius: 0.4rem;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+        cursor: zoom-out;
+    }
+}
+
 /* Wider body width on post pages */
 .wrapper.post {
     max-width: 880px;

@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It's a nice example of how a single operational security mistake - a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script - cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.
+Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It's a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.
 
 ## Recon
 
@@ -63,7 +63,7 @@ nxc smb 10.129.231.149 -u users.txt -p 'Cicada$M6Corpb*@Lp#nZp!8' --continue-on-
 [-] emily.oscars: STATUS_LOGON_FAILURE
 ```
 
-`michael.wrightson` hadn't changed his default password. WinRM denied him, but LDAP worked - enough to query the directory.
+`michael.wrightson` hadn't changed his default password. WinRM denied him, but LDAP worked, enough to query the directory.
 
 ## david.orelious from an AD Description Field
 
@@ -107,13 +107,13 @@ User flag on her desktop.
 
 ## Backup Operators and SeBackupPrivilege
 
-I noticed emily's group memberships in BloodHound before I had her password - she was in the Backup Operators group alongside Remote Management Users:
+I noticed emily's group memberships in BloodHound before I had her password. She was in the Backup Operators group alongside Remote Management Users:
 
 ![BloodHound graph showing EMILY.OSCARS@CICADA.HTB is MemberOf Backup Operators, Remote Management Users, and Domain Users groups](/images/writeups/htb-cicada/bloodhound-emily-backup-operators.png)
 
 `whoami /all` inside her WinRM session confirmed it: `SeBackupPrivilege` and `SeRestorePrivilege`, both enabled.
 
-Backup Operators is a privileged built-in group designed to let members back up and restore files regardless of their normal permissions. The underlying mechanism is SeBackupPrivilege, which bypasses normal ACL checks when opening files for backup purposes. On a domain controller, that includes the registry hives - specifically `HKLM\SAM` and `HKLM\SYSTEM`, which together allow offline extraction of all local account NT hashes.
+Backup Operators is a privileged built-in group designed to let members back up and restore files regardless of their normal permissions. The underlying mechanism is SeBackupPrivilege, which bypasses normal ACL checks when opening files for backup purposes. On a domain controller, that includes the registry hives, specifically `HKLM\SAM` and `HKLM\SYSTEM`, which together allow offline extraction of all local account NT hashes.
 
 The nxc `backup_operator` module automates the whole thing remotely. It starts RemoteRegistry via a named pipe, then uses backup semantics to save the hives directly to a readable share:
 
@@ -141,4 +141,4 @@ Pass-the-hash:
 evil-winrm -i 10.129.231.149 -u Administrator -H 2b87e7c93a3e8a0ea4a581937016f341
 ```
 
-Root flag. The password in the account description field is the thing to remember from this one. Not a misconfigured service, not a protocol weakness - just someone typing a credential into a field meant for a note and forgetting about it. Check description fields in BloodHound data, every time.
+Root flag. The password in the account description field is the thing to remember from this one. Not a misconfigured service, not a protocol weakness. Just someone typing a credential into a field meant for a note and forgetting about it. Check description fields in BloodHound data, every time.

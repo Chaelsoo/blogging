@@ -13,7 +13,7 @@
       <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-escape/</guid>
       
-      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most - you&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
       
     </item>
     
@@ -24,7 +24,7 @@
       <guid>http://localhost:1313/writeups/htb-scrambled/</guid>
       
       <description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
-&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely - you forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
+&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
       
     </item>
     

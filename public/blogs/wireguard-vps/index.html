@@ -51,7 +51,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/blogs/wireguard-vps/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -204,7 +204,7 @@ stroke-linejoin="round" class="feather feather-home">
 <h2 id="why-wireguard">Why WireGuard</h2>
 <p>Simpler than OpenVPN, kernel-based, and the mental model is clean. Each machine has its own private key, each knows the other&rsquo;s public key, peers get assigned internal VPN IPs. No certificate infrastructure to deal with.</p>
 <h2 id="architecture">Architecture</h2>
-<p><img src="/wireguard_tunnel_diagram.svg" alt="WireGuard tunnel diagram"></p>
+<p><img src="/images/blogs/wireguard-vps/wireguard_tunnel_diagram.svg" alt="WireGuard tunnel diagram"></p>
 <p>With full tunnel mode enabled, traffic flows: Laptop -&gt; WireGuard tunnel -&gt; VPS -&gt; NAT -&gt; Internet. The VPS becomes your gateway.</p>
 <h2 id="server-setup">Server Setup</h2>
 <p>Install WireGuard and generate a key pair on the VPS:</p>
@@ -397,6 +397,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

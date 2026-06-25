@@ -13,7 +13,7 @@
       <pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-tombwatcher/</guid>
       
-      <description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used - Reanimate-Tombstones - and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description>
       
     </item>
     

@@ -51,7 +51,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-timelapse/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -196,20 +196,20 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password - just a client certificate. It&rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&rsquo;s deployed everywhere and constantly misread on BloodHound graphs.</p>
+                <p>Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&rsquo;s deployed everywhere and constantly misread on BloodHound graphs.</p>
 <h2 id="recon">Recon</h2>
 <p>10.129.227.113, domain <code>timelapse.htb</code>, DC01. One thing nmap flagged that&rsquo;s unusual: port 5986 open instead of the typical 5985. Port 5986 is WinRM over SSL (HTTPS). Regular WinRM is 5985 (plain HTTP). Null sessions were denied, but guest auth on SMB worked:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.227.113 -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span> --shares
 </span></span><span class="line"><span class="cl">Share      Permissions
 </span></span><span class="line"><span class="cl">Shares     READ
-</span></span></code></pre></div><p>The <code>Shares</code> share had two subdirectories: <code>Dev</code> and <code>HelpDesk</code>. HelpDesk had LAPS documentation - the installer, a datasheet, an operations guide. Filed as a hint for later. Dev had one file: <code>winrm_backup.zip</code>.</p>
+</span></span></code></pre></div><p>The <code>Shares</code> share had two subdirectories: <code>Dev</code> and <code>HelpDesk</code>. HelpDesk had LAPS documentation, the installer, a datasheet, an operations guide. Filed as a hint for later. Dev had one file: <code>winrm_backup.zip</code>.</p>
 <h2 id="cracking-the-zip-and-pfx">Cracking the ZIP and PFX</h2>
 <p>The zip was password-protected. zip2john extracts the hash, john cracks it:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">zip2john winrm_backup.zip &gt; zip.hash
 </span></span><span class="line"><span class="cl">john zip.hash --wordlist<span class="o">=</span>/usr/share/wordlists/rockyou.txt
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">supremelegacy    <span class="o">(</span>winrm_backup.zip/legacyy_dev_auth.pfx<span class="o">)</span>
-</span></span></code></pre></div><p>Inside: <code>legacyy_dev_auth.pfx</code>. A PFX (PKCS#12) file is a binary container that bundles a certificate and its corresponding private key together, encrypted with a passphrase. It&rsquo;s typically used to distribute identities for things like client certificate authentication. The passphrase protects the private key inside - you can&rsquo;t extract either the certificate or the key without it.</p>
+</span></span></code></pre></div><p>Inside: <code>legacyy_dev_auth.pfx</code>. A PFX (PKCS#12) file is a binary container that bundles a certificate and its corresponding private key together, encrypted with a passphrase. It&rsquo;s typically used to distribute identities for things like client certificate authentication. The passphrase protects the private key inside. You can&rsquo;t extract either the certificate or the key without it.</p>
 <p>This one was also passphrase-protected:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">crackpkcs12 -d /usr/share/wordlists/rockyou.txt legacyy_dev_auth.pfx
 </span></span><span class="line"><span class="cl">
@@ -218,7 +218,7 @@ stroke-linejoin="round" class="feather feather-home">
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out key.pem -nodes -passin pass:thuglegacy
 </span></span><span class="line"><span class="cl">openssl pkcs12 -in legacyy_dev_auth.pfx -nokeys  -out cert.pem -passin pass:thuglegacy
 </span></span></code></pre></div><h2 id="winrm-via-client-certificate">WinRM via Client Certificate</h2>
-<p>WinRM supports certificate-based authentication as an alternative to password auth. When you connect with a client certificate, WinRM checks which domain account the certificate&rsquo;s subject maps to and authenticates you as that user - no password involved. The certificate filename <code>legacyy_dev_auth.pfx</code> gives away the username.</p>
+<p>WinRM supports certificate-based authentication as an alternative to password auth. When you connect with a client certificate, WinRM checks which domain account the certificate&rsquo;s subject maps to and authenticates you as that user, no password involved. The certificate filename <code>legacyy_dev_auth.pfx</code> gives away the username.</p>
 <p>evil-winrm takes the cert and key directly with <code>-c</code> and <code>-k</code>. The <code>-S</code> flag tells it to use SSL (port 5986):</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.227.113 -c cert.pem -k key.pem -S
 </span></span><span class="line"><span class="cl">
@@ -243,7 +243,7 @@ stroke-linejoin="round" class="feather feather-home">
 <p>BloodHound showed what svc_deploy could do:</p>
 <p><img src="/images/writeups/htb-timelapse/bloodhound-svc-deploy-laps-readers.png" alt="BloodHound graph showing SVC_DEPLOY@TIMELAPSE.HTB is MemberOf LAPS_READERS@TIMELAPSE.HTB which has a ReadLAPSPassword edge to DC01.TIMELAPSE.HTB"></p>
 <p><code>SVC_DEPLOY → LAPS_READERS → ReadLAPSPassword → DC01</code>.</p>
-<p>LAPS (Local Administrator Password Solution) is a Microsoft tool that automatically rotates the built-in Administrator password on domain-joined machines on a schedule and stores the current password in AD as an attribute (<code>ms-Mcs-AdmPwd</code>) on the computer object. The point is to prevent lateral movement from one compromised machine to another via a shared local admin password. The tradeoff is that the password has to live somewhere - it lives in AD, readable by members of designated groups. If you&rsquo;re in one of those groups, you can read it.</p>
+<p>LAPS (Local Administrator Password Solution) is a Microsoft tool that automatically rotates the built-in Administrator password on domain-joined machines on a schedule and stores the current password in AD as an attribute (<code>ms-Mcs-AdmPwd</code>) on the computer object. The point is to prevent lateral movement from one compromised machine to another via a shared local admin password. The tradeoff is that the password has to live somewhere. It lives in AD, readable by members of designated groups. If you&rsquo;re in one of those groups, you can read it.</p>
 <p>bloodyAD queries it directly:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD --host 10.129.227.113 -d timelapse.htb <span class="se">\
 </span></span></span><span class="line"><span class="cl">  -u svc_deploy -p <span class="s1">&#39;E3R$Q62^12p7PLlC%KWaxuaV&#39;</span> <span class="se">\
@@ -253,7 +253,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>DC01,OU<span class="o">=</span>Domain Controllers,DC<span class="o">=</span>timelapse,DC<span class="o">=</span>htb
 </span></span><span class="line"><span class="cl">ms-Mcs-AdmPwd: 1xs%D<span class="o">)</span>bv+G8K8+Tpk<span class="o">{</span>e%7282
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.227.113 -u Administrator -p <span class="s1">&#39;1xs%D)bv+G8K8+Tpk{e%7282&#39;</span> -S
-</span></span></code></pre></div><p>One thing worth noting: the root flag wasn&rsquo;t on Administrator&rsquo;s desktop - it was on the TRX user&rsquo;s desktop. Grabbed it from <code>C:\Users\TRX\Desktop\</code>. The PowerShell history file is the lesson from this box. The pfx cert hidden in a zip was a clever entry, but someone leaving <code>evil-winrm</code> invocations in their command history with plaintext credentials is the kind of thing that shows up constantly in real Windows environments. The ConsoleHost_history.txt file is almost never on the checklist and almost always has something in it.</p>
+</span></span></code></pre></div><p>One thing worth noting: the root flag wasn&rsquo;t on Administrator&rsquo;s desktop. It was on the TRX user&rsquo;s desktop. Grabbed it from <code>C:\Users\TRX\Desktop\</code>. The PowerShell history file is the lesson from this box. The pfx cert hidden in a zip was a clever entry, but someone leaving <code>evil-winrm</code> invocations in their command history with plaintext credentials is the kind of thing that shows up constantly in real Windows environments. The ConsoleHost_history.txt file is almost never on the checklist and almost always has something in it.</p>
 
             </div>
         </article></main>
@@ -378,6 +378,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

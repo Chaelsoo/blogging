@@ -31,9 +31,9 @@ The web app is a "HTB Printer Admin Panel" with a Settings page that shows the p
 
 ![Settings page showing Server Address: printer.return.local, Server Port: 389, Community String, Username: svc-printer, Password: *******](/images/writeups/htb-return/web-printer-settings-svc-printer.png)
 
-Server Address, port 389 (LDAP), username `svc-printer`, and a password hidden behind asterisks. The obvious thing to try first was to fill in the password field with something and submit, hoping the form would reveal the stored value or accept any input. It didn't. Changing the password to `Password123!` and submitting just updated the field without giving anything away. Tried the same thing directly through Burp with a modified POST body - same result.
+Server Address, port 389 (LDAP), username `svc-printer`, and a password hidden behind asterisks. The obvious thing to try first was to fill in the password field with something and submit, hoping the form would reveal the stored value or accept any input. It didn't. Changing the password to `Password123!` and submitting just updated the field without giving anything away. Tried the same thing directly through Burp with a modified POST body, same result.
 
-The insight is in how printer firmware handles LDAP configuration. The device stores LDAP credentials so it can bind to a directory server for things like address book lookups or user authentication. When you submit the settings form, the printer doesn't just save the values - it immediately tries to connect to the configured Server Address and bind, to test whether the configuration works.
+The insight is in how printer firmware handles LDAP configuration. The device stores LDAP credentials so it can bind to a directory server for things like address book lookups or user authentication. When you submit the settings form, the printer doesn't just save the values. It immediately tries to connect to the configured Server Address and bind, to test whether the configuration works.
 
 If you change the Server Address to your IP and leave everything else alone, the printer will attempt to bind to your machine on port 389 using its stored credentials. LDAP bind requests carry credentials in plaintext when not using TLS. A netcat listener on port 389 catches the raw bind packet:
 
@@ -93,7 +93,7 @@ SeIncreaseWorkingSetPrivilege Increase a process working set      Enabled
 SeTimeZonePrivilege           Change the time zone                Enabled
 ```
 
-Several paths to SYSTEM from here - SeBackupPrivilege, SeLoadDriverPrivilege, and Server Operators itself. I'd already done the SeBackupPrivilege registry hive dump in the Cicada writeup, so I went with Server Operators instead.
+Several paths to SYSTEM from here, SeBackupPrivilege, SeLoadDriverPrivilege, and Server Operators itself. I'd already done the SeBackupPrivilege registry hive dump in the Cicada writeup, so I went with Server Operators instead.
 
 Server Operators is a built-in Windows group meant for local administration tasks on domain controllers: managing services, starting and stopping them, backing up files. The key permission it grants is `SC_MANAGER_ALL_ACCESS` on the Service Control Manager, which means members can modify service configuration including the binary path. When you change a service's `binPath` to an arbitrary command, the SCM executes that command as SYSTEM when the service starts, because Windows services run under SYSTEM by default unless explicitly configured otherwise.
 
@@ -110,7 +110,7 @@ The service has not been started.
 sc.exe start VMTools
 ```
 
-The stop failed because VMTools wasn't running - that's fine. Starting it directly triggered the binary path:
+The stop failed because VMTools wasn't running, that's fine. Starting it directly triggered the binary path:
 
 ```bash
 nc -lvnp 9001
@@ -122,4 +122,4 @@ Microsoft Windows [Version 10.0.17763.107]
 C:\Windows\system32>
 ```
 
-SYSTEM. Root flag. The printer trick is the one to remember from this box. Point it at your netcat listener and it hands you credentials without any exploitation at all - just a configuration field pointing at the wrong place. This works on real printers in real environments because the firmware was designed to test its own LDAP settings, and nobody thought about what happens when the server address is malicious.
+SYSTEM. Root flag. The printer trick is the one to remember from this box. Point it at your netcat listener and it hands you credentials without any exploitation at all, just a configuration field pointing at the wrong place. This works on real printers in real environments because the firmware was designed to test its own LDAP settings, and nobody thought about what happens when the server address is malicious.

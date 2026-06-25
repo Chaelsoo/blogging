@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn't sanitize the file path. Reading `web.config` through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted - and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.
+Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn't sanitize the file path. Reading `web.config` through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.
 
 ## Recon
 
@@ -27,7 +27,7 @@ PORT   STATE SERVICE VERSION
 Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-One port. The main site at `pov.htb` was a personal portfolio - a frontend with no interactive functionality. The contact section was the useful part:
+One port. The main site at `pov.htb` was a personal portfolio, a frontend with no interactive functionality. The contact section was the useful part:
 
 ![pov.htb contact page with text pointing to dev.pov.htb subdomain and sfitz@pov.htb email](/images/writeups/htb-pov/web-contact-subdomain-hint.png)
 
@@ -39,7 +39,7 @@ One port. The main site at `pov.htb` was a personal portfolio - a frontend with 
 
 ![Burp Suite POST request to dev.pov.htb triggering the file parameter LFI](/images/writeups/htb-pov/burp-lfi-download-cv-request.png)
 
-The obvious target in an ASP.NET application is `web.config`. This is the application's main configuration file - database connection strings, custom settings, and crucially, the `machineKey` element that controls how the app handles cryptographic operations.
+The obvious target in an ASP.NET application is `web.config`. This is the application's main configuration file, database connection strings, custom settings, and crucially the `machineKey` element that controls how the app handles cryptographic operations.
 
 Requesting `../../web.config` through the LFI gave this response:
 
@@ -52,9 +52,9 @@ Requesting `../../web.config` through the LFI gave this response:
   validationKey="5620D3D029F914F4CDF25869D24EC2DA517435B200CCF1ACFA1EDE22213BECEB55BA3CF576813C3301FCB07018E605E7B7872EEACE791AAD71A267BC16633468" />
 ```
 
-Here is what makes this key dangerous. ASP.NET uses a mechanism called `__VIEWSTATE` to preserve page state between requests. When you submit a form, the browser sends back a hidden field containing a base64-encoded blob that represents the state of every control on the page - which dropdown was selected, what was in a text field, and so on. To prevent clients from tampering with this blob (injecting different values, for example), ASP.NET signs and encrypts it using the machineKey before sending it to the browser, and verifies that signature before deserializing it on the way back in.
+Here is what makes this key dangerous. ASP.NET uses a mechanism called `__VIEWSTATE` to preserve page state between requests. When you submit a form, the browser sends back a hidden field containing a base64-encoded blob that represents the state of every control on the page, which dropdown was selected, what was in a text field, and so on. To prevent clients from tampering with this blob (injecting different values, for example), ASP.NET signs and encrypts it using the machineKey before sending it to the browser, and verifies that signature before deserializing it on the way back in.
 
-The catch is the deserialization step. ASP.NET deserializes the ViewState blob using the .NET BinaryFormatter, which is a general-purpose object serializer. If you can forge a ViewState that passes the signature check - which you can, because you have the key - you can embed a .NET deserialization gadget chain inside it. When the server deserializes the blob, the gadget chain executes arbitrary code in the context of the IIS worker process.
+The catch is the deserialization step. ASP.NET deserializes the ViewState blob using the .NET BinaryFormatter, which is a general-purpose object serializer. If you can forge a ViewState that passes the signature check, which you can, because you have the key, you can embed a .NET deserialization gadget chain inside it. When the server deserializes the blob, the gadget chain executes arbitrary code in the context of the IIS worker process.
 
 `ysoserial.net` handles the gadget chain and the ViewState signing in one step. Built it locally, then generated the payload:
 
@@ -135,7 +135,7 @@ Mode                LastWriteTime         Length Name
 -a----       12/25/2023   2:26 PM           1838 connection.xml
 ```
 
-PSCredential XML is a Windows feature that lets you serialize a credential object to disk. The password is encrypted with DPAPI, which ties the encryption to the current user's login session - only the user who saved it can decrypt it, because only they have the right DPAPI master key. Running `Import-Clixml` as sfitz decrypted it cleanly:
+PSCredential XML is a Windows feature that lets you serialize a credential object to disk. The password is encrypted with DPAPI, which ties the encryption to the current user's login session. Only the user who saved it can decrypt it, because only they have the right DPAPI master key. Running `Import-Clixml` as sfitz decrypted it cleanly:
 
 ```powershell
 $cred = Import-Clixml C:\Users\sfitz\Documents\connection.xml
@@ -209,13 +209,13 @@ SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
 
 High Integrity Level and `SeDebugPrivilege` enabled.
 
-Normally Windows prevents you from opening a handle to a process owned by a different user. `SeDebugPrivilege` removes that restriction entirely - it lets you call `OpenProcess()` on any process on the system regardless of who owns it, including SYSTEM-level processes like `winlogon.exe`, `lsass.exe`, and `services.exe`.
+Normally Windows prevents you from opening a handle to a process owned by a different user. `SeDebugPrivilege` removes that restriction entirely. It lets you call `OpenProcess()` on any process on the system regardless of who owns it, including SYSTEM-level processes like `winlogon.exe`, `lsass.exe`, and `services.exe`.
 
 The technique here exploits how Windows handles process creation. When you create a new process, you can specify a parent process by PID using the `PROC_THREAD_ATTRIBUTE_PARENT_PROCESS` attribute. Windows then assigns the new process the access token of the specified parent rather than the token of the calling process. Child processes inherit their parent's token. If you create a process claiming `winlogon.exe` as its parent, the new process gets SYSTEM's token.
 
 To open a handle to `winlogon.exe` in the first place, you need `SeDebugPrivilege`. That's the link: `SeDebugPrivilege` lets you read the SYSTEM process, and the parent PID spoof makes your new process inherit its token.
 
-Before running the exploit, I tunneled WinRM through chisel. A bare RunasCs shell is a socket/pipe with no real network environment - the SYSTEM process spawned by psgetsys would inherit that empty environment and have no path to my tun0 IP. A proper WinRM session over a tunnel gave the child process a real network context to connect back through:
+Before running the exploit, I tunneled WinRM through chisel. A bare RunasCs shell is a socket/pipe with no real network environment. The SYSTEM process spawned by psgetsys would inherit that empty environment and have no path to my tun0 IP. A proper WinRM session over a tunnel gave the child process a real network context to connect back through:
 
 ```bash
 …/tunneling/chisel ❯ ./chisel server -p 8001 --reverse
@@ -254,4 +254,4 @@ SYSTEM shell came back on the listener. Root flag.
 
 *References: [github.com/decoder-it/psgetsystem](https://github.com/decoder-it/psgetsystem), [pentestlab.blog - Parent PID Spoofing](https://pentestlab.blog/2020/02/24/parent-pid-spoofing/)*
 
-The PPID spoofing technique is the thing I'd take from this box. Most people reach for token impersonation or process injection when they see SeDebugPrivilege, but the parent PID approach is different - you're not injecting code into another process at all. You're just creating a brand new process and claiming a SYSTEM process as its parent. Windows hands over the token because that's what token inheritance is supposed to do.
+The PPID spoofing technique is the thing I'd take from this box. Most people reach for token impersonation or process injection when they see SeDebugPrivilege, but the parent PID approach is different. You're not injecting code into another process at all. You're just creating a brand new process and claiming a SYSTEM process as its parent. Windows hands over the token because that's what token inheritance is supposed to do.

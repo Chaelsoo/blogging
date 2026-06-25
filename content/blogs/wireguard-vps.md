@@ -17,7 +17,7 @@ Simpler than OpenVPN, kernel-based, and the mental model is clean. Each machine 
 
 ## Architecture
 
-![WireGuard tunnel diagram](/wireguard_tunnel_diagram.svg)
+![WireGuard tunnel diagram](/images/blogs/wireguard-vps/wireguard_tunnel_diagram.svg)
 
 With full tunnel mode enabled, traffic flows: Laptop -> WireGuard tunnel -> VPS -> NAT -> Internet. The VPS becomes your gateway.
 

@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page - pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke's Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn't in `hm.txt`, it's in an alternate data stream attached to it, invisible to a normal directory listing.
+Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page, pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke's Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn't in `hm.txt`, it's in an alternate data stream attached to it, invisible to a normal directory listing.
 
 ## Recon
 
@@ -46,7 +46,7 @@ Host script results:
 |_  message_signing: disabled (dangerous, but default)
 ```
 
-Four ports: 80, 135, 445, 50000. SMB signing is off, which is worth noting. No domain - `workgroup: WORKGROUP`, so this isn't an AD box. Guest and null SMB auth both failed:
+Four ports: 80, 135, 445, 50000. SMB signing is off, which is worth noting. No domain, `workgroup: WORKGROUP`, so this isn't an AD box. Guest and null SMB auth both failed:
 
 ```bash
 …/labs/jeeves ❯ nxc smb $DC -u '' -p ''
@@ -62,11 +62,11 @@ Port 80 was the fake Ask Jeeves search page:
 
 ![The Ask Jeeves themed search page on port 80 with a search bar that redirects to a static error page](/images/writeups/htb-jeeves/web-ask-jeeves-search.png)
 
-Every search just landed on a static `error.html`. Looking at the source confirmed it - the form `action` points to `error.html` unconditionally. The error page itself leaks something though:
+Every search just landed on a static `error.html`. Looking at the source confirmed it. The form `action` points to `error.html` unconditionally. The error page itself leaks something though:
 
 ![Static error page leaking Microsoft SQL Server 2005 version from a type conversion exception](/images/writeups/htb-jeeves/web-sql-error-mssql-version.png)
 
-A SQL Server type conversion error with a full stack trace. The page is static - this isn't live SQL output, it's a hardcoded error page used as a decoy. The MSSQL version shown is from 2005 on Windows NT 5.0, which doesn't match the actual OS. Port 80 is a dead end.
+A SQL Server type conversion error with a full stack trace. The page is static. This isn't live SQL output, it's a hardcoded error page used as a decoy. The MSSQL version shown is from 2005 on Windows NT 5.0, which doesn't match the actual OS. Port 80 is a dead end.
 
 ## Jenkins on Jetty
 
@@ -89,9 +89,9 @@ console: 404
 
 ![Jenkins dashboard at /askjeeves on port 50000, fully accessible without authentication](/images/writeups/htb-jeeves/web-jenkins-unauthenticated-dashboard.png)
 
-Full Jenkins dashboard, no authentication required. Every menu item accessible: New Item, People, Build History, Manage Jenkins, Credentials. This isn't a login bypass - there is no login. The instance was set up with security disabled.
+Full Jenkins dashboard, no authentication required. Every menu item accessible: New Item, People, Build History, Manage Jenkins, Credentials. This isn't a login bypass. There is no login. The instance was set up with security disabled.
 
-Jenkins has a Script Console under Manage Jenkins that executes arbitrary Groovy code server-side. Groovy runs on the JVM and has full access to Java's standard library, including `Runtime.exec()` and socket classes. This is intentional functionality for administrators - and it's directly accessible here without any credentials.
+Jenkins has a Script Console under Manage Jenkins that executes arbitrary Groovy code server-side. Groovy runs on the JVM and has full access to Java's standard library, including `Runtime.exec()` and socket classes. This is intentional functionality for administrators, and it's directly accessible here without any credentials.
 
 ![Jenkins Script Console under Manage Jenkins, accepting arbitrary Groovy code for server-side execution](/images/writeups/htb-jeeves/web-jenkins-script-console.png)
 
@@ -128,7 +128,7 @@ C:\Users\Administrator\.jenkins>whoami
 jeeves\kohsuke
 ```
 
-Shell as `kohsuke`. Jenkins was running from `C:\Users\Administrator\.jenkins` - not from an Administrator shell, just from that directory. `whoami /all`:
+Shell as `kohsuke`. Jenkins was running from `C:\Users\Administrator\.jenkins`, not from an Administrator shell, just from that directory. `whoami /all`:
 
 ```
 USER INFORMATION
@@ -172,7 +172,7 @@ SeTimeZonePrivilege           Change the time zone                      Disabled
 
 High Integrity Level and `SeImpersonatePrivilege` enabled. The obvious move was a potato exploit.
 
-I tried PrintSpoofer, GodPotato, and JuicyPotato. All failed. The reason is the shell context: a bare netcat reverse shell from a Windows service runs under a non-interactive service token. Potato exploits impersonate a higher-privileged token by coercing a SYSTEM-level service to authenticate to a local pipe you control. That impersonation step requires the current token to be an interactive session token - `NT AUTHORITY\SERVICE` in a non-interactive socket shell doesn't qualify. The spawned impersonated process has no interactive desktop session to attach to, so the exploit fails silently or errors out.
+I tried PrintSpoofer, GodPotato, and JuicyPotato. All failed. The reason is the shell context: a bare netcat reverse shell from a Windows service runs under a non-interactive service token. Potato exploits impersonate a higher-privileged token by coercing a SYSTEM-level service to authenticate to a local pipe you control. That impersonation step requires the current token to be an interactive session token. `NT AUTHORITY\SERVICE` in a non-interactive socket shell doesn't qualify. The spawned impersonated process has no interactive desktop session to attach to, so the exploit fails silently or errors out.
 
 Kept enumerating.
 
@@ -184,7 +184,7 @@ kohsuke's Documents folder had one file:
 C:\Users\kohsuke\Documents\CEH.kdbx
 ```
 
-KeePass is a local password manager. It stores credentials encrypted in a `.kdbx` file, protected by a master password. The whole database is one encrypted blob - without the master password you can't read any entry. But the encrypted blob itself is a known format and can be attacked offline.
+KeePass is a local password manager. It stores credentials encrypted in a `.kdbx` file, protected by a master password. The whole database is one encrypted blob. Without the master password you can't read any entry. But the encrypted blob itself is a known format and can be attacked offline.
 
 `keepass2john` extracts a crackable hash from the file:
 
@@ -266,9 +266,9 @@ Uname: bob
 Notes:
 ```
 
-"Backup stuff" has a password that's formatted as an NTLM hash: `aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00`. The first half (`aad3b435b51404eeaad3b435b51404ee`) is the blank LM hash - Windows uses this as a placeholder when LM hashing is disabled. The second half is the NT hash. Someone stored an NTLM hash directly in a KeePass entry, probably as a backup credential.
+"Backup stuff" has a password that's formatted as an NTLM hash: `aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00`. The first half (`aad3b435b51404eeaad3b435b51404ee`) is the blank LM hash. Windows uses this as a placeholder when LM hashing is disabled. The second half is the NT hash. Someone stored an NTLM hash directly in a KeePass entry, probably as a backup credential.
 
-NTLM doesn't require you to know the plaintext password - you can authenticate directly with the hash. `psexec.py` with `-hashes` handles this:
+NTLM doesn't require you to know the plaintext password. You can authenticate directly with the hash. `psexec.py` with `-hashes` handles this:
 
 ## Pass-the-Hash to SYSTEM
 
@@ -307,7 +307,7 @@ The flag is elsewhere.  Look deeper.
 
 ## NTFS Alternate Data Streams
 
-NTFS allows files to have multiple named data streams attached to the same filename. A regular file has one default stream (`$DATA`) - that's what `type` reads and what `dir` shows the size of. You can attach additional named streams to the same file and they're completely invisible to a normal `dir` listing. The only way to see them is with `dir /r`, which shows alternate streams explicitly:
+NTFS allows files to have multiple named data streams attached to the same filename. A regular file has one default stream (`$DATA`), that's what `type` reads and what `dir` shows the size of. You can attach additional named streams to the same file and they're completely invisible to a normal `dir` listing. The only way to see them is with `dir /r`, which shows alternate streams explicitly:
 
 ```
 C:\Users\Administrator\Desktop> dir /r C:\Users\Administrator\Desktop\hm.txt
@@ -320,10 +320,10 @@ C:\Users\Administrator\Desktop> dir /r C:\Users\Administrator\Desktop\hm.txt
                                     34 hm.txt:root.txt:$DATA
 ```
 
-`hm.txt:root.txt:$DATA` - there's a second stream named `root.txt` attached to `hm.txt`. Reading it by name:
+`hm.txt:root.txt:$DATA`. There's a second stream named `root.txt` attached to `hm.txt`. Reading it by name:
 
 ```
 C:\Users\Administrator\Desktop> more < hm.txt:root.txt
 ```
 
-Root flag. The NTFS ADS trick is a classic HTB finale - easy once you know it, completely invisible if you don't think to look. Worth keeping `dir /r` in muscle memory for any Windows box where a flag file looks suspiciously small or returns a troll message.
+Root flag. The NTFS ADS trick is a classic HTB finale, easy once you know it, completely invisible if you don't think to look. Worth keeping `dir /r` in muscle memory for any Windows box where a flag file looks suspiciously small or returns a troll message.

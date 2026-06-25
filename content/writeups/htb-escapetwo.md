@@ -46,7 +46,7 @@ I also ran BloodHound early. Nothing immediately obvious between rose and any es
 
 ## MSSQL as sa
 
-Rose could connect to MSSQL as a guest - `xp_cmdshell` denied, no impersonation rights, limited. I tried coercing the sql_svc NTLMv2 hash via `xp_dirtree` and Responder, caught the hash, but couldn't crack it with rockyou. Dead end.
+Rose could connect to MSSQL as a guest, `xp_cmdshell` denied, no impersonation rights, limited. I tried coercing the sql_svc NTLMv2 hash via `xp_dirtree` and Responder, caught the hash, but couldn't crack it with rockyou. Dead end.
 
 The sa credentials from the spreadsheet were the real path:
 
@@ -69,14 +69,14 @@ SQLSVCPASSWORD="WqSZAF6CysDQbGb3"
 SAPWD="MSSQLP@ssw0rd!"
 ```
 
-sa's password confirmed - and sql_svc's password too. I had the four passwords from the spreadsheet plus this one. Time to spray them against the other local users. `C:\Users\` showed Administrator, Public, ryan, and sql_svc.
+sa's password confirmed, and sql_svc's password too. I had the four passwords from the spreadsheet plus this one. Time to spray them against the other local users. `C:\Users\` showed Administrator, Public, ryan, and sql_svc.
 
 ```bash
 nxc winrm 10.129.232.128 -u ryan -p 'WqSZAF6CysDQbGb3'
 [+] sequel.htb\ryan:WqSZAF6CysDQbGb3 (Pwn3d!)
 ```
 
-sql_svc's password worked for ryan. Password reuse between service account and a user account - common enough that it's always worth the spray.
+sql_svc's password worked for ryan. Password reuse between service account and a user account, common enough that it's always worth the spray.
 
 ## ACL Chain: WriteOwner to ca_svc
 
@@ -84,7 +84,7 @@ Ryan's BloodHound data had the next step:
 
 ![BloodHound graph showing RYAN@SEQUEL.HTB has a WriteOwner edge to CA_SVC@SEQUEL.HTB](/images/writeups/htb-escapetwo/bloodhound-ryan-writeowner-ca-svc.png)
 
-Ryan has WriteOwner over ca_svc. WriteOwner lets you replace the security principal that owns an AD object. Once you own the object, you can grant yourself any additional permissions on it - including GenericAll, which means full control over the account (reset password, add to groups, etc.).
+Ryan has WriteOwner over ca_svc. WriteOwner lets you replace the security principal that owns an AD object. Once you own the object, you can grant yourself any additional permissions on it, including GenericAll, which means full control over the account (reset password, add to groups, etc.).
 
 The chain: WriteOwner → own ca_svc → add GenericAll → reset ca_svc's password:
 
@@ -107,7 +107,7 @@ Now I had `ca_svc:Password123!`.
 
 ca_svc is in Cert Publishers, which has FullControl over the `DunderMifflinAuthentication` certificate template. That means ca_svc can modify the template's attributes in LDAP directly.
 
-ESC4 is about write access to a certificate template. The AD object representing a template has attributes that define its behavior - things like whether the enrollee can supply their own subject, whether the certificate enables client authentication, who can enroll. If you can write those attributes, you can turn a locked-down template into an ESC1 vulnerability.
+ESC4 is about write access to a certificate template. The AD object representing a template has attributes that define its behavior, things like whether the enrollee can supply their own subject, whether the certificate enables client authentication, who can enroll. If you can write those attributes, you can turn a locked-down template into an ESC1 vulnerability.
 
 The specific attribute is `msPKI-Certificate-Name-Flag`. Setting bit 1 (value `1`) on this flag enables `CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT`, meaning the person requesting the certificate gets to specify the Subject Alternative Name themselves. Combined with Client Authentication being enabled on the template, that's ESC1.
 
@@ -135,7 +135,7 @@ certipy req -u ca_svc@sequel.htb -p 'Password123!' \
 [*] Saving certificate and private key to 'administrator.pfx'
 ```
 
-The CA issued a certificate with `administrator@sequel.htb` in the SAN because EnrolleeSuppliesSubject was now set. The CA's job is to sign certs per the template policy - it doesn't verify that you actually are the principal you're claiming to be in the SAN.
+The CA issued a certificate with `administrator@sequel.htb` in the SAN because EnrolleeSuppliesSubject was now set. The CA's job is to sign certs per the template policy. It doesn't verify that you actually are the principal you're claiming to be in the SAN.
 
 ```bash
 # Step 3: authenticate and get the hash
@@ -151,4 +151,4 @@ Kerberos PKINIT sees the certificate, checks the SAN, sees `administrator@sequel
 evil-winrm -i 10.129.232.128 -u administrator -H 7a8d4e04986afa8ed4060f75e5a0b3ff
 ```
 
-Both flags. The core idea here is that once EnrolleeSuppliesSubject is set and you have enrollment rights, the CA is just doing its job. You told it you were Administrator, it believed you and signed the certificate. The CA doesn't verify identity - the template policy does, and the template policy was broken.
+Both flags. The core idea here is that once EnrolleeSuppliesSubject is set and you have enrollment rights, the CA is just doing its job. You told it you were Administrator, it believed you and signed the certificate. The CA doesn't verify identity. The template policy does, and the template policy was broken.

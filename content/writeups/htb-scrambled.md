@@ -10,11 +10,11 @@ draft: false
 
 Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.
 
-The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely - you forge the ticket as Administrator, signed with sqlsvc's NT hash, and the MSSQL service just trusts it. The DC never gets involved.
+The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc's NT hash, and the MSSQL service just trusts it. The DC never gets involved.
 
 ## Recon
 
-Standard AD profile on 10.129.11.56. Kerberos on 88, LDAP on 389 and 636, SMB on 445, and MSSQL 2019 on 1433. WinRM was up too. The web server on port 80 stood out - IIS on a DC usually means something was put there deliberately.
+Standard AD profile on 10.129.11.56. Kerberos on 88, LDAP on 389 and 636, SMB on 445, and MSSQL 2019 on 1433. WinRM was up too. The web server on port 80 stood out. IIS on a DC usually means something was put there deliberately.
 
 ```bash
 sudo nmap -sC -sV -T4 10.129.11.56
@@ -32,7 +32,7 @@ Domain is `scrm.local`, DC hostname is `DC1`. I added both to /etc/hosts and set
 
 ## Username and Credential Discovery
 
-The website is a Scramble Corp intranet. Three pages: `index.html`, `support.html`, `newuser.html`. The support page gives away a username without realizing it. The instructions for collecting network info show a command prompt example - the path is `C:\Users\ksimpson>`. That's a username.
+The website is a Scramble Corp intranet. Three pages: `index.html`, `support.html`, `newuser.html`. The support page gives away a username without realizing it. The instructions for collecting network info show a command prompt example. The path is `C:\Users\ksimpson>`. That's a username.
 
 ![Scramble Corp support page showing a cmd.exe example with C:\Users\ksimpson> as the prompt, leaking the username](/images/writeups/htb-scrambled/web-support-page-username-leak.png)
 
@@ -50,9 +50,9 @@ NTLM is gone. The full policy document was sitting in the Public SMB share:
 
 ![Scramble Corp "Additional Security Measures" PDF document explaining NTLM was disabled after an attacker used NTLM relaying, and that Kerberos "has absolutely no way anyone could exploit it"](/images/writeups/htb-scrambled/web-security-measures-pdf.png)
 
-Two notable things in that document. First, they explain that Kerberos is "definitely 100% secure and has absolutely no way anyone could exploit it" - which is a hint if you've ever read about silver tickets. Second, they say MSSQL access was also removed for everyone except network administrators, because credentials were previously stolen from the SQL database. That second restriction is what made a silver ticket necessary later.
+Two notable things in that document. First, they explain that Kerberos is "definitely 100% secure and has absolutely no way anyone could exploit it," which is a hint if you've ever read about silver tickets. Second, they say MSSQL access was also removed for everyone except network administrators, because credentials were previously stolen from the SQL database. That second restriction is what made a silver ticket necessary later.
 
-Since NTLM is out, tools like nxc just fail silently. I needed a proper Kerberos TGT. `getTGT.py` handles this - it exchanges plaintext credentials for a ticket-granting ticket:
+Since NTLM is out, tools like nxc just fail silently. I needed a proper Kerberos TGT. `getTGT.py` handles this. It exchanges plaintext credentials for a ticket-granting ticket:
 
 ```bash
 getTGT.py scrm.local/ksimpson:ksimpson -dc-ip 10.129.11.56
@@ -118,9 +118,9 @@ BloodHound explained it. sqlsvc is a member of the NOACCESS group:
 
 That group matches what the security document described - they blocked the SQL service account from logging in directly after the previous breach.
 
-Here's where the silver ticket matters. Normal Kerberos authentication has two steps: you get a TGT from the DC, then exchange it for a TGS for the specific service you want. When you present that TGS to the service, the service decrypts it using its own account's NT hash to verify its authenticity. The DC is only involved in the first two steps - once the service receives the TGS, it validates it locally.
+Here's where the silver ticket matters. Normal Kerberos authentication has two steps: you get a TGT from the DC, then exchange it for a TGS for the specific service you want. When you present that TGS to the service, the service decrypts it using its own account's NT hash to verify its authenticity. The DC is only involved in the first two steps. Once the service receives the TGS, it validates it locally.
 
-A silver ticket skips the DC entirely. If you know the service account's NT hash, you can forge a TGS yourself, signed as any user you want, for any SPN that account owns. The service will trust it because it decrypts correctly. The NOACCESS restriction on sqlsvc doesn't apply because you're not presenting sqlsvc's TGT to the DC - you're presenting a service ticket that claims to be from Administrator, signed with sqlsvc's key.
+A silver ticket skips the DC entirely. If you know the service account's NT hash, you can forge a TGS yourself, signed as any user you want, for any SPN that account owns. The service will trust it because it decrypts correctly. The NOACCESS restriction on sqlsvc doesn't apply because you're not presenting sqlsvc's TGT to the DC. You're presenting a service ticket that claims to be from Administrator, signed with sqlsvc's key.
 
 Three things needed to forge it:
 
@@ -162,9 +162,9 @@ MSSQL as domain Administrator. The NOACCESS group was never consulted.
 
 ## Shell and SYSTEM
 
-`xp_cmdshell` was available and enabled. This is a SQL Server stored procedure that shells out to cmd.exe on the host. It's disabled by default but DBAs frequently re-enable it for convenience - once you have sysadmin on MSSQL, it's usually the first thing to check.
+`xp_cmdshell` was available and enabled. This is a SQL Server stored procedure that shells out to cmd.exe on the host. It's disabled by default but DBAs frequently re-enable it for convenience. Once you have sysadmin on MSSQL, it's usually the first thing to check.
 
-Running `whoami` through xp_cmdshell shows the underlying process is `scrm\sqlsvc`, not Administrator - the ticket got me authenticated as a sysadmin, but the service itself runs as sqlsvc. Checking privileges:
+Running `whoami` through xp_cmdshell shows the underlying process is `scrm\sqlsvc`, not Administrator. The ticket got me authenticated as a sysadmin, but the service itself runs as sqlsvc. Checking privileges:
 
 ```
 SeImpersonatePrivilege    Impersonate a client after authentication    Enabled
@@ -180,6 +180,6 @@ C:\Temp\gp.exe -cmd "cmd /c whoami"
 nt authority\system
 ```
 
-Got both flags from SYSTEM. The notes say "idk what was the intended here" - the machine probably has a more involved path through a .NET application called ScrambleClient, but the silver ticket + GodPotato route landed SYSTEM cleanly without needing it.
+Got both flags from SYSTEM. The notes say "idk what was the intended here." The machine probably has a more involved path through a .NET application called ScrambleClient, but the silver ticket + GodPotato route landed SYSTEM cleanly without needing it.
 
 *Reference: [secured.ai - Active Directory Series: Silver Ticket Attack](https://secured.ai/active-directory-series-silver-ticket-attack/)*

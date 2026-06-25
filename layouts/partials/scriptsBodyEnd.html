@@ -9,6 +9,11 @@
     {{ $main = $main | append $codeBlocks }}
 {{ end }}
 
+{{ $lightbox := resources.Get "js/lightbox.js" }}
+{{ if $lightbox }}
+    {{ $main = $main | append $lightbox }}
+{{ end }}
+
 {{ $custom := slice }}
 {{ range $script := .Site.Params.additionalScripts }}
     {{ $script_res := resources.Get $script }}

@@ -14,7 +14,7 @@ Windows AD box where NTLM authentication is completely disabled. That single con
 
 ## Recon
 
-10.129.232.130, domain `voleur.htb`, hostname `DC`. Standard AD ports: DNS, Kerberos, LDAP, SMB, WinRM on 5985. Also an SSH server on port 2222, running OpenSSH on Ubuntu - WSL, as it turns out.
+10.129.232.130, domain `voleur.htb`, hostname `DC`. Standard AD ports: DNS, Kerberos, LDAP, SMB, WinRM on 5985. Also an SSH server on port 2222, running OpenSSH on Ubuntu. WSL, as it turns out.
 
 ```bash
 …/labs/voleur ❯ sudo nmap -sV -sC -T4 $DC
@@ -103,7 +103,7 @@ LDAP        voleur.htb      389    DC               Done in 0M 17S
 LDAP        voleur.htb      389    DC               Compressing output into /home/kanyo/.nxc/logs/DC_voleur.htb_2026-06-07_161131_bloodhound.zip
 ```
 
-Ryan is a member of First-Line Technicians - a custom group, which usually means it has some permission wired to it.
+Ryan is a member of First-Line Technicians, a custom group, which usually means it has some permission wired to it.
 
 ![BloodHound graph showing RYAN.NAYLOR is MemberOf FIRST-LINE TECHNICIANS and DOMAIN USERS groups](/images/writeups/htb-voleur/bloodhound-ryan-first-line-technicians.png)
 
@@ -164,7 +164,7 @@ The spreadsheet was an account access review document. Everything in it:
 | svc_iis       | Service | `N5pXyW1VqM7CZ8`            | IIS Administration                                         |
 | svc_winrm     | Service | unknown                     | Remote Management, recently reset by Lacey                 |
 
-A few things jump out immediately. `svc_ldap` has a plaintext password. `Todd.Wolfe` is flagged as a leaver with his account "deleted" - and we already have his password. BloodHound showed exactly what `svc_ldap` can do with those credentials:
+A few things jump out immediately. `svc_ldap` has a plaintext password. `Todd.Wolfe` is flagged as a leaver with his account "deleted," and we already have his password. BloodHound showed exactly what `svc_ldap` can do with those credentials:
 
 ![BloodHound graph showing SVC_LDAP is MemberOf RESTORE_USERS which has GenericWrite over LACEY.MILLER and the SECOND-LINE SUPPORT OU, and SVC_LDAP has WriteSPN over SVC_WINRM](/images/writeups/htb-voleur/bloodhound-svcldap-restore-users-chain.png)
 
@@ -172,7 +172,7 @@ Two paths: `svc_ldap` has `WriteSPN` directly on `svc_winrm`, and via `Restore_U
 
 ## Targeted Kerberoasting via WriteSPN
 
-WriteSPN is an AD permission that lets you add or modify a user account's `servicePrincipalName` attribute. This matters because the Kerberos protocol treats any account with an SPN as a service. When you request a TGS ticket for a service, the KDC encrypts part of the response with that account's password hash. That encrypted blob is the kerberoastable hash - you take it offline and crack it.
+WriteSPN is an AD permission that lets you add or modify a user account's `servicePrincipalName` attribute. This matters because the Kerberos protocol treats any account with an SPN as a service. When you request a TGS ticket for a service, the KDC encrypts part of the response with that account's password hash. That encrypted blob is the kerberoastable hash. You take it offline and crack it.
 
 `svc_ldap` has WriteSPN over `svc_winrm`. That means I can register a fake SPN on svc_winrm, request a TGS for it, and get a crackable hash. First I needed a TGT as svc_ldap:
 
@@ -263,11 +263,11 @@ Hash.Target......: $krb5tgs$23$*lacey.miller$VOLEUR.HTB$voleur.htb/lac...d5f118
 
 Exhausted. Lacey's password wasn't in rockyou. There's no ADCS on this box either, so shadow credentials are off the table. Dead end.
 
-The group name "Restore_Users" plus Todd's flagged-as-deleted account in the spreadsheet - that was the real path.
+The group name "Restore_Users" plus Todd's flagged-as-deleted account in the spreadsheet, that was the real path.
 
 ## Reanimate-Tombstone: Bringing Todd Back
 
-I covered tombstone reanimation in detail in the [TombWatcher writeup](/writeups/htb-tombwatcher) - same mechanic, different path to it. Short version: when an account is deleted in Active Directory it doesn't disappear immediately. AD moves it to `CN=Deleted Objects` and strips most of its attributes, but keeps the object's SID and `sAMAccountName` for a configurable period (the `msDS-deletedObjectLifetime`, default 180 days). This is called a tombstone. The Reanimate-Tombstones extended right, when granted on the domain root or a specific OU, lets a principal restore a tombstoned object back to its original location with its SID intact.
+I covered tombstone reanimation in detail in the [TombWatcher writeup](/writeups/htb-tombwatcher), same mechanic, different path to it. Short version: when an account is deleted in Active Directory it doesn't disappear immediately. AD moves it to `CN=Deleted Objects` and strips most of its attributes, but keeps the object's SID and `sAMAccountName` for a configurable period (the `msDS-deletedObjectLifetime`, default 180 days). This is called a tombstone. The Reanimate-Tombstones extended right, when granted on the domain root or a specific OU, lets a principal restore a tombstoned object back to its original location with its SID intact.
 
 The `Restore_Users` group has that right. `svc_ldap` is a member. Let me query deleted objects using the LDAP control OID `1.2.840.113556.1.4.2064` (the "show deleted objects" control):
 
@@ -283,7 +283,7 @@ name: Todd Wolfe
 DEL:1c6b1deb-c372-4cbb-87b1-15031de169db
 ```
 
-Todd is there. Get his SID - restoration by SID is more reliable than by name when multiple tombstones exist:
+Todd is there. Get his SID. Restoration by SID is more reliable than by name when multiple tombstones exist:
 
 ```bash
 …/labs/voleur ✗ faketime -f '+8h' bloodyAD -d voleur.htb -k --host dc.voleur.htb get search -c 1.2.840.113556.1.4.2064 \
@@ -336,9 +336,9 @@ drw-rw-rw-          0  Wed Jan 29 16:13:09 2025 ..
 -rw-rw-rw-         24  Wed Jan 29 13:53:08 2025 Preferred
 ```
 
-These are standard Windows DPAPI artifacts. When a user saves credentials through Windows Credential Manager - logging into a network share, saving a password for an RDP connection, anything like that - Windows encrypts the credential blob using the user's DPAPI master key. The master key itself is derived from the user's password (via their NT hash) and their SID. The encrypted blobs live at `AppData\Roaming\Microsoft\Credentials\` and the master keys at `AppData\Roaming\Microsoft\Protect\<SID>\`.
+These are standard Windows DPAPI artifacts. When a user saves credentials through Windows Credential Manager, logging into a network share, saving a password for an RDP connection, anything like that, Windows encrypts the credential blob using the user's DPAPI master key. The master key itself is derived from the user's password (via their NT hash) and their SID. The encrypted blobs live at `AppData\Roaming\Microsoft\Credentials\` and the master keys at `AppData\Roaming\Microsoft\Protect\<SID>\`.
 
-When Todd was tombstoned, his Windows profile was archived to the IT share rather than wiped. That was the mistake - the archive included his entire DPAPI state: the credential blob containing Jeremy's saved password, and the master key needed to decrypt it.
+When Todd was tombstoned, his Windows profile was archived to the IT share rather than wiped. That was the mistake. The archive included his entire DPAPI state: the credential blob containing Jeremy's saved password, and the master key needed to decrypt it.
 
 Decrypt the master key offline using Todd's password:
 
@@ -378,7 +378,7 @@ Username    : jeremy.combs
 Unknown     : qT3V9pLXyN7W4m
 ```
 
-`jeremy.combs:qT3V9pLXyN7W4m`. Todd had saved Jeremy's credentials in Credential Manager at some point - maybe to access a shared resource, maybe to test a service. Windows encrypted them silently. When Todd got deleted and his profile archived, those credentials came along for the ride.
+`jeremy.combs:qT3V9pLXyN7W4m`. Todd had saved Jeremy's credentials in Credential Manager at some point, maybe to access a shared resource, maybe to test a service. Windows encrypted them silently. When Todd got deleted and his profile archived, those credentials came along for the ride.
 
 ## Jeremy, the SSH Key, and the Backup
 
@@ -424,7 +424,7 @@ Thanks,
 Admin
 ```
 
-Port 2222 from the nmap. `svc_backup` with that SSH key. The note explains what the Linux SSH is for - WSL is configured on the DC to run Linux binaries against the Windows filesystem.
+Port 2222 from the nmap. `svc_backup` with that SSH key. The note explains what the Linux SSH is for. WSL is configured on the DC to run Linux binaries against the Windows filesystem.
 
 ```bash
 svc_backup@DC:~$ sudo -l
@@ -525,7 +525,7 @@ voleur.htb\svc_winrm:des-cbc-md5:32b61fb92a7010ab
 [*] Cleaning up...
 ```
 
-Administrator NT hash. Because NTLM is disabled, I can't use it directly for pass-the-hash over SMB or WinRM. But I can use it to get a Kerberos TGT - the KDC will accept the NT hash to derive the AS-REP encryption key:
+Administrator NT hash. Because NTLM is disabled, I can't use it directly for pass-the-hash over SMB or WinRM. But I can use it to get a Kerberos TGT. The KDC will accept the NT hash to derive the AS-REP encryption key:
 
 ```bash
 …/voleur/Backups ✗ faketime -f '+8h' getTGT.py -hashes :e656e07c56d831611b577b160b259ad2 voleur.htb/administrator

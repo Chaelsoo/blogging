@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows AD box with starting credentials. The box name is a hint you'll miss until it isn't. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used - Reanimate-Tombstones - and the ADCS OU he controls looks empty until you remember that AD doesn't actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.
+Windows AD box with starting credentials. The box name is a hint you'll miss until it isn't. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn't actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.
 
 ## Recon
 
@@ -40,11 +40,11 @@ BloodHound showed the full picture immediately:
 
 ![BloodHound graph showing HENRY has WriteSPN on ALFRED, Alfred can AddSelf to INFRASTRUCTURE group, INFRASTRUCTURE has ReadGMSAPassword on ANSIBLE_DEV$, ANSIBLE_DEV$ has ForceChangePassword on SAM, SAM has WriteOwner on JOHN, and JOHN has GenericAll on the ADCS OU](/images/writeups/htb-tombwatcher/bloodhound-full-chain.png)
 
-That's one hell of a chain. Five hops to john, and GenericAll on the ADCS OU waiting at the end. The steps are each one command - let's get through them.
+That's one hell of a chain. Five hops to john, and GenericAll on the ADCS OU waiting at the end. The steps are each one command, let's get through them.
 
 ### 1. WriteSPN on Alfred, then Kerberoast
 
-WriteSPN lets you add a Service Principal Name to any account you have that right over. An account with a SPN becomes kerberoastable - the KDC will issue a TGS ticket encrypted with that account's NT hash. No SPN needs to exist beforehand; write a fake one and it's immediately roastable:
+WriteSPN lets you add a Service Principal Name to any account you have that right over. An account with a SPN becomes kerberoastable. The KDC will issue a TGS ticket encrypted with that account's NT hash. No SPN needs to exist beforehand; write a fake one and it's immediately roastable:
 
 ```bash
 bloodyAD -u henry -p 'H3nry_987TGV!' -d tombwatcher.htb --host $DC \
@@ -79,7 +79,7 @@ bloodyAD -u alfred -p 'basketball' -d tombwatcher.htb --host $DC \
 
 ### 3. Read ANSIBLE_DEV$'s gMSA Password
 
-Group Managed Service Accounts have passwords the DC auto-rotates on a schedule. The current NT hash is stored as the `msDS-ManagedPassword` attribute on the computer object, readable over LDAP by members of the designated group - here, Infrastructure:
+Group Managed Service Accounts have passwords the DC auto-rotates on a schedule. The current NT hash is stored as the `msDS-ManagedPassword` attribute on the computer object, readable over LDAP by members of the designated group, here Infrastructure:
 
 ```bash
 bloodyAD -u alfred -p 'basketball' -d tombwatcher.htb --host $DC \
@@ -92,7 +92,7 @@ msDS-ManagedPassword.B64ENCODED: mfN6zpVwyTpoirhbjkl6QrRJVzGohXxRem98/IxOBHXUQ85
 
 ### 4. ForceChangePassword on Sam
 
-ANSIBLE_DEV$ has this right over Sam - reset the password without knowing the current one:
+ANSIBLE_DEV$ has this right over Sam, reset the password without knowing the current one:
 
 ```bash
 bloodyAD -u 'ansible_dev$' -p ':cba56cd2df7d642f622e2a59956f6d47' \
@@ -104,7 +104,7 @@ bloodyAD -u 'ansible_dev$' -p ':cba56cd2df7d642f622e2a59956f6d47' \
 
 ### 5. WriteOwner on John
 
-This is a three-step abuse. Sam has WriteOwner over John's object. Ownership in AD controls the DACL - the owner can modify permission entries on the object. So: take ownership, grant yourself GenericAll, reset the password:
+This is a three-step abuse. Sam has WriteOwner over John's object. Ownership in AD controls the DACL. The owner can modify permission entries on the object. So: take ownership, grant yourself GenericAll, reset the password:
 
 ```bash
 bloodyAD -u sam -p 'Kanyo123!' -d tombwatcher.htb --host $DC \
@@ -131,7 +131,7 @@ bloodyAD -u sam -p 'Kanyo123!' -d tombwatcher.htb --host $DC \
 [+] Password changed successfully!
 ```
 
-John is in Remote Management Users - WinRM works, user flag on his desktop.
+John is in Remote Management Users. WinRM works, user flag on his desktop.
 
 ![BloodHound graph showing JOHN@TOMBWATCHER.HTB is MemberOf Remote Management Users and Domain Users groups](/images/writeups/htb-tombwatcher/bloodhound-john-remote-management.png)
 
@@ -185,7 +185,7 @@ When an AD object is deleted, it doesn't disappear. It becomes a tombstone:
 
 ![Diagram showing AD object lifecycle: Live Object becomes Logically Deleted Object (restorable during msDS-deletedObjectLifetime window), then becomes Recycled Object (cannot restore), then Physically Deleted Object after tombstoneLifetime expires](/images/writeups/htb-tombwatcher/ad-tombstone-lifecycle-diagram.png)
 
-The object is moved to `CN=Deleted Objects`, most attributes are stripped, and `isDeleted=TRUE` is set. The SID, GUID, `lastKnownParent`, and a handful of other attributes survive intact. For a configurable retention window (default 180 days), the object is recoverable. Reanimate-Tombstones is the extended right that lets you pull it back - clearing `isDeleted`, moving it back to `lastKnownParent`, and restoring it with its original SID.
+The object is moved to `CN=Deleted Objects`, most attributes are stripped, and `isDeleted=TRUE` is set. The SID, GUID, `lastKnownParent`, and a handful of other attributes survive intact. For a configurable retention window (default 180 days), the object is recoverable. Reanimate-Tombstones is the extended right that lets you pull it back, clearing `isDeleted`, moving it back to `lastKnownParent`, and restoring it with its original SID.
 
 Querying the deleted objects container with the `1.2.840.113556.1.4.417` control (which instructs the DC to include deleted objects in the response):
 
@@ -255,7 +255,7 @@ objectSid:: AQUAAAAAAAUVAAAAArr/UoEu+1C7Lcd+VwQAAA==
 lastKnownParent: OU=ADCS,DC=tombwatcher,DC=htb
 ```
 
-The base64-encoded SIDs decode to RIDs 1110 and 1111 respectively - the second one is the match. Delete the incorrectly restored object and restore by SID this time:
+The base64-encoded SIDs decode to RIDs 1110 and 1111 respectively. The second one is the match. Delete the incorrectly restored object and restore by SID this time:
 
 ```bash
 bloodyAD -u john -p 'Kanyo123!' -d tombwatcher.htb --host $DC \
@@ -270,7 +270,7 @@ bloodyAD -u john -p 'Kanyo123!' -d tombwatcher.htb --host $DC \
     under CN=cert_admin,OU=ADCS,DC=tombwatcher,DC=htb
 ```
 
-Certipy now resolved the SID to `cert_admin`. GenericAll from the OU ACE inherits immediately - reset cert_admin's password directly:
+Certipy now resolved the SID to `cert_admin`. GenericAll from the OU ACE inherits immediately. Reset cert_admin's password directly:
 
 ```bash
 bloodyAD -u john -p 'Kanyo123!' -d tombwatcher.htb --host $DC \
@@ -279,7 +279,7 @@ bloodyAD -u john -p 'Kanyo123!' -d tombwatcher.htb --host $DC \
 [+] Password changed successfully!
 ```
 
-One thing worth calling out: SharpHound does not collect deleted objects even when run as Domain Admin, despite documentation suggesting it might. BloodHound CE has no visibility into the tombstone container. This entire escalation path - Reanimate-Tombstones feeding GenericAll via OU inheritance - is completely blind to standard BloodHound collection.
+One thing worth calling out: SharpHound does not collect deleted objects even when run as Domain Admin, despite documentation suggesting it might. BloodHound CE has no visibility into the tombstone container. This entire escalation path, Reanimate-Tombstones feeding GenericAll via OU inheritance, is completely blind to standard BloodHound collection.
 
 ## ESC15 via cert_admin
 
@@ -314,7 +314,7 @@ Permissions
 
 ESC15 is CVE-2024-49019. The vulnerability lives in how schema version 1 certificate templates handle the relationship between two certificate extensions: Extended Key Usage (EKU) and Application Policies.
 
-Normally, EKU determines what a certificate can be used for. But schema v1 templates have a quirk: if a certificate request includes an Application Policies extension, certain Windows components will prefer it over EKU. Specifically, Schannel - the Windows TLS stack used for LDAPS - follows Microsoft's own documented behavior:
+Normally, EKU determines what a certificate can be used for. But schema v1 templates have a quirk: if a certificate request includes an Application Policies extension, certain Windows components will prefer it over EKU. Specifically, Schannel, the Windows TLS stack used for LDAPS, follows Microsoft's own documented behavior:
 
 > *"If a certificate has an extension containing an application policy and also has an EKU extension, the EKU extension is ignored."*
 
@@ -336,7 +336,7 @@ certipy req -u cert_admin@tombwatcher.htb -p 'Kanyo123!' \
 [*] Saving certificate and private key to 'administrator.pfx'
 ```
 
-PKINIT won't work with this certificate. Kerberos pre-authentication checks the EKU extension strictly - it sees `Server Authentication`, finds no `Client Authentication` there, and returns `KDC_ERR_INCONSISTENT_KEY_PURPOSE`. It never consults Application Policies. The path in is LDAPS via Schannel instead:
+PKINIT won't work with this certificate. Kerberos pre-authentication checks the EKU extension strictly. It sees `Server Authentication`, finds no `Client Authentication` there, and returns `KDC_ERR_INCONSISTENT_KEY_PURPOSE`. It never consults Application Policies. The path in is LDAPS via Schannel instead:
 
 ```bash
 certipy auth -pfx administrator.pfx -dc-ip $DC -ldap-shell

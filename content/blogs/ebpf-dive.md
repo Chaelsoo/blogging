@@ -332,5 +332,5 @@ The skeleton handles all the boilerplate so you're not manually calling the
 
 Before we wrap up, here's a quick visual to anchor the flow.
 
-![eBPF overview](/eBPF.png)
+![eBPF overview](/images/blogs/ebpf-dive/eBPF.png)
 

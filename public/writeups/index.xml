@@ -13,7 +13,7 @@
       <pubDate>Tue, 09 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-vulncicada/</guid>
       
-      <description>&lt;p&gt;This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note - an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&amp;rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &amp;ldquo;NTLM is disabled&amp;rdquo; doesn&amp;rsquo;t mean relay attacks are impossible - it means you have to do it with Kerberos instead, which is a completely different mechanism that&amp;rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&amp;rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.&lt;/p&gt;</description>
+      <description>&lt;p&gt;This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note, an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&amp;rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &amp;ldquo;NTLM is disabled&amp;rdquo; doesn&amp;rsquo;t mean relay attacks are impossible. It means you have to do it with Kerberos instead, which is a completely different mechanism that&amp;rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&amp;rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.&lt;/p&gt;</description>
       
     </item>
     
@@ -23,7 +23,7 @@
       <pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-jeeves/</guid>
       
-      <description>&lt;p&gt;Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page - pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&amp;rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&amp;rsquo;t in &lt;code&gt;hm.txt&lt;/code&gt;, it&amp;rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page, pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&amp;rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&amp;rsquo;t in &lt;code&gt;hm.txt&lt;/code&gt;, it&amp;rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.&lt;/p&gt;</description>
       
     </item>
     
@@ -63,7 +63,7 @@
       <pubDate>Sun, 07 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-pov/</guid>
       
-      <description>&lt;p&gt;Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&amp;rsquo;t sanitize the file path. Reading &lt;code&gt;web.config&lt;/code&gt; through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted - and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&amp;rsquo;t sanitize the file path. Reading &lt;code&gt;web.config&lt;/code&gt; through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.&lt;/p&gt;</description>
       
     </item>
     
@@ -94,7 +94,7 @@
       <pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-tombwatcher/</guid>
       
-      <description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used - Reanimate-Tombstones - and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description>
       
     </item>
     
@@ -115,7 +115,7 @@
       <pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-streamio/</guid>
       
-      <description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability - it&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability. It&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description>
       
     </item>
     
@@ -145,7 +145,7 @@
       <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-escape/</guid>
       
-      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most - you&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
       
     </item>
     
@@ -156,7 +156,7 @@
       <guid>http://localhost:1313/writeups/htb-scrambled/</guid>
       
       <description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
-&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely - you forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
+&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
       
     </item>
     
@@ -166,7 +166,9 @@
       <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-cicada/</guid>
       
-      <description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake - a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script - cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;
+&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+&lt;p&gt;10.129.231.149, domain &lt;code&gt;cicada.htb&lt;/code&gt;, DC hostname &lt;code&gt;CICADA-DC&lt;/code&gt;. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:&lt;/p&gt;</description>
       
     </item>
     
@@ -197,7 +199,7 @@
       <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-sauna/</guid>
       
-      <description>&lt;p&gt;Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it&amp;rsquo;s the only initial foothold surface. What makes this box interesting is the AS-REP roasting step - it&amp;rsquo;s a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it&amp;rsquo;s the only initial foothold surface. What makes this box interesting is the AS-REP roasting step, a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.&lt;/p&gt;</description>
       
     </item>
     
@@ -207,7 +209,7 @@
       <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-timelapse/</guid>
       
-      <description>&lt;p&gt;Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password - just a client certificate. It&amp;rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&amp;rsquo;s deployed everywhere and constantly misread on BloodHound graphs.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&amp;rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&amp;rsquo;s deployed everywhere and constantly misread on BloodHound graphs.&lt;/p&gt;</description>
       
     </item>
     

@@ -34,7 +34,7 @@
       <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-escape/</guid>
       
-      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most - you&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
+      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
       
     </item>
     

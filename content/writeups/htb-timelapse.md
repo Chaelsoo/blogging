@@ -8,7 +8,7 @@ draft: false
 ---
 
 
-Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password - just a client certificate. It's a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it's deployed everywhere and constantly misread on BloodHound graphs.
+Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It's a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it's deployed everywhere and constantly misread on BloodHound graphs.
 
 ## Recon
 
@@ -20,7 +20,7 @@ Share      Permissions
 Shares     READ
 ```
 
-The `Shares` share had two subdirectories: `Dev` and `HelpDesk`. HelpDesk had LAPS documentation - the installer, a datasheet, an operations guide. Filed as a hint for later. Dev had one file: `winrm_backup.zip`.
+The `Shares` share had two subdirectories: `Dev` and `HelpDesk`. HelpDesk had LAPS documentation, the installer, a datasheet, an operations guide. Filed as a hint for later. Dev had one file: `winrm_backup.zip`.
 
 ## Cracking the ZIP and PFX
 
@@ -33,7 +33,7 @@ john zip.hash --wordlist=/usr/share/wordlists/rockyou.txt
 supremelegacy    (winrm_backup.zip/legacyy_dev_auth.pfx)
 ```
 
-Inside: `legacyy_dev_auth.pfx`. A PFX (PKCS#12) file is a binary container that bundles a certificate and its corresponding private key together, encrypted with a passphrase. It's typically used to distribute identities for things like client certificate authentication. The passphrase protects the private key inside - you can't extract either the certificate or the key without it.
+Inside: `legacyy_dev_auth.pfx`. A PFX (PKCS#12) file is a binary container that bundles a certificate and its corresponding private key together, encrypted with a passphrase. It's typically used to distribute identities for things like client certificate authentication. The passphrase protects the private key inside. You can't extract either the certificate or the key without it.
 
 This one was also passphrase-protected:
 
@@ -52,7 +52,7 @@ openssl pkcs12 -in legacyy_dev_auth.pfx -nokeys  -out cert.pem -passin pass:thug
 
 ## WinRM via Client Certificate
 
-WinRM supports certificate-based authentication as an alternative to password auth. When you connect with a client certificate, WinRM checks which domain account the certificate's subject maps to and authenticates you as that user - no password involved. The certificate filename `legacyy_dev_auth.pfx` gives away the username.
+WinRM supports certificate-based authentication as an alternative to password auth. When you connect with a client certificate, WinRM checks which domain account the certificate's subject maps to and authenticates you as that user, no password involved. The certificate filename `legacyy_dev_auth.pfx` gives away the username.
 
 evil-winrm takes the cert and key directly with `-c` and `-k`. The `-S` flag tells it to use SSL (port 5986):
 
@@ -98,7 +98,7 @@ BloodHound showed what svc_deploy could do:
 
 `SVC_DEPLOY → LAPS_READERS → ReadLAPSPassword → DC01`.
 
-LAPS (Local Administrator Password Solution) is a Microsoft tool that automatically rotates the built-in Administrator password on domain-joined machines on a schedule and stores the current password in AD as an attribute (`ms-Mcs-AdmPwd`) on the computer object. The point is to prevent lateral movement from one compromised machine to another via a shared local admin password. The tradeoff is that the password has to live somewhere - it lives in AD, readable by members of designated groups. If you're in one of those groups, you can read it.
+LAPS (Local Administrator Password Solution) is a Microsoft tool that automatically rotates the built-in Administrator password on domain-joined machines on a schedule and stores the current password in AD as an attribute (`ms-Mcs-AdmPwd`) on the computer object. The point is to prevent lateral movement from one compromised machine to another via a shared local admin password. The tradeoff is that the password has to live somewhere. It lives in AD, readable by members of designated groups. If you're in one of those groups, you can read it.
 
 bloodyAD queries it directly:
 
@@ -116,4 +116,4 @@ ms-Mcs-AdmPwd: 1xs%D)bv+G8K8+Tpk{e%7282
 evil-winrm -i 10.129.227.113 -u Administrator -p '1xs%D)bv+G8K8+Tpk{e%7282' -S
 ```
 
-One thing worth noting: the root flag wasn't on Administrator's desktop - it was on the TRX user's desktop. Grabbed it from `C:\Users\TRX\Desktop\`. The PowerShell history file is the lesson from this box. The pfx cert hidden in a zip was a clever entry, but someone leaving `evil-winrm` invocations in their command history with plaintext credentials is the kind of thing that shows up constantly in real Windows environments. The ConsoleHost_history.txt file is almost never on the checklist and almost always has something in it.
+One thing worth noting: the root flag wasn't on Administrator's desktop. It was on the TRX user's desktop. Grabbed it from `C:\Users\TRX\Desktop\`. The PowerShell history file is the lesson from this box. The pfx cert hidden in a zip was a clever entry, but someone leaving `evil-winrm` invocations in their command history with plaintext credentials is the kind of thing that shows up constantly in real Windows environments. The ConsoleHost_history.txt file is almost never on the checklist and almost always has something in it.

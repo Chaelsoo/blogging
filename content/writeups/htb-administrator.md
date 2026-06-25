@@ -170,4 +170,4 @@ secretsdump.py administrator.htb/ethan:limpbizkit@10.129.9.36
 Administrator:500:aad3b435b51404eeaad3b435b51404ee:3dc553ce4b9fd20bd016e098d2d2fd2e:::
 ```
 
-Pass-the-hash as Administrator. Root flag. What I liked about this box is how every step in the ACL chain used a different primitive. ForceChangePassword, GenericWrite, WriteDACL, ownership - not the same trick repeated six times. Good one to run through if you want to build muscle memory for moving through realistic ACL chains.
+Pass-the-hash as Administrator. Root flag. What I liked about this box is how every step in the ACL chain used a different primitive. ForceChangePassword, GenericWrite, WriteDACL, ownership, not the same trick repeated six times. Good one to run through if you want to build muscle memory for moving through realistic ACL chains.
