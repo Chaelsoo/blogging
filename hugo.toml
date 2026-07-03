@@ -1,5 +1,5 @@
 baseURL = 'https://chaelsoo.me/'
-title = "Chaelsoo's blog"
+title = "kanyo's blog"
 languageCode = 'en-gb'
 defaultContentLanguage = "en-gb"
 enableEmoji = true
@@ -67,7 +67,7 @@ rssFeedDescription = "summary"
 
 [Languages.en-gb.params.author]
 avatar = "avatar.jpg"                       # /assets/avatar.jpg
-intro = "Chaelsoo's blog"
+intro = "kanyo's blog"
 description = "a work in progress"
 
 [[params.socialIcons]]

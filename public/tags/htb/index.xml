@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Htb on Chaelsoo&#39;s blog</title>
+    <title>Htb on kanyo&#39;s blog</title>
     <link>http://localhost:1313/tags/htb/</link>
-    <description>Recent content in Htb on Chaelsoo&#39;s blog</description>
+    <description>Recent content in Htb on kanyo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
     <lastBuildDate>Sat, 07 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/htb/index.xml" rel="self" type="application/rss+xml" />

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Fail2ban on Chaelsoo&#39;s blog</title>
+    <title>Fail2ban on kanyo&#39;s blog</title>
     <link>http://localhost:1313/tags/fail2ban/</link>
-    <description>Recent content in Fail2ban on Chaelsoo&#39;s blog</description>
+    <description>Recent content in Fail2ban on kanyo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
     <lastBuildDate>Mon, 08 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/fail2ban/index.xml" rel="self" type="application/rss+xml" />
