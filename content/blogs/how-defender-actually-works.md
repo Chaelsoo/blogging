@@ -16,7 +16,6 @@ That's completely the wrong way to approach this.
 
 Defender, and EDRs in general, don't work as one big scanner that either catches you or doesn't. They operate across three distinct layers, each catching different things at different points in execution. If you don't know which layer is catching you, you'll keep fixing the wrong problem. You'll patch AMSI when the memory scanner is what's killing you. You'll spend hours hunting signatures when the issue is behavioral. You'll waste time on the wrong layer while the right one sits untouched.
 
-This post is about building that map. Not a surface-level "here are the three layers" overview, an actual explanation of what each one is doing, why it catches what it catches, and how the techniques used against them have evolved over time. By the end of this, you should be able to look at any evasion failure and reason through exactly where it broke.
 
 ## AMSI, In-Memory Script Scanner
 
@@ -64,11 +63,7 @@ The r-tec blog linked below has a comprehensive breakdown of 20+ AMSI bypass tec
 
 The specific technique matters less than understanding the underlying principle: every detection has a gap, and the gaps keep moving.
 
-### My Take on AMSI
-
-Honestly, and this is just my personal experience after going through several lab environments, I'm still skeptical about how relevant AMSI actually is in real production environments. I haven't run into it as a genuine obstacle outside of lab contexts, and I think that step gets included in most lab scenarios specifically to teach you the concept. Real hardened environments have bigger problems than AMSI. EDRs with their own provider implementations, kernel-level telemetry, behavioral analysis that operates well below the AMSI layer.
-
-AMSI feels more like a tutorial mechanic than a real bottleneck. But understanding it matters, because the ideas it introduces, in-memory patching, understanding the scan pipeline, the difference between signature-based and behavioral detection, feed directly into the harder problems.
+> Honestly, and this is just my personal experience after going through several lab environments, I'm still skeptical about how relevant AMSI actually is in real production environments. I haven't run into it as a genuine obstacle outside of lab contexts, and I think that step gets included in most lab scenarios specifically to teach you the concept. Real hardened environments have bigger problems than AMSI. EDRs with their own provider implementations, kernel-level telemetry, behavioral analysis that operates well below the AMSI layer.
 
 ## Static On-Disk Scanner
 
@@ -100,8 +95,6 @@ Tools like [gocheck](https://github.com/gatariee/gocheck) automate this.
 ![Binary Search Workflow - Gocheck](/blogs/defender/gocheck.png)
 
 Once you've found the region, you null it, encrypt it, or restructure around it.
-
-### The VirusTotal Trap
 
 > Don't test your payloads on VirusTotal. Every engine that scans your binary can potentially feed that signature back into their databases. You burn your payload before you've used it once, and you might be signing it for every other operator running a similar setup. Test locally against Defender in an isolated VM. Use ThreatCheck or [gocheck](https://github.com/gatariee/gocheck). Keep VT for analyzing samples you didn't write.
 
