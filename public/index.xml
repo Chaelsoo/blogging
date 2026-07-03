@@ -6,7 +6,20 @@
     <description>Recent content in Home on Chaelsoo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Tue, 09 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>How Defender Actually Works</title>
+      <link>http://localhost:1313/blogs/how-defender-actually-works/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/how-defender-actually-works/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/blogs/defender/defender_aileenchik_shutterstock.webp&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;At Ingehack, I spent way too long blindly throwing obfuscated tools at a target. Change a string here, re-encode there, try a different obfuscator, run it again. Sometimes something worked. Most of the time it didn&amp;rsquo;t. And the frustrating part was that I had no real idea why, I was just guessing and hoping that enough random changes would eventually get me through.&lt;/p&gt;
+&lt;p&gt;That&amp;rsquo;s completely the wrong way to approach this.&lt;/p&gt;</description>
+      
+    </item>
+    
     <item>
       <title>HTB: VulnCicada</title>
       <link>http://localhost:1313/writeups/htb-vulncicada/</link>

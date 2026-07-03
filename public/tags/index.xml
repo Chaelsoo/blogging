@@ -6,7 +6,57 @@
     <description>Recent content in Tags on Chaelsoo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Tue, 09 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Amsi</title>
+      <link>http://localhost:1313/tags/amsi/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/amsi/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Antivirus-Bypass</title>
+      <link>http://localhost:1313/tags/antivirus-bypass/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/antivirus-bypass/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Defender</title>
+      <link>http://localhost:1313/tags/defender/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/defender/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Edr-Evasion</title>
+      <link>http://localhost:1313/tags/edr-evasion/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/edr-evasion/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Windows</title>
+      <link>http://localhost:1313/tags/windows/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/windows/</guid>
+      
+      <description></description>
+      
+    </item>
+    
     <item>
       <title>Esc8</title>
       <link>http://localhost:1313/tags/esc8/</link>
@@ -42,16 +92,6 @@
       <link>http://localhost:1313/tags/ntlm-disabled/</link>
       <pubDate>Tue, 09 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/tags/ntlm-disabled/</guid>
-      
-      <description></description>
-      
-    </item>
-    
-    <item>
-      <title>Windows</title>
-      <link>http://localhost:1313/tags/windows/</link>
-      <pubDate>Tue, 09 Jun 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/tags/windows/</guid>
       
       <description></description>
       
@@ -552,26 +592,6 @@
       <link>http://localhost:1313/tags/tombstone-reanimation/</link>
       <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/tags/tombstone-reanimation/</guid>
-      
-      <description></description>
-      
-    </item>
-    
-    <item>
-      <title>Antivirus-Bypass</title>
-      <link>http://localhost:1313/tags/antivirus-bypass/</link>
-      <pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/tags/antivirus-bypass/</guid>
-      
-      <description></description>
-      
-    </item>
-    
-    <item>
-      <title>Edr-Evasion</title>
-      <link>http://localhost:1313/tags/edr-evasion/</link>
-      <pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/tags/edr-evasion/</guid>
       
       <description></description>
       

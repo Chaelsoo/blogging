@@ -2,10 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/tags/esc8/</loc>
-    <lastmod>2026-06-09T00:00:00+00:00</lastmod>
+    <loc>http://localhost:1313/tags/amsi/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/antivirus-bypass/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blogs/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/defender/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/edr-evasion/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blogs/how-defender-actually-works/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/windows/</loc>
+    <lastmod>2026-07-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/esc8/</loc>
     <lastmod>2026-06-09T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/writeups/htb-vulncicada/</loc>
@@ -18,12 +42,6 @@
     <lastmod>2026-06-09T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/tags/ntlm-disabled/</loc>
-    <lastmod>2026-06-09T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/tags/</loc>
-    <lastmod>2026-06-09T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/tags/windows/</loc>
     <lastmod>2026-06-09T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/writeups/</loc>
@@ -248,20 +266,11 @@
     <loc>http://localhost:1313/tags/tombstone-reanimation/</loc>
     <lastmod>2026-05-26T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/antivirus-bypass/</loc>
-    <lastmod>2026-04-21T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/tags/edr-evasion/</loc>
-    <lastmod>2026-04-21T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>http://localhost:1313/tags/ingehack/</loc>
     <lastmod>2026-04-21T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/writeups/ingehack-edr-evasion/</loc>
     <lastmod>2026-04-21T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/blogs/</loc>
-    <lastmod>2026-03-27T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/tags/ebpf/</loc>
     <lastmod>2026-03-27T00:00:00+00:00</lastmod>
