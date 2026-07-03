@@ -86,7 +86,7 @@ One of the most overlooked static detection surfaces is the **Import Address Tab
 
 This is part of why **direct syscalls** matter from a static evasion angle. Instead of importing Win32 API functions, which show up in the IAT, you issue the `syscall` instruction directly with the correct Syscall Service Number (SSN), talking to the kernel without going through any API layer. No import means no IAT entry. No IAT entry means nothing to match against statically. Your binary no longer announces its intentions.
 
-### The Gocheck Workflow
+### The [Gocheck](https://github.com/gatariee/gocheck) Workflow
 
 When you need to find exactly what's flagged in a payload, the process is basically a binary search against Defender:
 
@@ -95,7 +95,7 @@ When you need to find exactly what's flagged in a payload, the process is basica
 - The half that triggers → split again
 - Repeat until you've isolated the flagged byte range
 
-Tools like gocheck automate this.
+Tools like [gocheck](https://github.com/gatariee/gocheck) automate this.
 
 ![Binary Search Workflow - Gocheck](/blogs/defender/gocheck.png)
 
@@ -103,7 +103,7 @@ Once you've found the region, you null it, encrypt it, or restructure around it.
 
 ### The VirusTotal Trap
 
-Don't test your payloads on VirusTotal. Every engine that scans your binary can potentially feed that signature back into their databases. You burn your payload before you've used it once, and you might be signing it for every other operator running a similar setup. Test locally against Defender in an isolated VM. Use ThreatCheck or gocheck. Keep VT for analyzing samples you didn't write.
+> Don't test your payloads on VirusTotal. Every engine that scans your binary can potentially feed that signature back into their databases. You burn your payload before you've used it once, and you might be signing it for every other operator running a similar setup. Test locally against Defender in an isolated VM. Use ThreatCheck or [gocheck](https://github.com/gatariee/gocheck). Keep VT for analyzing samples you didn't write.
 
 ## Behavioral Scanner, Runtime Detection
 
@@ -145,7 +145,7 @@ This is the direction the field is moving, and it makes behavioral evasion meani
 
 Before changing anything, figure out which layer is the actual problem:
 
-- **Binary flagged on disk before execution** → static scanner. Start with gocheck or ThreatCheck.
+- **Binary flagged on disk before execution** → static scanner. Start with [gocheck](https://github.com/gatariee/gocheck) or ThreatCheck.
 - **Script blocked before your code runs** → AMSI. Check whether the patch landed, whether a secondary provider is still active, whether script block logging is capturing you anyway.
 - **Code ran briefly then died** → behavioral scanner. Not about appearance anymore, it's about what your code did.
 
@@ -153,7 +153,7 @@ Getting this right changes everything. The layers are distinct. Treat them that 
 
 ## Two Distinct Problems
 
-Something I think is worth being explicit about, and that I haven't seen addressed cleanly in most writeups, is that there are two fundamentally different situations when working against Defender, and they each come with their own struggles.
+Something I think is worth being explicit about, and that I haven't seen addressed cleanly in most writeups, is that there are two fundamentally different situations when working against Defender, and they each come with their own struggles. That's how I see it at least.
 
 **Problem 1, Getting a Foothold and Persistence**
 
@@ -181,10 +181,10 @@ Next post, we'll get into how to actually approach each of the two problems abov
 
 ## References
 
-r-tec, *Bypass AMSI in 2025*, https://www.r-tec.net/r-tec-blog-bypass-amsi-in-2025.html
+https://www.hackmosphere.fr/bypass-windows-defender-antivirus-2025-part-2/
 
-hackmosphere, *Bypass Windows Defender in 2026*
+https://www.r-tec.net/r-tec-blog-bypass-amsi-in-2025.html
 
-Marcus Hutchins (MalwareTech), *Bypassing EDRs With EDR-Preloading*, https://malwaretech.com/2024/02/bypassing-edrs-with-edr-preload.html
+https://malwaretech.com/2024/02/bypassing-edrs-with-edr-preload.html
 
-Gatari, binary splitting diagram
+https://gatari.dev/posts/malicious-bytes/
