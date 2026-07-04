@@ -172,7 +172,7 @@ These two problems need different approaches. What gets you the foothold is larg
 
 This post covered the three defense mechanisms and how they've evolved. The classic `AmsiScanBuffer` entry point patch isn't safe anymore. Static detection has grown beyond simple byte patterns into composite heuristics and IAT analysis. Behavioral analysis now includes ML models that don't rely on fixed rules.
 
-Next post, we'll get into how to actually approach each of the two problems above, the techniques, the reasoning, and where thinking outside the box starts to matter a lot.
+Next post, we'll get into how to actually approach each of the two problems above, the techniques, the reasoning, and where thinking outside the box starts to matter a lot. Read it [here](/blogs/walking-past-defender/).
 
 ## References
 
