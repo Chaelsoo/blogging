@@ -61,6 +61,8 @@ The r-tec blog linked below has a comprehensive breakdown of 20+ AMSI bypass tec
 
 ![AMSI Bypass Techniques and Effectiveness](/blogs/defender/techniques.png)
 
+The code for all of these techniques is collected in [this repo](https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell).
+
 The specific technique matters less than understanding the underlying principle: every detection has a gap, and the gaps keep moving.
 
 > Honestly, and this is just my personal experience after going through several lab environments, I'm still skeptical about how relevant AMSI actually is in real production environments. I haven't run into it as a genuine obstacle outside of lab contexts, and I think that step gets included in most lab scenarios specifically to teach you the concept. Real hardened environments have bigger problems than AMSI. EDRs with their own provider implementations, kernel-level telemetry, behavioral analysis that operates well below the AMSI layer.
@@ -181,3 +183,5 @@ https://www.r-tec.net/r-tec-blog-bypass-amsi-in-2025.html
 https://malwaretech.com/2024/02/bypassing-edrs-with-edr-preload.html
 
 https://gatari.dev/posts/malicious-bytes/
+
+https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell

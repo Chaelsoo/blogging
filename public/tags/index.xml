@@ -6,12 +6,62 @@
     <description>Recent content in Tags on kanyo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Amsi</title>
       <link>http://localhost:1313/tags/amsi/</link>
-      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/tags/amsi/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Defender</title>
+      <link>http://localhost:1313/tags/defender/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/defender/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Edr-Evasion</title>
+      <link>http://localhost:1313/tags/edr-evasion/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/edr-evasion/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Loader</title>
+      <link>http://localhost:1313/tags/loader/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/loader/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Shellcode</title>
+      <link>http://localhost:1313/tags/shellcode/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/shellcode/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Windows</title>
+      <link>http://localhost:1313/tags/windows/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/windows/</guid>
       
       <description></description>
       
@@ -22,36 +72,6 @@
       <link>http://localhost:1313/tags/antivirus-bypass/</link>
       <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/tags/antivirus-bypass/</guid>
-      
-      <description></description>
-      
-    </item>
-    
-    <item>
-      <title>Defender</title>
-      <link>http://localhost:1313/tags/defender/</link>
-      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/tags/defender/</guid>
-      
-      <description></description>
-      
-    </item>
-    
-    <item>
-      <title>Edr-Evasion</title>
-      <link>http://localhost:1313/tags/edr-evasion/</link>
-      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/tags/edr-evasion/</guid>
-      
-      <description></description>
-      
-    </item>
-    
-    <item>
-      <title>Windows</title>
-      <link>http://localhost:1313/tags/windows/</link>
-      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/tags/windows/</guid>
       
       <description></description>
       

@@ -6,7 +6,19 @@
     <description>Recent content in Home on kanyo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Walking Past Defender</title>
+      <link>http://localhost:1313/blogs/walking-past-defender/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/walking-past-defender/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/blogs/defender/mimikatz.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;When it came to practice, I hardly found what I was looking for. Most writeups and blogs on stager development and Defender evasion put everything into complex scenarios, so much detail, so much context, so much &amp;ldquo;here&amp;rsquo;s how I did it in this specific environment with these specific tools.&amp;rdquo; But no one actually simplified it. No one broke it down to what it actually is at its core.&lt;/p&gt;</description>
+      
+    </item>
+    
     <item>
       <title>How Defender Actually Works</title>
       <link>http://localhost:1313/blogs/how-defender-actually-works/</link>
