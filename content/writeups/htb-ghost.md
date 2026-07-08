@@ -418,6 +418,10 @@ Pass the hash into WinRM on the DC:
 evil-winrm -i DC01.ghost.htb -u administrator -H 1cdb17d5c14ff69e7067cffcc9e470bd
 ```
 
+Ghost is one of those boxes that sticks with you. Not because any single step was impossible, but because the chain is so long and every link is genuinely different. Login form to blind LDAP injection to path traversal to command injection to SSH socket hijacking to DNS poisoning to gMSA to Golden SAML to linked SQL servers to potato to cross-forest ticket forgery. None of it felt like padding.
+
+The things worth carrying forward: blind LDAP injection as a credential extraction primitive, not just an auth bypass. The ControlMaster hijack as a lateral movement path out of containers. And the ExtraSIDs attack for intraforest escalation, which shows up more in real environments than people think, especially where teams spin up child domains for "isolation" without realizing they've tied the two domains' fates together.
+
 ## References
 
 *Reference: [Hunters Security - ADFS Threat Hunting](https://www.hunters.security/en/blog/adfs-threat-hunting)*
