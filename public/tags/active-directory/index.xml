@@ -6,7 +6,18 @@
     <description>Recent content in Active-Directory on kanyo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Tue, 26 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/active-directory/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 19 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/active-directory/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Ghost</title>
+      <link>http://localhost:1313/writeups/htb-ghost/</link>
+      <pubDate>Fri, 19 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-ghost/</guid>
+      
+      <description>&lt;p&gt;Ghost is the kind of box you respect even when it&amp;rsquo;s frustrating you. Two domains, a forest trust, a container, a Linux dev workstation, ADFS, linked SQL servers. The chain is long and every step is distinct. Nothing is filler. You&amp;rsquo;re not repeating the same technique twice.&lt;/p&gt;
+&lt;p&gt;The short version: LDAP injection gets you into an intranet app, blind injection extracts a Gitea password, a path traversal in Ghost CMS hands you an env key that unlocks a command injection endpoint. From the container you hijack an SSH ControlMaster socket and land on a dev machine as a domain user with an active TGT. From there DNS poisoning gets you another user&amp;rsquo;s hash, and that user has ReadGMSAPassword on the ADFS service account. You dump the ADFS token-signing keys, forge a Golden SAML assertion as Administrator, and walk into the Ghost config panel, which happens to have an MSSQL query interface connected to both domains. SA impersonation, EfsPotato for SYSTEM, DCSync the corp domain, then craft a cross-forest Golden Ticket with the Enterprise Admins ExtraSID to DCSync the parent domain. That&amp;rsquo;s the whole thing.&lt;/p&gt;</description>
+      
+    </item>
+    
     <item>
       <title>HackINI 2026: Shell-DC</title>
       <link>http://localhost:1313/writeups/hackini-shell-dc/</link>

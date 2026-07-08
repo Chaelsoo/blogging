@@ -1,0 +1,15 @@
+{
+  "space_id": "6790f091-be70-816e-89c1-0003a5ee1edf",
+  "source": "database",
+  "database_id": "da471634-8d20-466e-9929-9e71b5c2f26a",
+  "output_dir": "notion/sync-output",
+  "slug_property": null,
+  "frontmatter": {
+    "techniques": "Techniques",
+    "difficulty": "Difficulty",
+    "status": "Status",
+    "os": "OS",
+    "season": "Season",
+    "name": "Name"
+  }
+}
