@@ -14,4 +14,3 @@ Blog posts live in `content/blogs/` and writeups in `content/writeups/` as `.md`
 ```bash
 hugo server --disableFastRender
 ```
-hm
