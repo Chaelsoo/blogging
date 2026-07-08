@@ -68,6 +68,24 @@
     <loc>http://localhost:1313/writeups/</loc>
     <lastmod>2026-06-19T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/writeups/htb-flight/</loc>
+    <lastmod>2026-06-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/iis/</loc>
+    <lastmod>2026-06-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/ntlm-coercion/</loc>
+    <lastmod>2026-06-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/ntlm-theft/</loc>
+    <lastmod>2026-06-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/password-spray/</loc>
+    <lastmod>2026-06-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/seimpersonateprivilege/</loc>
+    <lastmod>2026-06-15T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/tags/esc8/</loc>
     <lastmod>2026-06-09T00:00:00+00:00</lastmod>
   </url><url>

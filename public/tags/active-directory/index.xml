@@ -13,8 +13,20 @@
       <pubDate>Fri, 19 Jun 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/writeups/htb-ghost/</guid>
       
-      <description>&lt;p&gt;Ghost is the kind of box you respect even when it&amp;rsquo;s frustrating you. Two domains, a forest trust, a container, a Linux dev workstation, ADFS, linked SQL servers. The chain is long and every step is distinct. Nothing is filler. You&amp;rsquo;re not repeating the same technique twice.&lt;/p&gt;
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/writeups/htb-ghost/ghost-pwned.png&#34; alt=&#34;Ghost has been Pwned by kanyo on 19 Jun 2026&#34;&gt;&lt;/p&gt;
+&lt;p&gt;Ghost is the kind of box you respect even when it&amp;rsquo;s frustrating you. Two domains, a forest trust, a container, a Linux dev workstation, ADFS, linked SQL servers. The chain is long and every step is distinct. Nothing is filler. You&amp;rsquo;re not repeating the same technique twice.&lt;/p&gt;
 &lt;p&gt;The short version: LDAP injection gets you into an intranet app, blind injection extracts a Gitea password, a path traversal in Ghost CMS hands you an env key that unlocks a command injection endpoint. From the container you hijack an SSH ControlMaster socket and land on a dev machine as a domain user with an active TGT. From there DNS poisoning gets you another user&amp;rsquo;s hash, and that user has ReadGMSAPassword on the ADFS service account. You dump the ADFS token-signing keys, forge a Golden SAML assertion as Administrator, and walk into the Ghost config panel, which happens to have an MSSQL query interface connected to both domains. SA impersonation, EfsPotato for SYSTEM, DCSync the corp domain, then craft a cross-forest Golden Ticket with the Enterprise Admins ExtraSID to DCSync the parent domain. That&amp;rsquo;s the whole thing.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Flight</title>
+      <link>http://localhost:1313/writeups/htb-flight/</link>
+      <pubDate>Mon, 15 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-flight/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/writeups/htb-flight/flight-pwned.png&#34; alt=&#34;Flight has been Pwned by kanyo - 15 Jun 2026, 850 XP&#34;&gt;&lt;/p&gt;
+&lt;p&gt;There&amp;rsquo;s something satisfying about a box that commits to a theme. Flight runs NTLM coercion twice, through two completely different surfaces, and neither of them is the obvious one. The first is a PHP &lt;code&gt;?view=&lt;/code&gt; parameter that looks like a boring LFI. The second is a shared network folder that users actually browse to. Same technique, different packaging. Once you understand why the first one works, the second one clicks immediately.&lt;/p&gt;</description>
       
     </item>
     
