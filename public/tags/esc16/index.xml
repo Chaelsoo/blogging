@@ -1,2 +1,22 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Esc16 on kanyo's blog</title><link>https://chaelsoo.me/tags/esc16/</link><description>Recent content in Esc16 on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 06 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/esc16/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: Fluffy</title><link>https://chaelsoo.me/writeups/htb-fluffy/</link><pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-fluffy/</guid><description>&lt;p&gt;Windows box, Active Directory. What made this one interesting was finding an Upgrade_Notice.pdf in the IT share that listed the exact CVEs the environment was sitting on. A CTF design choice that feels like a realistic IT team tracking their own attack surface and just not getting around to patching it. You&amp;rsquo;re not hunting blind; you&amp;rsquo;re triaging a known vulnerability list.&lt;/p&gt;
-&lt;p&gt;The chain hits three distinct techniques: CVE-2025-24071 coerces an NTLMv2 hash from anyone who browses the share, Shadow Credentials via &lt;code&gt;msDS-KeyCredentialLink&lt;/code&gt; get you lateral movement without ever touching a password, and ESC16 on the CA exploits a disabled security extension to slip a domain admin certificate past the KDC. Each one has a specific reason it works that&amp;rsquo;s worth understanding properly.&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Esc16 on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/esc16/</link>
+    <description>Recent content in Esc16 on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Sat, 06 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/esc16/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Fluffy</title>
+      <link>http://localhost:1313/writeups/htb-fluffy/</link>
+      <pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-fluffy/</guid>
+      
+      <description>&lt;p&gt;Windows box, Active Directory. What made this one interesting was finding an Upgrade_Notice.pdf in the IT share that listed the exact CVEs the environment was sitting on. A CTF design choice that feels like a realistic IT team tracking their own attack surface and just not getting around to patching it. You&amp;rsquo;re not hunting blind; you&amp;rsquo;re triaging a known vulnerability list.&lt;/p&gt;
+&lt;p&gt;The chain hits three distinct techniques: CVE-2025-24071 coerces an NTLMv2 hash from anyone who browses the share, Shadow Credentials via &lt;code&gt;msDS-KeyCredentialLink&lt;/code&gt; get you lateral movement without ever touching a password, and ESC16 on the CA exploits a disabled security extension to slip a domain admin certificate past the KDC. Each one has a specific reason it works that&amp;rsquo;s worth understanding properly.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

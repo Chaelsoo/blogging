@@ -1,1 +1,21 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tcb on kanyo's blog</title><link>https://chaelsoo.me/tags/tcb/</link><description>Recent content in Tcb on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Mon, 08 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/tcb/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: Media</title><link>https://chaelsoo.me/writeups/htb-media/</link><pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-media/</guid><description>&lt;p&gt;A Windows box with a media company theme that tells you exactly what the vulnerability is the moment you read the upload form. The site asks you to submit a video file &amp;ldquo;compatible with Windows Media Player.&amp;rdquo; That phrasing is the hint. WMP processes playlist formats like &lt;code&gt;.m3u&lt;/code&gt; and when a UNC path appears in one, Windows automatically tries to authenticate to the remote share using the current user&amp;rsquo;s credentials. The server processes the upload with WMP, the auth request hits your Responder listener, and you get an NTLMv2 hash. Getting from user to admin is a junction symlink abuse: the upload path is derived from a predictable MD5 of the form inputs, so you can pre-create a junction at that exact path pointing to the webroot before the upload lands, which drops your webshell directly into XAMPP&amp;rsquo;s htdocs. The shell runs as Local Service, Local Service has SeTcbPrivilege, and that closes it.&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tcb on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/tcb/</link>
+    <description>Recent content in Tcb on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Mon, 08 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/tcb/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Media</title>
+      <link>http://localhost:1313/writeups/htb-media/</link>
+      <pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-media/</guid>
+      
+      <description>&lt;p&gt;A Windows box with a media company theme that tells you exactly what the vulnerability is the moment you read the upload form. The site asks you to submit a video file &amp;ldquo;compatible with Windows Media Player.&amp;rdquo; That phrasing is the hint. WMP processes playlist formats like &lt;code&gt;.m3u&lt;/code&gt; and when a UNC path appears in one, Windows automatically tries to authenticate to the remote share using the current user&amp;rsquo;s credentials. The server processes the upload with WMP, the auth request hits your Responder listener, and you get an NTLMv2 hash. Getting from user to admin is a junction symlink abuse: the upload path is derived from a predictable MD5 of the form inputs, so you can pre-create a junction at that exact path pointing to the webroot before the upload lands, which drops your webshell directly into XAMPP&amp;rsquo;s htdocs. The shell runs as Local Service, Local Service has SeTcbPrivilege, and that closes it.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

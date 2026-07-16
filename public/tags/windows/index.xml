@@ -1,25 +1,285 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Windows on kanyo's blog</title><link>https://chaelsoo.me/tags/windows/</link><description>Recent content in Windows on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/windows/index.xml" rel="self" type="application/rss+xml"/><item><title>Walking Past Defender</title><link>https://chaelsoo.me/blogs/walking-past-defender/</link><pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/walking-past-defender/</guid><description>&lt;p&gt;&lt;img src="https://chaelsoo.me/blogs/defender/mimikatz.png" alt=""&gt;&lt;/p&gt;
-&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;When it came to practice, I hardly found what I was looking for. Most writeups and blogs on stager development and Defender evasion put everything into complex scenarios, so much detail, so much context, so much &amp;ldquo;here&amp;rsquo;s how I did it in this specific environment with these specific tools.&amp;rdquo; But no one actually simplified it. No one broke it down to what it actually is at its core.&lt;/p&gt;</description></item><item><title>How Defender Actually Works</title><link>https://chaelsoo.me/blogs/how-defender-actually-works/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/how-defender-actually-works/</guid><description>&lt;p&gt;&lt;img src="https://chaelsoo.me/blogs/defender/defender_aileenchik_shutterstock.webp" alt=""&gt;&lt;/p&gt;
-&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Windows on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/windows/</link>
+    <description>Recent content in Windows on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/windows/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Walking Past Defender</title>
+      <link>http://localhost:1313/blogs/walking-past-defender/</link>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/walking-past-defender/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/blogs/defender/mimikatz.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;When it came to practice, I hardly found what I was looking for. Most writeups and blogs on stager development and Defender evasion put everything into complex scenarios, so much detail, so much context, so much &amp;ldquo;here&amp;rsquo;s how I did it in this specific environment with these specific tools.&amp;rdquo; But no one actually simplified it. No one broke it down to what it actually is at its core.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>How Defender Actually Works</title>
+      <link>http://localhost:1313/blogs/how-defender-actually-works/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/how-defender-actually-works/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/blogs/defender/defender_aileenchik_shutterstock.webp&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;At Ingehack, I spent way too long blindly throwing obfuscated tools at a target. Change a string here, re-encode there, try a different obfuscator, run it again. Sometimes something worked. Most of the time it didn&amp;rsquo;t. And the frustrating part was that I had no real idea why, I was just guessing and hoping that enough random changes would eventually get me through.&lt;/p&gt;
-&lt;p&gt;That&amp;rsquo;s completely the wrong way to approach this.&lt;/p&gt;</description></item><item><title>HTB: Ghost</title><link>https://chaelsoo.me/writeups/htb-ghost/</link><pubDate>Fri, 19 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-ghost/</guid><description>&lt;p&gt;&lt;img src="https://chaelsoo.me/images/writeups/htb-ghost/ghost-pwned.png" alt="Ghost has been Pwned by kanyo on 19 Jun 2026"&gt;&lt;/p&gt;
+&lt;p&gt;That&amp;rsquo;s completely the wrong way to approach this.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Ghost</title>
+      <link>http://localhost:1313/writeups/htb-ghost/</link>
+      <pubDate>Fri, 19 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-ghost/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/writeups/htb-ghost/ghost-pwned.png&#34; alt=&#34;Ghost has been Pwned by kanyo on 19 Jun 2026&#34;&gt;&lt;/p&gt;
 &lt;p&gt;Ghost is the kind of box you respect even when it&amp;rsquo;s frustrating you. Two domains, a forest trust, a container, a Linux dev workstation, ADFS, linked SQL servers. The chain is long and every step is distinct. Nothing is filler. You&amp;rsquo;re not repeating the same technique twice.&lt;/p&gt;
-&lt;p&gt;The short version: LDAP injection gets you into an intranet app, blind injection extracts a Gitea password, a path traversal in Ghost CMS hands you an env key that unlocks a command injection endpoint. From the container you hijack an SSH ControlMaster socket and land on a dev machine as a domain user with an active TGT. From there DNS poisoning gets you another user&amp;rsquo;s hash, and that user has ReadGMSAPassword on the ADFS service account. You dump the ADFS token-signing keys, forge a Golden SAML assertion as Administrator, and walk into the Ghost config panel, which happens to have an MSSQL query interface connected to both domains. SA impersonation, EfsPotato for SYSTEM, DCSync the corp domain, then craft a cross-forest Golden Ticket with the Enterprise Admins ExtraSID to DCSync the parent domain. That&amp;rsquo;s the whole thing.&lt;/p&gt;</description></item><item><title>HTB: Flight</title><link>https://chaelsoo.me/writeups/htb-flight/</link><pubDate>Mon, 15 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-flight/</guid><description>&lt;p&gt;&lt;img src="https://chaelsoo.me/images/writeups/htb-flight/flight-pwned.png" alt="Flight has been Pwned by kanyo - 15 Jun 2026, 850 XP"&gt;&lt;/p&gt;
-&lt;p&gt;There&amp;rsquo;s something satisfying about a box that commits to a theme. Flight runs NTLM coercion twice, through two completely different surfaces, and neither of them is the obvious one. The first is a PHP &lt;code&gt;?view=&lt;/code&gt; parameter that looks like a boring LFI. The second is a shared network folder that users actually browse to. Same technique, different packaging. Once you understand why the first one works, the second one clicks immediately.&lt;/p&gt;</description></item><item><title>HTB: VulnCicada</title><link>https://chaelsoo.me/writeups/htb-vulncicada/</link><pubDate>Tue, 09 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-vulncicada/</guid><description>&lt;p&gt;This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note, an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&amp;rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &amp;ldquo;NTLM is disabled&amp;rdquo; doesn&amp;rsquo;t mean relay attacks are impossible. It means you have to do it with Kerberos instead, which is a completely different mechanism that&amp;rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&amp;rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.&lt;/p&gt;</description></item><item><title>HTB: Jeeves</title><link>https://chaelsoo.me/writeups/htb-jeeves/</link><pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-jeeves/</guid><description>&lt;p&gt;Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page, pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&amp;rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&amp;rsquo;t in &lt;code&gt;hm.txt&lt;/code&gt;, it&amp;rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.&lt;/p&gt;</description></item><item><title>HTB: Media</title><link>https://chaelsoo.me/writeups/htb-media/</link><pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-media/</guid><description>&lt;p&gt;A Windows box with a media company theme that tells you exactly what the vulnerability is the moment you read the upload form. The site asks you to submit a video file &amp;ldquo;compatible with Windows Media Player.&amp;rdquo; That phrasing is the hint. WMP processes playlist formats like &lt;code&gt;.m3u&lt;/code&gt; and when a UNC path appears in one, Windows automatically tries to authenticate to the remote share using the current user&amp;rsquo;s credentials. The server processes the upload with WMP, the auth request hits your Responder listener, and you get an NTLMv2 hash. Getting from user to admin is a junction symlink abuse: the upload path is derived from a predictable MD5 of the form inputs, so you can pre-create a junction at that exact path pointing to the webroot before the upload lands, which drops your webshell directly into XAMPP&amp;rsquo;s htdocs. The shell runs as Local Service, Local Service has SeTcbPrivilege, and that closes it.&lt;/p&gt;</description></item><item><title>HTB: Pov</title><link>https://chaelsoo.me/writeups/htb-pov/</link><pubDate>Sun, 07 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-pov/</guid><description>&lt;p&gt;Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&amp;rsquo;t sanitize the file path. Reading &lt;code&gt;web.config&lt;/code&gt; through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.&lt;/p&gt;</description></item><item><title>HTB: Voleur</title><link>https://chaelsoo.me/writeups/htb-voleur/</link><pubDate>Sun, 07 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-voleur/</guid><description>&lt;p&gt;Windows AD box where NTLM authentication is completely disabled. That single constraint changes everything about how you operate: no pass-the-hash, no NTLM relay, every tool needs a TGT and Kerberos must be properly configured. The box hands you starting credentials upfront but then makes you earn the rest through a chain that&amp;rsquo;s worth understanding. A spreadsheet locked in an SMB share leaks passwords for accounts you can&amp;rsquo;t use yet. A service account with WriteSPN lets you kerberoast your way to WinRM. A group called Restore_Users hints at a deleted employee. And once you bring that employee back from tombstone, his archived DPAPI blobs hand you the next account&amp;rsquo;s credentials without any cracking at all.&lt;/p&gt;</description></item><item><title>HTB: Fluffy</title><link>https://chaelsoo.me/writeups/htb-fluffy/</link><pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-fluffy/</guid><description>&lt;p&gt;Windows box, Active Directory. What made this one interesting was finding an Upgrade_Notice.pdf in the IT share that listed the exact CVEs the environment was sitting on. A CTF design choice that feels like a realistic IT team tracking their own attack surface and just not getting around to patching it. You&amp;rsquo;re not hunting blind; you&amp;rsquo;re triaging a known vulnerability list.&lt;/p&gt;
-&lt;p&gt;The chain hits three distinct techniques: CVE-2025-24071 coerces an NTLMv2 hash from anyone who browses the share, Shadow Credentials via &lt;code&gt;msDS-KeyCredentialLink&lt;/code&gt; get you lateral movement without ever touching a password, and ESC16 on the CA exploits a disabled security extension to slip a domain admin certificate past the KDC. Each one has a specific reason it works that&amp;rsquo;s worth understanding properly.&lt;/p&gt;</description></item><item><title>HTB: TombWatcher</title><link>https://chaelsoo.me/writeups/htb-tombwatcher/</link><pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-tombwatcher/</guid><description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description></item><item><title>HTB: StreamIO</title><link>https://chaelsoo.me/writeups/htb-streamio/</link><pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-streamio/</guid><description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability. It&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description></item><item><title>HTB: Administrator</title><link>https://chaelsoo.me/writeups/htb-administrator/</link><pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-administrator/</guid><description>&lt;p&gt;Windows box, Medium. They gave you credentials to start: &lt;code&gt;Olivia:ichliebedich&lt;/code&gt;. WinRM open, SMB open, LDAP accessible. The whole box is BloodHound ACL chain work. What made it stick was the dead end near the finish. Emily has GenericWrite over Ethan, and the natural move is Shadow Credentials. But ADCS isn&amp;rsquo;t configured on this domain. That null result pushed toward something I use less often: targeted Kerberoasting. You don&amp;rsquo;t need an account to already have an SPN. If you have GenericWrite over it, you can write one yourself, and now it&amp;rsquo;s kerberoastable on demand.&lt;/p&gt;</description></item><item><title>HTB: Authority</title><link>https://chaelsoo.me/writeups/htb-authority/</link><pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-authority/</guid><description>&lt;p&gt;Windows box, Medium. The foothold here isn&amp;rsquo;t a CVE or a spray. It&amp;rsquo;s an Ansible deployment someone left readable on an SMB share with no credentials required. Three vault-encrypted credential blobs in the configs looked protected. They weren&amp;rsquo;t, because all three used the same master password. Once you crack those, you land on a PWM service on port 8443: a self-service password management portal backed by an LDAP directory. The interesting part is that PWM&amp;rsquo;s configuration file specifies which LDAP server to authenticate against. Change that URL to point at your own machine, upload the config back through the portal, and the service helpfully connects to your Responder listener using the LDAP service account in cleartext.&lt;/p&gt;</description></item><item><title>HTB: Escape</title><link>https://chaelsoo.me/writeups/htb-escape/</link><pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-escape/</guid><description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description></item><item><title>HTB: Scrambled</title><link>https://chaelsoo.me/writeups/htb-scrambled/</link><pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-scrambled/</guid><description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
-&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description></item><item><title>HTB: Cicada</title><link>https://chaelsoo.me/writeups/htb-cicada/</link><pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-cicada/</guid><description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;
-&lt;h2 id="recon"&gt;Recon&lt;/h2&gt;
-&lt;p&gt;10.129.231.149, domain &lt;code&gt;cicada.htb&lt;/code&gt;, DC hostname &lt;code&gt;CICADA-DC&lt;/code&gt;. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:&lt;/p&gt;</description></item><item><title>HTB: EscapeTwo</title><link>https://chaelsoo.me/writeups/htb-escapetwo/</link><pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-escapetwo/</guid><description>&lt;p&gt;Windows box, same domain name as the original Escape (&lt;code&gt;sequel.htb&lt;/code&gt;), but a different environment. The ESC1 from that box shows up again here, except this time it&amp;rsquo;s locked behind an ACL chain: you need WriteOwner over a service account, then full control, then a template write that turns a non-vulnerable template into one you can exploit. The ESC4-to-ESC1 chain is the thing worth taking away from this box.&lt;/p&gt;
-&lt;p&gt;We were given credentials upfront: &lt;code&gt;rose / KxEPkKe6R8su&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>HTB: Return</title><link>https://chaelsoo.me/writeups/htb-return/</link><pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-return/</guid><description>&lt;p&gt;Windows box, no credentials. There&amp;rsquo;s no web app to enumerate, no SMB shares to dig through. The initial foothold comes entirely from a printer admin panel running on port 80. What makes this box memorable is how the credential theft works: you abuse the way the printer firmware tests its own configuration to make it hand over credentials to a listener you control. After that, Server Operators takes you to SYSTEM in a few commands.&lt;/p&gt;</description></item><item><title>HTB: Sauna</title><link>https://chaelsoo.me/writeups/htb-sauna/</link><pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-sauna/</guid><description>&lt;p&gt;Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it&amp;rsquo;s the only initial foothold surface. What makes this box interesting is the AS-REP roasting step, a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.&lt;/p&gt;</description></item><item><title>HTB: Timelapse</title><link>https://chaelsoo.me/writeups/htb-timelapse/</link><pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-timelapse/</guid><description>&lt;p&gt;Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&amp;rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&amp;rsquo;s deployed everywhere and constantly misread on BloodHound graphs.&lt;/p&gt;</description></item><item><title>HackINI 2026: IT Workstation</title><link>https://chaelsoo.me/writeups/hackini-it-workstation/</link><pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/hackini-it-workstation/</guid><description>&lt;p&gt;The second machine in the chain. A Windows workstation with WinRM exposed and nothing else obviously interesting until you&amp;rsquo;re inside. Autologon credentials stored in plaintext in the registry handed over local Administrator, then Mimikatz pulled a cleartext domain password out of Credential Manager. That opened the door to the Active Directory machine.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;Ran through this one with &lt;a href="https://www.linkedin.com/in/aymen-drid-36bba4243/"&gt;Aymen&lt;/a&gt;. Two people piecing together a chain like this makes a real difference: every dead end gets shorter when someone&amp;rsquo;s right there with you. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description></item><item><title>HackINI 2026: Shell-DC</title><link>https://chaelsoo.me/writeups/hackini-shell-dc/</link><pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/hackini-shell-dc/</guid><description>&lt;p&gt;This was the most satisfying machine in the chain. A full Active Directory environment, &lt;code&gt;ad.shell.local&lt;/code&gt; on Windows Server 2019, with a deliberate series of layered misconfigurations that build on each other. You start with a regular domain user and work your way through Kerberoasting, a BloodHound ACL chain, Shadow Credentials, gMSA password abuse, and finally tombstone reanimation to reach Domain Admin.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;Solved this one together with &lt;a href="https://www.linkedin.com/in/aymen-drid-36bba4243/"&gt;Aymen&lt;/a&gt;. We spent the better part of a day working through this chain side by side, and a lot of what made it click came from having someone just as deep in it to think out loud with. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description></item><item><title>IngeHack: EDR Evasion</title><link>https://chaelsoo.me/writeups/ingehack-edr-evasion/</link><pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/ingehack-edr-evasion/</guid><description>&lt;p&gt;An Active Directory series from IngeHack. The chain is built around a Windows environment with Defender active — meaning before you can do anything meaningful, you have to get your tooling past it. That was the first challenge, and the one this writeup covers for now.&lt;/p&gt;
-&lt;p&gt;The approach was modifying GodPotato to strip or replace the signatures that Defender flags, combined with techniques for building custom versions of common tools that don&amp;rsquo;t carry recognizable bytecode patterns. The two resources below were the most useful references for this:&lt;/p&gt;</description></item><item><title>HTB Season 10: Pirate</title><link>https://chaelsoo.me/writeups/htb-pirate/</link><pubDate>Sat, 28 Feb 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-pirate/</guid><description>&lt;p&gt;Pirate is a Windows Hard box and earns the rating. It&amp;rsquo;s a multi stage Active Directory environment where no single step gets you very far on its own. The path to Domain Admin is built from several smaller wins stacked on top of each other. The kind of machine you want to take notes on.&lt;/p&gt;
-&lt;h2 id="whats-inside"&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
+&lt;p&gt;The short version: LDAP injection gets you into an intranet app, blind injection extracts a Gitea password, a path traversal in Ghost CMS hands you an env key that unlocks a command injection endpoint. From the container you hijack an SSH ControlMaster socket and land on a dev machine as a domain user with an active TGT. From there DNS poisoning gets you another user&amp;rsquo;s hash, and that user has ReadGMSAPassword on the ADFS service account. You dump the ADFS token-signing keys, forge a Golden SAML assertion as Administrator, and walk into the Ghost config panel, which happens to have an MSSQL query interface connected to both domains. SA impersonation, EfsPotato for SYSTEM, DCSync the corp domain, then craft a cross-forest Golden Ticket with the Enterprise Admins ExtraSID to DCSync the parent domain. That&amp;rsquo;s the whole thing.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Flight</title>
+      <link>http://localhost:1313/writeups/htb-flight/</link>
+      <pubDate>Mon, 15 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-flight/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/writeups/htb-flight/flight-pwned.png&#34; alt=&#34;Flight has been Pwned by kanyo - 15 Jun 2026, 850 XP&#34;&gt;&lt;/p&gt;
+&lt;p&gt;There&amp;rsquo;s something satisfying about a box that commits to a theme. Flight runs NTLM coercion twice, through two completely different surfaces, and neither of them is the obvious one. The first is a PHP &lt;code&gt;?view=&lt;/code&gt; parameter that looks like a boring LFI. The second is a shared network folder that users actually browse to. Same technique, different packaging. Once you understand why the first one works, the second one clicks immediately.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: VulnCicada</title>
+      <link>http://localhost:1313/writeups/htb-vulncicada/</link>
+      <pubDate>Tue, 09 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-vulncicada/</guid>
+      
+      <description>&lt;p&gt;This one genuinely surprised me at almost every step. The entry was a photo on an NFS share with a password on a sticky note, an Easy-box trick on what turns out to be a Medium machine. Then the environment punches back: NTLM is disabled domain-wide, so every standard relay tool, every classic pass-the-hash shortcut, just bounces. The ADCS scan comes back with ESC8, web enrollment over HTTP. Normally that&amp;rsquo;s an NTLM relay to certsrv. Without NTLM it looks dead. But &amp;ldquo;NTLM is disabled&amp;rdquo; doesn&amp;rsquo;t mean relay attacks are impossible. It means you have to do it with Kerberos instead, which is a completely different mechanism that&amp;rsquo;s conceptually harder to grasp. You control the DNS name, so you control the SPN the DC requests a ticket for, so you can be the legitimate endpoint that ticket was meant for and turn around and use it at certsrv. I didn&amp;rsquo;t know this was even a thing before this box. Tons of learning, exactly what a good Medium should feel like.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Jeeves</title>
+      <link>http://localhost:1313/writeups/htb-jeeves/</link>
+      <pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-jeeves/</guid>
+      
+      <description>&lt;p&gt;Windows box with two web services and a theme. Port 80 presents a fake Ask Jeeves search engine that sends everything to a static error page, pure misdirection. Port 50000 runs Jetty, which is the real surface: a Jenkins instance that requires no authentication and exposes a Groovy script console you can run arbitrary code in. The privilege escalation is a KeePass database sitting in kohsuke&amp;rsquo;s Documents folder. Inside it, an NTLM hash stored as a password that works for pass-the-hash as Administrator. Then one more trick at the end: the root flag isn&amp;rsquo;t in &lt;code&gt;hm.txt&lt;/code&gt;, it&amp;rsquo;s in an alternate data stream attached to it, invisible to a normal directory listing.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Media</title>
+      <link>http://localhost:1313/writeups/htb-media/</link>
+      <pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-media/</guid>
+      
+      <description>&lt;p&gt;A Windows box with a media company theme that tells you exactly what the vulnerability is the moment you read the upload form. The site asks you to submit a video file &amp;ldquo;compatible with Windows Media Player.&amp;rdquo; That phrasing is the hint. WMP processes playlist formats like &lt;code&gt;.m3u&lt;/code&gt; and when a UNC path appears in one, Windows automatically tries to authenticate to the remote share using the current user&amp;rsquo;s credentials. The server processes the upload with WMP, the auth request hits your Responder listener, and you get an NTLMv2 hash. Getting from user to admin is a junction symlink abuse: the upload path is derived from a predictable MD5 of the form inputs, so you can pre-create a junction at that exact path pointing to the webroot before the upload lands, which drops your webshell directly into XAMPP&amp;rsquo;s htdocs. The shell runs as Local Service, Local Service has SeTcbPrivilege, and that closes it.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Pov</title>
+      <link>http://localhost:1313/writeups/htb-pov/</link>
+      <pubDate>Sun, 07 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-pov/</guid>
+      
+      <description>&lt;p&gt;Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&amp;rsquo;t sanitize the file path. Reading &lt;code&gt;web.config&lt;/code&gt; through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Voleur</title>
+      <link>http://localhost:1313/writeups/htb-voleur/</link>
+      <pubDate>Sun, 07 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-voleur/</guid>
+      
+      <description>&lt;p&gt;Windows AD box where NTLM authentication is completely disabled. That single constraint changes everything about how you operate: no pass-the-hash, no NTLM relay, every tool needs a TGT and Kerberos must be properly configured. The box hands you starting credentials upfront but then makes you earn the rest through a chain that&amp;rsquo;s worth understanding. A spreadsheet locked in an SMB share leaks passwords for accounts you can&amp;rsquo;t use yet. A service account with WriteSPN lets you kerberoast your way to WinRM. A group called Restore_Users hints at a deleted employee. And once you bring that employee back from tombstone, his archived DPAPI blobs hand you the next account&amp;rsquo;s credentials without any cracking at all.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Fluffy</title>
+      <link>http://localhost:1313/writeups/htb-fluffy/</link>
+      <pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-fluffy/</guid>
+      
+      <description>&lt;p&gt;Windows box, Active Directory. What made this one interesting was finding an Upgrade_Notice.pdf in the IT share that listed the exact CVEs the environment was sitting on. A CTF design choice that feels like a realistic IT team tracking their own attack surface and just not getting around to patching it. You&amp;rsquo;re not hunting blind; you&amp;rsquo;re triaging a known vulnerability list.&lt;/p&gt;
+&lt;p&gt;The chain hits three distinct techniques: CVE-2025-24071 coerces an NTLMv2 hash from anyone who browses the share, Shadow Credentials via &lt;code&gt;msDS-KeyCredentialLink&lt;/code&gt; get you lateral movement without ever touching a password, and ESC16 on the CA exploits a disabled security extension to slip a domain admin certificate past the KDC. Each one has a specific reason it works that&amp;rsquo;s worth understanding properly.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: TombWatcher</title>
+      <link>http://localhost:1313/writeups/htb-tombwatcher/</link>
+      <pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-tombwatcher/</guid>
+      
+      <description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: StreamIO</title>
+      <link>http://localhost:1313/writeups/htb-streamio/</link>
+      <pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-streamio/</guid>
+      
+      <description>&lt;p&gt;Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&amp;rsquo;t any single vulnerability. It&amp;rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&amp;rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Administrator</title>
+      <link>http://localhost:1313/writeups/htb-administrator/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-administrator/</guid>
+      
+      <description>&lt;p&gt;Windows box, Medium. They gave you credentials to start: &lt;code&gt;Olivia:ichliebedich&lt;/code&gt;. WinRM open, SMB open, LDAP accessible. The whole box is BloodHound ACL chain work. What made it stick was the dead end near the finish. Emily has GenericWrite over Ethan, and the natural move is Shadow Credentials. But ADCS isn&amp;rsquo;t configured on this domain. That null result pushed toward something I use less often: targeted Kerberoasting. You don&amp;rsquo;t need an account to already have an SPN. If you have GenericWrite over it, you can write one yourself, and now it&amp;rsquo;s kerberoastable on demand.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Authority</title>
+      <link>http://localhost:1313/writeups/htb-authority/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-authority/</guid>
+      
+      <description>&lt;p&gt;Windows box, Medium. The foothold here isn&amp;rsquo;t a CVE or a spray. It&amp;rsquo;s an Ansible deployment someone left readable on an SMB share with no credentials required. Three vault-encrypted credential blobs in the configs looked protected. They weren&amp;rsquo;t, because all three used the same master password. Once you crack those, you land on a PWM service on port 8443: a self-service password management portal backed by an LDAP directory. The interesting part is that PWM&amp;rsquo;s configuration file specifies which LDAP server to authenticate against. Change that URL to point at your own machine, upload the config back through the portal, and the service helpfully connects to your Responder listener using the LDAP service account in cleartext.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Escape</title>
+      <link>http://localhost:1313/writeups/htb-escape/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-escape/</guid>
+      
+      <description>&lt;p&gt;Windows AD box with MSSQL exposed and no web server. Cleaner attack surface than most. You&amp;rsquo;re not sifting through web directories waiting for gobuster to finish. The path here chains three separate credential finds, each one unlocking the next: a PDF in a public share, a SQL error log, and an ADCS certificate template open to any domain user. The ESC1 at the end is worth understanding because it shows up constantly in real environments.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Scrambled</title>
+      <link>http://localhost:1313/writeups/htb-scrambled/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-scrambled/</guid>
+      
+      <description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
+&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Cicada</title>
+      <link>http://localhost:1313/writeups/htb-cicada/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-cicada/</guid>
+      
+      <description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;
+&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+&lt;p&gt;10.129.231.149, domain &lt;code&gt;cicada.htb&lt;/code&gt;, DC hostname &lt;code&gt;CICADA-DC&lt;/code&gt;. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: EscapeTwo</title>
+      <link>http://localhost:1313/writeups/htb-escapetwo/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-escapetwo/</guid>
+      
+      <description>&lt;p&gt;Windows box, same domain name as the original Escape (&lt;code&gt;sequel.htb&lt;/code&gt;), but a different environment. The ESC1 from that box shows up again here, except this time it&amp;rsquo;s locked behind an ACL chain: you need WriteOwner over a service account, then full control, then a template write that turns a non-vulnerable template into one you can exploit. The ESC4-to-ESC1 chain is the thing worth taking away from this box.&lt;/p&gt;
+&lt;p&gt;We were given credentials upfront: &lt;code&gt;rose / KxEPkKe6R8su&lt;/code&gt;.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Return</title>
+      <link>http://localhost:1313/writeups/htb-return/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-return/</guid>
+      
+      <description>&lt;p&gt;Windows box, no credentials. There&amp;rsquo;s no web app to enumerate, no SMB shares to dig through. The initial foothold comes entirely from a printer admin panel running on port 80. What makes this box memorable is how the credential theft works: you abuse the way the printer firmware tests its own configuration to make it hand over credentials to a listener you control. After that, Server Operators takes you to SYSTEM in a few commands.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Sauna</title>
+      <link>http://localhost:1313/writeups/htb-sauna/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-sauna/</guid>
+      
+      <description>&lt;p&gt;Windows AD box, no credentials given. The website is running for a fictional bank called Egotistical Bank, and it&amp;rsquo;s the only initial foothold surface. What makes this box interesting is the AS-REP roasting step, a technique that often gets lumped in with Kerberoasting in tool menus, but the mechanism is completely different and worth understanding on its own. The escalation is clean: Winlogon autologon keys exposing a service account, that service account having DCSync rights.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Timelapse</title>
+      <link>http://localhost:1313/writeups/htb-timelapse/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-timelapse/</guid>
+      
+      <description>&lt;p&gt;Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&amp;rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&amp;rsquo;s deployed everywhere and constantly misread on BloodHound graphs.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HackINI 2026: IT Workstation</title>
+      <link>http://localhost:1313/writeups/hackini-it-workstation/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-it-workstation/</guid>
+      
+      <description>&lt;p&gt;The second machine in the chain. A Windows workstation with WinRM exposed and nothing else obviously interesting until you&amp;rsquo;re inside. Autologon credentials stored in plaintext in the registry handed over local Administrator, then Mimikatz pulled a cleartext domain password out of Credential Manager. That opened the door to the Active Directory machine.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Ran through this one with &lt;a href=&#34;https://www.linkedin.com/in/aymen-drid-36bba4243/&#34;&gt;Aymen&lt;/a&gt;. Two people piecing together a chain like this makes a real difference: every dead end gets shorter when someone&amp;rsquo;s right there with you. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HackINI 2026: Shell-DC</title>
+      <link>http://localhost:1313/writeups/hackini-shell-dc/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-shell-dc/</guid>
+      
+      <description>&lt;p&gt;This was the most satisfying machine in the chain. A full Active Directory environment, &lt;code&gt;ad.shell.local&lt;/code&gt; on Windows Server 2019, with a deliberate series of layered misconfigurations that build on each other. You start with a regular domain user and work your way through Kerberoasting, a BloodHound ACL chain, Shadow Credentials, gMSA password abuse, and finally tombstone reanimation to reach Domain Admin.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Solved this one together with &lt;a href=&#34;https://www.linkedin.com/in/aymen-drid-36bba4243/&#34;&gt;Aymen&lt;/a&gt;. We spent the better part of a day working through this chain side by side, and a lot of what made it click came from having someone just as deep in it to think out loud with. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>IngeHack: EDR Evasion</title>
+      <link>http://localhost:1313/writeups/ingehack-edr-evasion/</link>
+      <pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/ingehack-edr-evasion/</guid>
+      
+      <description>&lt;p&gt;An Active Directory series from IngeHack. The chain is built around a Windows environment with Defender active — meaning before you can do anything meaningful, you have to get your tooling past it. That was the first challenge, and the one this writeup covers for now.&lt;/p&gt;
+&lt;p&gt;The approach was modifying GodPotato to strip or replace the signatures that Defender flags, combined with techniques for building custom versions of common tools that don&amp;rsquo;t carry recognizable bytecode patterns. The two resources below were the most useful references for this:&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB Season 10: Pirate</title>
+      <link>http://localhost:1313/writeups/htb-pirate/</link>
+      <pubDate>Sat, 28 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-pirate/</guid>
+      
+      <description>&lt;p&gt;Pirate is a Windows Hard box and earns the rating. It&amp;rsquo;s a multi stage Active Directory environment where no single step gets you very far on its own. The path to Domain Admin is built from several smaller wins stacked on top of each other. The kind of machine you want to take notes on.&lt;/p&gt;
+&lt;h2 id=&#34;whats-inside&#34;&gt;What&amp;rsquo;s Inside&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;A realistic Active Directory environment with multiple users, groups, and services in play&lt;/li&gt;
 &lt;li&gt;Early enumeration that rewards thoroughness over speed&lt;/li&gt;
 &lt;li&gt;At least two distinct AD misconfigurations that each open a new door&lt;/li&gt;
 &lt;li&gt;A final escalation that ties the chain together, satisfying when it clicks&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;HTB Season 10 is still active. Full writeup drops once this machine retires.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

@@ -1,43 +1,403 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Timelapse | kanyo's blog</title><meta property="og:title" content="HTB: Timelapse | kanyo's blog"><meta name=twitter:title content="HTB: Timelapse | kanyo's blog"><meta itemprop=name content="HTB: Timelapse | kanyo's blog"><meta name=application-name content="HTB: Timelapse | kanyo's blog"><meta property="og:site_name" content><meta name=description content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy's credentials, and LAPS gives the DC admin password."><meta itemprop=description content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy's credentials, and LAPS gives the DC admin password."><meta property="og:description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy's credentials, and LAPS gives the DC admin password."><meta name=twitter:description content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy's credentials, and LAPS gives the DC admin password."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-timelapse/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-timelapse/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Timelapse"><meta property="og:description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy's credentials, and LAPS gives the DC admin password."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-01T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-01T00:00:00+00:00"><meta property="article:tag" content="Laps"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Timelapse"><meta name=twitter:description content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy's credentials, and LAPS gives the DC admin password."><link rel=canonical href=https://chaelsoo.me/writeups/htb-timelapse/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Timelapse</h1><div class=post-meta><time datetime=2026-06-01T00:00:00+00:00 itemprop=datePublished>1 Jun 2026</time></div></header><img src=/images/writeups/htb-timelapse/htb-timelapse-pwned.png alt="HTB: Timelapse" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#cracking-the-zip-and-pfx>Cracking the ZIP and PFX</a></li><li><a href=#winrm-via-client-certificate>WinRM via Client Certificate</a></li><li><a href=#powershell-history>PowerShell History</a></li><li><a href=#laps-password-via-svc_deploy>LAPS Password via svc_deploy</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&rsquo;s deployed everywhere and constantly misread on BloodHound graphs.</p><h2 id=recon>Recon</h2><p>10.129.227.113, domain <code>timelapse.htb</code>, DC01. One thing nmap flagged that&rsquo;s unusual: port 5986 open instead of the typical 5985. Port 5986 is WinRM over SSL (HTTPS). Regular WinRM is 5985 (plain HTTP). Null sessions were denied, but guest auth on SMB worked:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.129.227.113 -u <span class=s1>&#39;guest&#39;</span> -p <span class=s1>&#39;&#39;</span> --shares
-</span></span><span class=line><span class=cl>Share      Permissions
-</span></span><span class=line><span class=cl>Shares     READ
-</span></span></code></pre></div><p>The <code>Shares</code> share had two subdirectories: <code>Dev</code> and <code>HelpDesk</code>. HelpDesk had LAPS documentation, the installer, a datasheet, an operations guide. Filed as a hint for later. Dev had one file: <code>winrm_backup.zip</code>.</p><h2 id=cracking-the-zip-and-pfx>Cracking the ZIP and PFX</h2><p>The zip was password-protected. zip2john extracts the hash, john cracks it:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>zip2john winrm_backup.zip &gt; zip.hash
-</span></span><span class=line><span class=cl>john zip.hash --wordlist<span class=o>=</span>/usr/share/wordlists/rockyou.txt
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>supremelegacy    <span class=o>(</span>winrm_backup.zip/legacyy_dev_auth.pfx<span class=o>)</span>
-</span></span></code></pre></div><p>Inside: <code>legacyy_dev_auth.pfx</code>. A PFX (PKCS#12) file is a binary container that bundles a certificate and its corresponding private key together, encrypted with a passphrase. It&rsquo;s typically used to distribute identities for things like client certificate authentication. The passphrase protects the private key inside. You can&rsquo;t extract either the certificate or the key without it.</p><p>This one was also passphrase-protected:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>crackpkcs12 -d /usr/share/wordlists/rockyou.txt legacyy_dev_auth.pfx
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>Dictionary attack - Thread <span class=m>8</span> - Password found: thuglegacy
-</span></span></code></pre></div><p>With the passphrase, openssl extracts the certificate and key separately:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out key.pem -nodes -passin pass:thuglegacy
-</span></span><span class=line><span class=cl>openssl pkcs12 -in legacyy_dev_auth.pfx -nokeys  -out cert.pem -passin pass:thuglegacy
-</span></span></code></pre></div><h2 id=winrm-via-client-certificate>WinRM via Client Certificate</h2><p>WinRM supports certificate-based authentication as an alternative to password auth. When you connect with a client certificate, WinRM checks which domain account the certificate&rsquo;s subject maps to and authenticates you as that user, no password involved. The certificate filename <code>legacyy_dev_auth.pfx</code> gives away the username.</p><p>evil-winrm takes the cert and key directly with <code>-c</code> and <code>-k</code>. The <code>-S</code> flag tells it to use SSL (port 5986):</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>evil-winrm -i 10.129.227.113 -c cert.pem -k key.pem -S
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>*Evil-WinRM* PS C:<span class=se>\U</span>sers<span class=se>\l</span>egacyy<span class=se>\D</span>ocuments&gt;
-</span></span></code></pre></div><p>User flag on legacyy&rsquo;s desktop.</p><h2 id=powershell-history>PowerShell History</h2><p>Checking <code>C:\Users\</code> showed legacyy, svc_deploy, TRX, and Administrator. The LAPS documentation in HelpDesk was the obvious escalation hint, but I needed credentials first.</p><p>Windows PowerShell saves command history through PSReadLine to a plaintext file:</p><pre tabindex=0><code>C:\Users\&lt;user&gt;\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
-</code></pre><p>This is the equivalent of bash&rsquo;s <code>.bash_history</code>, except Windows users are often less aware it exists. Legacyy&rsquo;s history:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=nb>type </span><span class=n>C:</span><span class=p>\</span><span class=n>Users</span><span class=p>\</span><span class=n>legacyy</span><span class=p>\</span><span class=n>AppData</span><span class=p>\</span><span class=n>Roaming</span><span class=p>\</span><span class=n>Microsoft</span><span class=p>\</span><span class=n>Windows</span><span class=p>\</span><span class=n>PowerShell</span><span class=p>\</span><span class=n>PSReadLine</span><span class=p>\</span><span class=n>ConsoleHost_history</span><span class=p>.</span><span class=py>txt</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>whoami</span>
-</span></span><span class=line><span class=cl><span class=n>ipconfig</span> <span class=p>/</span><span class=n>all</span>
-</span></span><span class=line><span class=cl><span class=n>netstat</span> <span class=n>-ano</span> <span class=p>|</span><span class=nb>select-string</span> <span class=n>LIST</span>
-</span></span><span class=line><span class=cl><span class=nv>$so</span> <span class=p>=</span> <span class=nb>New-PSSessionOption</span> <span class=n>-SkipCACheck</span> <span class=n>-SkipCNCheck</span> <span class=n>-SkipRevocationCheck</span>
-</span></span><span class=line><span class=cl><span class=nv>$p</span> <span class=p>=</span> <span class=nb>ConvertTo-SecureString</span> <span class=s1>&#39;E3R$Q62^12p7PLlC%KWaxuaV&#39;</span> <span class=n>-AsPlainText</span> <span class=n>-Force</span>
-</span></span><span class=line><span class=cl><span class=nv>$c</span> <span class=p>=</span> <span class=nb>New-Object</span> <span class=n>System</span><span class=p>.</span><span class=py>Management</span><span class=p>.</span><span class=py>Automation</span><span class=p>.</span><span class=py>PSCredential</span> <span class=p>(</span><span class=s1>&#39;svc_deploy&#39;</span><span class=p>,</span> <span class=nv>$p</span><span class=p>)</span>
-</span></span><span class=line><span class=cl><span class=nb>invoke-command</span> <span class=n>-computername</span> <span class=n>localhost</span> <span class=n>-credential</span> <span class=nv>$c</span> <span class=n>-port</span> <span class=mf>5986</span> <span class=n>-usessl</span> <span class=n>-SessionOption</span> <span class=nv>$so</span> <span class=n>-scriptblock</span> <span class=p>{</span><span class=n>whoami</span><span class=p>}</span>
-</span></span></code></pre></div><p>Someone used PowerShell remoting with svc_deploy&rsquo;s credentials to run a command on the local machine. The full credential object is right there in history: <code>svc_deploy:E3R$Q62^12p7PLlC%KWaxuaV</code>.</p><h2 id=laps-password-via-svc_deploy>LAPS Password via svc_deploy</h2><p>BloodHound showed what svc_deploy could do:</p><p><img src=/images/writeups/htb-timelapse/bloodhound-svc-deploy-laps-readers.png alt="BloodHound graph showing SVC_DEPLOY@TIMELAPSE.HTB is MemberOf LAPS_READERS@TIMELAPSE.HTB which has a ReadLAPSPassword edge to DC01.TIMELAPSE.HTB"></p><p><code>SVC_DEPLOY → LAPS_READERS → ReadLAPSPassword → DC01</code>.</p><p>LAPS (Local Administrator Password Solution) is a Microsoft tool that automatically rotates the built-in Administrator password on domain-joined machines on a schedule and stores the current password in AD as an attribute (<code>ms-Mcs-AdmPwd</code>) on the computer object. The point is to prevent lateral movement from one compromised machine to another via a shared local admin password. The tradeoff is that the password has to live somewhere. It lives in AD, readable by members of designated groups. If you&rsquo;re in one of those groups, you can read it.</p><p>bloodyAD queries it directly:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD --host 10.129.227.113 -d timelapse.htb <span class=se>\
-</span></span></span><span class=line><span class=cl>  -u svc_deploy -p <span class=s1>&#39;E3R$Q62^12p7PLlC%KWaxuaV&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  get search --filter <span class=s1>&#39;(ms-mcs-admpwdexpirationtime=*)&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  --attr ms-mcs-admpwd,ms-mcs-admpwdexpirationtime
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>distinguishedName: <span class=nv>CN</span><span class=o>=</span>DC01,OU<span class=o>=</span>Domain Controllers,DC<span class=o>=</span>timelapse,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>ms-Mcs-AdmPwd: 1xs%D<span class=o>)</span>bv+G8K8+Tpk<span class=o>{</span>e%7282
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>evil-winrm -i 10.129.227.113 -u Administrator -p <span class=s1>&#39;1xs%D)bv+G8K8+Tpk{e%7282&#39;</span> -S
-</span></span></code></pre></div><p>One thing worth noting: the root flag wasn&rsquo;t on Administrator&rsquo;s desktop. It was on the TRX user&rsquo;s desktop. Grabbed it from <code>C:\Users\TRX\Desktop\</code>. The PowerShell history file is the lesson from this box. The pfx cert hidden in a zip was a clever entry, but someone leaving <code>evil-winrm</code> invocations in their command history with plaintext credentials is the kind of thing that shows up constantly in real Windows environments. The ConsoleHost_history.txt file is almost never on the checklist and almost always has something in it.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Timelapse | kanyo&#39;s blog</title>
+<meta property="og:title" content="HTB: Timelapse | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Timelapse | kanyo&#39;s blog" />
+<meta itemprop="name" content="HTB: Timelapse | kanyo&#39;s blog" />
+<meta name="application-name" content="HTB: Timelapse | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy&#39;s credentials, and LAPS gives the DC admin password.">
+<meta itemprop="description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy&#39;s credentials, and LAPS gives the DC admin password." />
+<meta property="og:description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy&#39;s credentials, and LAPS gives the DC admin password." />
+<meta name="twitter:description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy&#39;s credentials, and LAPS gives the DC admin password." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-timelapse/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-timelapse/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HTB: Timelapse">
+  <meta property="og:description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy&#39;s credentials, and LAPS gives the DC admin password.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-01T00:00:00+00:00">
+    <meta property="article:tag" content="Laps">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Timelapse">
+  <meta name="twitter:description" content="An Easy Windows box where cracking a PFX from a guest-readable SMB share authenticates to WinRM via client certificate. PowerShell history leaks svc_deploy&#39;s credentials, and LAPS gives the DC admin password.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-timelapse/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Timelapse</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-01T00:00:00&#43;00:00" itemprop="datePublished"> 1 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-timelapse/htb-timelapse-pwned.png" alt="HTB: Timelapse" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#cracking-the-zip-and-pfx">Cracking the ZIP and PFX</a></li>
+    <li><a href="#winrm-via-client-certificate">WinRM via Client Certificate</a></li>
+    <li><a href="#powershell-history">PowerShell History</a></li>
+    <li><a href="#laps-password-via-svc_deploy">LAPS Password via svc_deploy</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows box, no credentials. The initial foothold is unusual: instead of extracting a password from some file, you crack a PFX certificate and use it directly to authenticate to WinRM. No username, no password, just a client certificate. It&rsquo;s a reminder that Windows supports certificate-based authentication in places people often forget about. LAPS is the escalation, which is worth understanding because it&rsquo;s deployed everywhere and constantly misread on BloodHound graphs.</p>
+<h2 id="recon">Recon</h2>
+<p>10.129.227.113, domain <code>timelapse.htb</code>, DC01. One thing nmap flagged that&rsquo;s unusual: port 5986 open instead of the typical 5985. Port 5986 is WinRM over SSL (HTTPS). Regular WinRM is 5985 (plain HTTP). Null sessions were denied, but guest auth on SMB worked:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.227.113 -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span> --shares
+</span></span><span class="line"><span class="cl">Share      Permissions
+</span></span><span class="line"><span class="cl">Shares     READ
+</span></span></code></pre></div><p>The <code>Shares</code> share had two subdirectories: <code>Dev</code> and <code>HelpDesk</code>. HelpDesk had LAPS documentation, the installer, a datasheet, an operations guide. Filed as a hint for later. Dev had one file: <code>winrm_backup.zip</code>.</p>
+<h2 id="cracking-the-zip-and-pfx">Cracking the ZIP and PFX</h2>
+<p>The zip was password-protected. zip2john extracts the hash, john cracks it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">zip2john winrm_backup.zip &gt; zip.hash
+</span></span><span class="line"><span class="cl">john zip.hash --wordlist<span class="o">=</span>/usr/share/wordlists/rockyou.txt
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">supremelegacy    <span class="o">(</span>winrm_backup.zip/legacyy_dev_auth.pfx<span class="o">)</span>
+</span></span></code></pre></div><p>Inside: <code>legacyy_dev_auth.pfx</code>. A PFX (PKCS#12) file is a binary container that bundles a certificate and its corresponding private key together, encrypted with a passphrase. It&rsquo;s typically used to distribute identities for things like client certificate authentication. The passphrase protects the private key inside. You can&rsquo;t extract either the certificate or the key without it.</p>
+<p>This one was also passphrase-protected:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">crackpkcs12 -d /usr/share/wordlists/rockyou.txt legacyy_dev_auth.pfx
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Dictionary attack - Thread <span class="m">8</span> - Password found: thuglegacy
+</span></span></code></pre></div><p>With the passphrase, openssl extracts the certificate and key separately:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out key.pem -nodes -passin pass:thuglegacy
+</span></span><span class="line"><span class="cl">openssl pkcs12 -in legacyy_dev_auth.pfx -nokeys  -out cert.pem -passin pass:thuglegacy
+</span></span></code></pre></div><h2 id="winrm-via-client-certificate">WinRM via Client Certificate</h2>
+<p>WinRM supports certificate-based authentication as an alternative to password auth. When you connect with a client certificate, WinRM checks which domain account the certificate&rsquo;s subject maps to and authenticates you as that user, no password involved. The certificate filename <code>legacyy_dev_auth.pfx</code> gives away the username.</p>
+<p>evil-winrm takes the cert and key directly with <code>-c</code> and <code>-k</code>. The <code>-S</code> flag tells it to use SSL (port 5986):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.227.113 -c cert.pem -k key.pem -S
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\l</span>egacyy<span class="se">\D</span>ocuments&gt;
+</span></span></code></pre></div><p>User flag on legacyy&rsquo;s desktop.</p>
+<h2 id="powershell-history">PowerShell History</h2>
+<p>Checking <code>C:\Users\</code> showed legacyy, svc_deploy, TRX, and Administrator. The LAPS documentation in HelpDesk was the obvious escalation hint, but I needed credentials first.</p>
+<p>Windows PowerShell saves command history through PSReadLine to a plaintext file:</p>
+<pre tabindex="0"><code>C:\Users\&lt;user&gt;\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+</code></pre><p>This is the equivalent of bash&rsquo;s <code>.bash_history</code>, except Windows users are often less aware it exists. Legacyy&rsquo;s history:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nb">type </span><span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">legacyy</span><span class="p">\</span><span class="n">AppData</span><span class="p">\</span><span class="n">Roaming</span><span class="p">\</span><span class="n">Microsoft</span><span class="p">\</span><span class="n">Windows</span><span class="p">\</span><span class="n">PowerShell</span><span class="p">\</span><span class="n">PSReadLine</span><span class="p">\</span><span class="n">ConsoleHost_history</span><span class="p">.</span><span class="py">txt</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">whoami</span>
+</span></span><span class="line"><span class="cl"><span class="n">ipconfig</span> <span class="p">/</span><span class="n">all</span>
+</span></span><span class="line"><span class="cl"><span class="n">netstat</span> <span class="n">-ano</span> <span class="p">|</span><span class="nb">select-string</span> <span class="n">LIST</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$so</span> <span class="p">=</span> <span class="nb">New-PSSessionOption</span> <span class="n">-SkipCACheck</span> <span class="n">-SkipCNCheck</span> <span class="n">-SkipRevocationCheck</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$p</span> <span class="p">=</span> <span class="nb">ConvertTo-SecureString</span> <span class="s1">&#39;E3R$Q62^12p7PLlC%KWaxuaV&#39;</span> <span class="n">-AsPlainText</span> <span class="n">-Force</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$c</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">System</span><span class="p">.</span><span class="py">Management</span><span class="p">.</span><span class="py">Automation</span><span class="p">.</span><span class="py">PSCredential</span> <span class="p">(</span><span class="s1">&#39;svc_deploy&#39;</span><span class="p">,</span> <span class="nv">$p</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nb">invoke-command</span> <span class="n">-computername</span> <span class="n">localhost</span> <span class="n">-credential</span> <span class="nv">$c</span> <span class="n">-port</span> <span class="mf">5986</span> <span class="n">-usessl</span> <span class="n">-SessionOption</span> <span class="nv">$so</span> <span class="n">-scriptblock</span> <span class="p">{</span><span class="n">whoami</span><span class="p">}</span>
+</span></span></code></pre></div><p>Someone used PowerShell remoting with svc_deploy&rsquo;s credentials to run a command on the local machine. The full credential object is right there in history: <code>svc_deploy:E3R$Q62^12p7PLlC%KWaxuaV</code>.</p>
+<h2 id="laps-password-via-svc_deploy">LAPS Password via svc_deploy</h2>
+<p>BloodHound showed what svc_deploy could do:</p>
+<p><img src="/images/writeups/htb-timelapse/bloodhound-svc-deploy-laps-readers.png" alt="BloodHound graph showing SVC_DEPLOY@TIMELAPSE.HTB is MemberOf LAPS_READERS@TIMELAPSE.HTB which has a ReadLAPSPassword edge to DC01.TIMELAPSE.HTB"></p>
+<p><code>SVC_DEPLOY → LAPS_READERS → ReadLAPSPassword → DC01</code>.</p>
+<p>LAPS (Local Administrator Password Solution) is a Microsoft tool that automatically rotates the built-in Administrator password on domain-joined machines on a schedule and stores the current password in AD as an attribute (<code>ms-Mcs-AdmPwd</code>) on the computer object. The point is to prevent lateral movement from one compromised machine to another via a shared local admin password. The tradeoff is that the password has to live somewhere. It lives in AD, readable by members of designated groups. If you&rsquo;re in one of those groups, you can read it.</p>
+<p>bloodyAD queries it directly:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD --host 10.129.227.113 -d timelapse.htb <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -u svc_deploy -p <span class="s1">&#39;E3R$Q62^12p7PLlC%KWaxuaV&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  get search --filter <span class="s1">&#39;(ms-mcs-admpwdexpirationtime=*)&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --attr ms-mcs-admpwd,ms-mcs-admpwdexpirationtime
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>DC01,OU<span class="o">=</span>Domain Controllers,DC<span class="o">=</span>timelapse,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">ms-Mcs-AdmPwd: 1xs%D<span class="o">)</span>bv+G8K8+Tpk<span class="o">{</span>e%7282
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.227.113 -u Administrator -p <span class="s1">&#39;1xs%D)bv+G8K8+Tpk{e%7282&#39;</span> -S
+</span></span></code></pre></div><p>One thing worth noting: the root flag wasn&rsquo;t on Administrator&rsquo;s desktop. It was on the TRX user&rsquo;s desktop. Grabbed it from <code>C:\Users\TRX\Desktop\</code>. The PowerShell history file is the lesson from this box. The pfx cert hidden in a zip was a clever entry, but someone leaving <code>evil-winrm</code> invocations in their command history with plaintext credentials is the kind of thing that shows up constantly in real Windows environments. The ConsoleHost_history.txt file is almost never on the checklist and almost always has something in it.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

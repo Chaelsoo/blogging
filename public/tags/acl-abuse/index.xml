@@ -1,1 +1,31 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Acl-Abuse on kanyo's blog</title><link>https://chaelsoo.me/tags/acl-abuse/</link><description>Recent content in Acl-Abuse on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 06 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/acl-abuse/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: TombWatcher</title><link>https://chaelsoo.me/writeups/htb-tombwatcher/</link><pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-tombwatcher/</guid><description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description></item><item><title>HTB: Administrator</title><link>https://chaelsoo.me/writeups/htb-administrator/</link><pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-administrator/</guid><description>&lt;p&gt;Windows box, Medium. They gave you credentials to start: &lt;code&gt;Olivia:ichliebedich&lt;/code&gt;. WinRM open, SMB open, LDAP accessible. The whole box is BloodHound ACL chain work. What made it stick was the dead end near the finish. Emily has GenericWrite over Ethan, and the natural move is Shadow Credentials. But ADCS isn&amp;rsquo;t configured on this domain. That null result pushed toward something I use less often: targeted Kerberoasting. You don&amp;rsquo;t need an account to already have an SPN. If you have GenericWrite over it, you can write one yourself, and now it&amp;rsquo;s kerberoastable on demand.&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Acl-Abuse on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/acl-abuse/</link>
+    <description>Recent content in Acl-Abuse on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Sat, 06 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/acl-abuse/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: TombWatcher</title>
+      <link>http://localhost:1313/writeups/htb-tombwatcher/</link>
+      <pubDate>Sat, 06 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-tombwatcher/</guid>
+      
+      <description>&lt;p&gt;Windows AD box with starting credentials. The box name is a hint you&amp;rsquo;ll miss until it isn&amp;rsquo;t. The first half is a clean BloodHound chain: five ACL hops from henry to john, each one mechanical. The second half is what makes this box worth remembering. John has a right most people have never used, Reanimate-Tombstones, and the ADCS OU he controls looks empty until you remember that AD doesn&amp;rsquo;t actually delete objects immediately. The cert_admin account sitting in the deleted objects container has enrollment rights on a schema version 1 template, which is all you need for ESC15.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HTB: Administrator</title>
+      <link>http://localhost:1313/writeups/htb-administrator/</link>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-administrator/</guid>
+      
+      <description>&lt;p&gt;Windows box, Medium. They gave you credentials to start: &lt;code&gt;Olivia:ichliebedich&lt;/code&gt;. WinRM open, SMB open, LDAP accessible. The whole box is BloodHound ACL chain work. What made it stick was the dead end near the finish. Emily has GenericWrite over Ethan, and the natural move is Shadow Credentials. But ADCS isn&amp;rsquo;t configured on this domain. That null result pushed toward something I use less often: targeted Kerberoasting. You don&amp;rsquo;t need an account to already have an SPN. If you have GenericWrite over it, you can write one yourself, and now it&amp;rsquo;s kerberoastable on demand.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

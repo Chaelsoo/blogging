@@ -1,2 +1,22 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tty on kanyo's blog</title><link>https://chaelsoo.me/tags/tty/</link><description>Recent content in Tty on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Wed, 03 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/tty/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: Pandora</title><link>https://chaelsoo.me/writeups/htb-pandora/</link><pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-pandora/</guid><description>&lt;p&gt;Linux Easy. The TCP scan gives you almost nothing: SSH on 22 and a static company landing page on 80. The UDP scan is where things get interesting. SNMP is running with the default &amp;ldquo;public&amp;rdquo; community string, and the process argument table has &lt;code&gt;host_check&lt;/code&gt; running with credentials directly in its parameters. That&amp;rsquo;s your SSH login.&lt;/p&gt;
-&lt;p&gt;Once inside as &lt;code&gt;daniel&lt;/code&gt;, you&amp;rsquo;re not the user that holds the flag. A second user, &lt;code&gt;matt&lt;/code&gt;, owns the Pandora FMS monitoring console that&amp;rsquo;s locked behind a localhost-only virtual host. Getting into that console doesn&amp;rsquo;t require a valid password: an unauthenticated SQLi lets you dump active PHP sessions and just cookie yourself in as matt. From there, an authenticated RCE via event response drops a reverse shell.&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tty on kanyo&#39;s blog</title>
+    <link>http://localhost:1313/tags/tty/</link>
+    <description>Recent content in Tty on kanyo&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Wed, 03 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/tty/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTB: Pandora</title>
+      <link>http://localhost:1313/writeups/htb-pandora/</link>
+      <pubDate>Wed, 03 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/htb-pandora/</guid>
+      
+      <description>&lt;p&gt;Linux Easy. The TCP scan gives you almost nothing: SSH on 22 and a static company landing page on 80. The UDP scan is where things get interesting. SNMP is running with the default &amp;ldquo;public&amp;rdquo; community string, and the process argument table has &lt;code&gt;host_check&lt;/code&gt; running with credentials directly in its parameters. That&amp;rsquo;s your SSH login.&lt;/p&gt;
+&lt;p&gt;Once inside as &lt;code&gt;daniel&lt;/code&gt;, you&amp;rsquo;re not the user that holds the flag. A second user, &lt;code&gt;matt&lt;/code&gt;, owns the Pandora FMS monitoring console that&amp;rsquo;s locked behind a localhost-only virtual host. Getting into that console doesn&amp;rsquo;t require a valid password: an unauthenticated SQLi lets you dump active PHP sessions and just cookie yourself in as matt. From there, an authenticated RCE via event response drops a reverse shell.&lt;/p&gt;</description>
+      
+    </item>
+    
+  </channel>
+</rss>

