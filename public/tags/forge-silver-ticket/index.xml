@@ -1,22 +1,2 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Forge-Silver-Ticket on kanyo&#39;s blog</title>
-    <link>http://localhost:1313/tags/forge-silver-ticket/</link>
-    <description>Recent content in Forge-Silver-Ticket on kanyo&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-gb</language>
-    <lastBuildDate>Tue, 02 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/forge-silver-ticket/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>HTB: Scrambled</title>
-      <link>http://localhost:1313/writeups/htb-scrambled/</link>
-      <pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/writeups/htb-scrambled/</guid>
-      
-      <description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
-&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description>
-      
-    </item>
-    
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Forge-Silver-Ticket on kanyo's blog</title><link>https://chaelsoo.me/tags/forge-silver-ticket/</link><description>Recent content in Forge-Silver-Ticket on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Tue, 02 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/forge-silver-ticket/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: Scrambled</title><link>https://chaelsoo.me/writeups/htb-scrambled/</link><pubDate>Tue, 02 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-scrambled/</guid><description>&lt;p&gt;Windows DC, Kerberos-only environment. The intranet website has a news banner from 2021 explaining that NTLM was disabled after a breach. That single constraint changed everything about how to approach the box: no Pass-the-Hash, no NTLM relay, none of the usual tools that just work against most AD labs. Everything had to go through Kerberos tickets.&lt;/p&gt;
+&lt;p&gt;The silver ticket was the technique that unlocked MSSQL. The sqlsvc account had an SPN and was Kerberoastable, but it was also stuck in a NOACCESS group that blocked it from logging into SQL Server directly. Silver ticket forgery sidesteps that entirely. You forge the ticket as Administrator, signed with sqlsvc&amp;rsquo;s NT hash, and the MSSQL service just trusts it. The DC never gets involved.&lt;/p&gt;</description></item></channel></rss>

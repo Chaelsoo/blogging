@@ -1,33 +1,18 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Cron on kanyo&#39;s blog</title>
-    <link>http://localhost:1313/tags/cron/</link>
-    <description>Recent content in Cron on kanyo&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-gb</language>
-    <lastBuildDate>Fri, 13 Feb 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/cron/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>HTB: Conversor</title>
-      <link>http://localhost:1313/writeups/htb-conversor/</link>
-      <pubDate>Fri, 13 Feb 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/writeups/htb-conversor/</guid>
-      
-      <description>&lt;p&gt;Conversor is a Linux Medium that gives you the source code upfront. That&amp;rsquo;s not a gift so much as a heads up. You&amp;rsquo;re expected to actually read it. The machine is built around a file conversion web app, and the foothold hinges on understanding what the app does under the hood before you can abuse it.&lt;/p&gt;
-&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cron on kanyo's blog</title><link>https://chaelsoo.me/tags/cron/</link><description>Recent content in Cron on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Fri, 13 Feb 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/cron/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: Conversor</title><link>https://chaelsoo.me/writeups/htb-conversor/</link><pubDate>Fri, 13 Feb 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-conversor/</guid><description>&lt;p&gt;Conversor is a Linux Medium that gives you the source code upfront. That&amp;rsquo;s not a gift so much as a heads up. You&amp;rsquo;re expected to actually read it. The machine is built around a file conversion web app, and the foothold hinges on understanding what the app does under the hood before you can abuse it.&lt;/p&gt;
+&lt;h2 id="recon"&gt;Recon&lt;/h2&gt;
 &lt;p&gt;Standard nmap scan. Two ports open, everything else closed or filtered.&lt;/p&gt;
-&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;┌──(kanyo㉿GIGABYTE)-[~]
+&lt;pre tabindex="0"&gt;&lt;code&gt;┌──(kanyo㉿GIGABYTE)-[~]
 └─$ nmap -T4 -sV -sC 10.129.238.31
 Starting Nmap 7.98 ( https://nmap.org ) at 2026-02-13 14:12 +0100
 Nmap scan report for 10.129.238.31
 Host is up (0.15s latency).
 Not shown: 993 closed tcp ports (reset)
-PORT     STATE    SERVICE        VERSION
-22/tcp   open     ssh            OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0)
+PORT STATE SERVICE VERSION
+22/tcp open ssh OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0)
 | ssh-hostkey:
-|   256 01:74:26:39:47:bc:6a:e2:cb:12:8b:71:84:9c:f8:5a (ECDSA)
-|_  256 3a:16:90:dc:74:d8:e3:c4:51:36:e2:08:06:26:17:ee (ED25519)
-80/tcp   open     http           Apache httpd 2.4.52
+| 256 01:74:26:39:47:bc:6a:e2:cb:12:8b:71:84:9c:f8:5a (ECDSA)
+|_ 256 3a:16:90:dc:74:d8:e3:c4:51:36:e2:08:06:26:17:ee (ED25519)
+80/tcp open http Apache httpd 2.4.52
 |_http-server-header: Apache/2.4.52 (Ubuntu)
 |_http-title: Did not follow redirect to http://conversor.htb/
 1083/tcp filtered ansoft-lm-1
@@ -36,9 +21,4 @@ PORT     STATE    SERVICE        VERSION
 5718/tcp filtered dpm
 7025/tcp filtered vmsvc-2
 Service Info: Host: conversor.htb; OS: Linux; CPE: cpe:/o:linux:linux_kernel
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Port 80 redirects to &lt;code&gt;conversor.htb&lt;/code&gt;, so add that to &lt;code&gt;/etc/hosts&lt;/code&gt; and move on. The web app is a file converter: you upload something, it spits back a transformed version. There&amp;rsquo;s a file upload input on the main page. That&amp;rsquo;s your surface right there.&lt;/p&gt;</description>
-      
-    </item>
-    
-  </channel>
-</rss>
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Port 80 redirects to &lt;code&gt;conversor.htb&lt;/code&gt;, so add that to &lt;code&gt;/etc/hosts&lt;/code&gt; and move on. The web app is a file converter: you upload something, it spits back a transformed version. There&amp;rsquo;s a file upload input on the main page. That&amp;rsquo;s your surface right there.&lt;/p&gt;</description></item></channel></rss>

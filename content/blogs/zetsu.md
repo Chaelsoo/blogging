@@ -1,6 +1,6 @@
 ---
 title: "A Personal RAG System for Offensive Security Knowledge"
-description: "A personal RAG system for offensive security knowledge. Built to solve the retrieval problem during engagements — your own notes, queryable in natural language, in under five seconds."
+description: "A personal RAG system for offensive security knowledge. Built to solve the retrieval problem during engagements: your own notes, queryable in natural language, in under five seconds."
 date: 2026-07-17
 tags: [rag, llm, offensive-security, tooling, python]
 draft: false

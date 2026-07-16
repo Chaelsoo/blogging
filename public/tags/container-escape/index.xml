@@ -1,25 +1,5 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Container-Escape on kanyo&#39;s blog</title>
-    <link>http://localhost:1313/tags/container-escape/</link>
-    <description>Recent content in Container-Escape on kanyo&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-gb</language>
-    <lastBuildDate>Mon, 02 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/container-escape/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>HTB: MonitorsFour</title>
-      <link>http://localhost:1313/writeups/htb-monitorsfour/</link>
-      <pubDate>Mon, 02 Mar 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/writeups/htb-monitorsfour/</guid>
-      
-      <description>&lt;p&gt;MonitorsFour is a Hard box and earns it, but not through obscurity. Each step is logical and builds on the last. The Docker escape at the end is the most interesting part, built around a real CVE with a CVSS of 9.3 that was still pretty fresh when this box dropped.&lt;/p&gt;
-&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Container-Escape on kanyo's blog</title><link>https://chaelsoo.me/tags/container-escape/</link><description>Recent content in Container-Escape on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Mon, 02 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/container-escape/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: MonitorsFour</title><link>https://chaelsoo.me/writeups/htb-monitorsfour/</link><pubDate>Mon, 02 Mar 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-monitorsfour/</guid><description>&lt;p&gt;MonitorsFour is a Hard box and earns it, but not through obscurity. Each step is logical and builds on the last. The Docker escape at the end is the most interesting part, built around a real CVE with a CVSS of 9.3 that was still pretty fresh when this box dropped.&lt;/p&gt;
+&lt;h2 id="recon"&gt;Recon&lt;/h2&gt;
 &lt;p&gt;Web app at &lt;code&gt;monitorsfour.htb&lt;/code&gt;. Nothing immediately obvious on the landing page, so I started fuzzing endpoints.&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -u http://monitorsfour.htb/FUZZ
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;One endpoint stood out: &lt;code&gt;/user&lt;/code&gt;. It accepted a &lt;code&gt;token&lt;/code&gt; parameter, which immediately looked interesting. The question was what it actually did with that token.&lt;/p&gt;</description>
-      
-    </item>
-    
-  </channel>
-</rss>
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;ffuf -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -u http://monitorsfour.htb/FUZZ
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;One endpoint stood out: &lt;code&gt;/user&lt;/code&gt;. It accepted a &lt;code&gt;token&lt;/code&gt; parameter, which immediately looked interesting. The question was what it actually did with that token.&lt;/p&gt;</description></item></channel></rss>

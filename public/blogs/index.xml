@@ -1,76 +1,16 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Blogs on kanyo&#39;s blog</title>
-    <link>http://localhost:1313/blogs/</link>
-    <description>Recent content in Blogs on kanyo&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-gb</language>
-    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/blogs/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Walking Past Defender</title>
-      <link>http://localhost:1313/blogs/walking-past-defender/</link>
-      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/blogs/walking-past-defender/</guid>
-      
-      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/blogs/defender/mimikatz.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
-&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;When it came to practice, I hardly found what I was looking for. Most writeups and blogs on stager development and Defender evasion put everything into complex scenarios, so much detail, so much context, so much &amp;ldquo;here&amp;rsquo;s how I did it in this specific environment with these specific tools.&amp;rdquo; But no one actually simplified it. No one broke it down to what it actually is at its core.&lt;/p&gt;</description>
-      
-    </item>
-    
-    <item>
-      <title>How Defender Actually Works</title>
-      <link>http://localhost:1313/blogs/how-defender-actually-works/</link>
-      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/blogs/how-defender-actually-works/</guid>
-      
-      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/blogs/defender/defender_aileenchik_shutterstock.webp&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
-&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blogs on kanyo's blog</title><link>https://chaelsoo.me/blogs/</link><description>Recent content in Blogs on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/blogs/index.xml" rel="self" type="application/rss+xml"/><item><title>Walking Past Defender</title><link>https://chaelsoo.me/blogs/walking-past-defender/</link><pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/walking-past-defender/</guid><description>&lt;p&gt;&lt;img src="https://chaelsoo.me/blogs/defender/mimikatz.png" alt=""&gt;&lt;/p&gt;
+&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;When it came to practice, I hardly found what I was looking for. Most writeups and blogs on stager development and Defender evasion put everything into complex scenarios, so much detail, so much context, so much &amp;ldquo;here&amp;rsquo;s how I did it in this specific environment with these specific tools.&amp;rdquo; But no one actually simplified it. No one broke it down to what it actually is at its core.&lt;/p&gt;</description></item><item><title>How Defender Actually Works</title><link>https://chaelsoo.me/blogs/how-defender-actually-works/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/how-defender-actually-works/</guid><description>&lt;p&gt;&lt;img src="https://chaelsoo.me/blogs/defender/defender_aileenchik_shutterstock.webp" alt=""&gt;&lt;/p&gt;
+&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;At Ingehack, I spent way too long blindly throwing obfuscated tools at a target. Change a string here, re-encode there, try a different obfuscator, run it again. Sometimes something worked. Most of the time it didn&amp;rsquo;t. And the frustrating part was that I had no real idea why, I was just guessing and hoping that enough random changes would eventually get me through.&lt;/p&gt;
-&lt;p&gt;That&amp;rsquo;s completely the wrong way to approach this.&lt;/p&gt;</description>
-      
-    </item>
-    
-    <item>
-      <title>eBPF Dive</title>
-      <link>http://localhost:1313/blogs/ebpf-dive/</link>
-      <pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/blogs/ebpf-dive/</guid>
-      
-      <description>&lt;p&gt;Ever wanted to run your own code inside the Linux kernel without writing a kernel
+&lt;p&gt;That&amp;rsquo;s completely the wrong way to approach this.&lt;/p&gt;</description></item><item><title>eBPF Dive</title><link>https://chaelsoo.me/blogs/ebpf-dive/</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/ebpf-dive/</guid><description>&lt;p&gt;Ever wanted to run your own code inside the Linux kernel without writing a kernel
 module, without rebooting, and without breaking everything? That&amp;rsquo;s eBPF.&lt;/p&gt;
 &lt;p&gt;This post is a practical intro. I&amp;rsquo;ll cover how eBPF programs actually work, walk
 through a real example, explain the two ways to get data out of the kernel, and
 show how the userspace side ties it all together. At the end I&amp;rsquo;ll touch on the
-network security toolkit I&amp;rsquo;ve been building on top of this.&lt;/p&gt;</description>
-      
-    </item>
-    
-    <item>
-      <title>Self-hosted VPN</title>
-      <link>http://localhost:1313/blogs/wireguard-vps/</link>
-      <pubDate>Fri, 20 Mar 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/blogs/wireguard-vps/</guid>
-      
-      <description>&lt;p&gt;Instead of relying on a commercial VPN provider, I wanted to see how far I could get by building my own on a VPS. The goal was simple: connect my laptop and phone over WireGuard, optionally route all traffic through it.&lt;/p&gt;
+network security toolkit I&amp;rsquo;ve been building on top of this.&lt;/p&gt;</description></item><item><title>Self-hosted VPN</title><link>https://chaelsoo.me/blogs/wireguard-vps/</link><pubDate>Fri, 20 Mar 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/wireguard-vps/</guid><description>&lt;p&gt;Instead of relying on a commercial VPN provider, I wanted to see how far I could get by building my own on a VPS. The goal was simple: connect my laptop and phone over WireGuard, optionally route all traffic through it.&lt;/p&gt;
 &lt;p&gt;The real value came from debugging actual issues. This post goes through all of it.&lt;/p&gt;
-&lt;h2 id=&#34;why-wireguard&#34;&gt;Why WireGuard&lt;/h2&gt;
-&lt;p&gt;Simpler than OpenVPN, kernel-based, and the mental model is clean. Each machine has its own private key, each knows the other&amp;rsquo;s public key, peers get assigned internal VPN IPs. No certificate infrastructure to deal with.&lt;/p&gt;</description>
-      
-    </item>
-    
-    <item>
-      <title>eJPT: Exam Guide</title>
-      <link>http://localhost:1313/blogs/ejpt-review/</link>
-      <pubDate>Tue, 17 Mar 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/blogs/ejpt-review/</guid>
-      
-      <description>&lt;p&gt;I passed the eJPT with 90%. I didn&amp;rsquo;t purchase the INE training bundle, so I won&amp;rsquo;t be walking through the exam itself, that&amp;rsquo;s against the rules and I didn&amp;rsquo;t have access to their course anyway. What I can do is tell you exactly what you need to know to be ready for it.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/blogs/ejpt-review/eJPT.png&#34; alt=&#34;eJPT certificate&#34;&gt;&lt;/p&gt;
-&lt;p&gt;The exam is 48 hours, practical, and covers a multi-machine scenario across multiple networks. It&amp;rsquo;s entry level but it&amp;rsquo;s not a joke. You need to actually know what you&amp;rsquo;re doing.&lt;/p&gt;</description>
-      
-    </item>
-    
-  </channel>
-</rss>
+&lt;h2 id="why-wireguard"&gt;Why WireGuard&lt;/h2&gt;
+&lt;p&gt;Simpler than OpenVPN, kernel-based, and the mental model is clean. Each machine has its own private key, each knows the other&amp;rsquo;s public key, peers get assigned internal VPN IPs. No certificate infrastructure to deal with.&lt;/p&gt;</description></item><item><title>eJPT: Exam Guide</title><link>https://chaelsoo.me/blogs/ejpt-review/</link><pubDate>Tue, 17 Mar 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/blogs/ejpt-review/</guid><description>&lt;p&gt;I passed the eJPT with 90%. I didn&amp;rsquo;t purchase the INE training bundle, so I won&amp;rsquo;t be walking through the exam itself, that&amp;rsquo;s against the rules and I didn&amp;rsquo;t have access to their course anyway. What I can do is tell you exactly what you need to know to be ready for it.&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://chaelsoo.me/images/blogs/ejpt-review/eJPT.png" alt="eJPT certificate"&gt;&lt;/p&gt;
+&lt;p&gt;The exam is 48 hours, practical, and covers a multi-machine scenario across multiple networks. It&amp;rsquo;s entry level but it&amp;rsquo;s not a joke. You need to actually know what you&amp;rsquo;re doing.&lt;/p&gt;</description></item></channel></rss>

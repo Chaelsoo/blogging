@@ -1,22 +1,2 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Ingehack on kanyo&#39;s blog</title>
-    <link>http://localhost:1313/tags/ingehack/</link>
-    <description>Recent content in Ingehack on kanyo&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-gb</language>
-    <lastBuildDate>Tue, 21 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/ingehack/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>IngeHack: EDR Evasion</title>
-      <link>http://localhost:1313/writeups/ingehack-edr-evasion/</link>
-      <pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/writeups/ingehack-edr-evasion/</guid>
-      
-      <description>&lt;p&gt;An Active Directory series from IngeHack. The chain is built around a Windows environment with Defender active — meaning before you can do anything meaningful, you have to get your tooling past it. That was the first challenge, and the one this writeup covers for now.&lt;/p&gt;
-&lt;p&gt;The approach was modifying GodPotato to strip or replace the signatures that Defender flags, combined with techniques for building custom versions of common tools that don&amp;rsquo;t carry recognizable bytecode patterns. The two resources below were the most useful references for this:&lt;/p&gt;</description>
-      
-    </item>
-    
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ingehack on kanyo's blog</title><link>https://chaelsoo.me/tags/ingehack/</link><description>Recent content in Ingehack on kanyo's blog</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Tue, 21 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chaelsoo.me/tags/ingehack/index.xml" rel="self" type="application/rss+xml"/><item><title>IngeHack: EDR Evasion</title><link>https://chaelsoo.me/writeups/ingehack-edr-evasion/</link><pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate><guid>https://chaelsoo.me/writeups/ingehack-edr-evasion/</guid><description>&lt;p&gt;An Active Directory series from IngeHack. The chain is built around a Windows environment with Defender active — meaning before you can do anything meaningful, you have to get your tooling past it. That was the first challenge, and the one this writeup covers for now.&lt;/p&gt;
+&lt;p&gt;The approach was modifying GodPotato to strip or replace the signatures that Defender flags, combined with techniques for building custom versions of common tools that don&amp;rsquo;t carry recognizable bytecode patterns. The two resources below were the most useful references for this:&lt;/p&gt;</description></item></channel></rss>
