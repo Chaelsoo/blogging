@@ -1,6 +1,8 @@
 public/
 resources/
 .hugo_build.lock
+.notion-sync-state.json
+/CNAME
 .env
 notion/sync-output/
 CLAUDE.md
