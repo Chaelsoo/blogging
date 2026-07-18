@@ -85,6 +85,7 @@ RDP is the one thing to watch out for. Ligolo has issues with RDP over its tunne
 2. [netexec](https://www.netexec.wiki/) does a lot more than check local admin. Read the wiki properly.
 3. Keep [impacket](https://github.com/fortra/impacket) up to date. Certain attacks silently fail on older versions.
 4. Flags don't have to be in order. Don't spend hours blocked on one flag when you can skip and come back.
+5. Always check `C:\`, `C:\Program Files`, `C:\Program Files (x86)`, and user home directories. Flags and credentials get buried in places you'd walk past without looking twice.
 
 ---
 
@@ -161,6 +162,39 @@ AD attacks involve a lot of moving parts that tools abstract away: how the PAC i
 I hit this multiple times. My Sliver beacon crashed mid-operation. ntlmrelayx silently failed with no useful output. impacket's getST threw something cryptic about KDC errors. In every case the fix required reading source code or understanding the protocol, not running the tool again with different flags.
 
 Blind tool reliance leads to rabbit holes, and rabbit holes lead to burnout. I've personally been there. The only way out is understanding concepts well enough that you could reason about what the tool is doing, even if you're not writing it yourself. You don't have to build everything from scratch, but you do have to understand it.
+
+---
+
+## Linux Over Windows for AD
+
+Something that changed how I operate, and that I wish someone had told me earlier: you can do almost everything in an AD environment from Linux, and it's usually a better experience than doing it from Windows.
+
+[Gatari's post on this](https://gatari.dev/posts/ad-linux/) lays it out better than I can, but the short version is that Windows tooling is genuinely painful. The [Kerberos double hop problem](https://www.thehacker.recipes/ad/movement/kerberos/delegations/unconstrained#double-hop-problem), PowerShell Constrained Language Mode, AV catching your execute-assembly, unstable lab workstations, cryptic error messages you can't Google. All of it adds up to time lost that has nothing to do with the actual attack. From Linux, most of that just disappears. Impacket errors are readable. You can modify the source code of a tool mid-operation. There's no session management hell.
+
+The key is understanding how to move tickets between the two environments. Windows uses `.kirbi`, Linux uses `.ccache`. Getting comfortable with [ticketConverter.py](https://github.com/fortra/impacket/blob/master/impacket/krb5/ccache.py) and the `KRB5CCNAME` environment variable unlocks the whole impacket suite for use against anything you compromise from either side.
+
+```bash
+# kirbi to ccache (Windows ticket to Linux)
+echo "[base64_ticket]" | base64 -d > ticket.kirbi
+ticketConverter.py ticket.kirbi ticket.ccache
+export KRB5CCNAME=ticket.ccache
+
+# then use with impacket
+secretsdump.py -k -no-pass target.domain.local
+
+# ccache back to kirbi (Linux ticket to Windows via Rubeus)
+ticketConverter.py ticket.ccache ticket.kirbi
+cat ticket.kirbi | base64 -w 0
+# then: Rubeus.exe ptt /ticket:[base64]
+```
+
+For BloodHound collection, [bloodhound-python](https://github.com/dirkjanm/BloodHound.py) works well but has some gotchas over a SOCKS proxy. The two flags that save you: `--dns-tcp` (Sliver's SOCKS implementation is unstable with UDP) and a trailing dot on the domain name (`domain.local.` not `domain.local`). Make sure `/etc/hosts` is populated with your target hostnames before running it. If it's still being difficult, [RustHound](https://github.com/NH-RED-TEAM/RustHound) usually just works.
+
+```bash
+proxychains bloodhound-python -u user -p pass -d domain.local. -ns [DC_IP] -c all --dns-tcp
+```
+
+For routing, Sliver's inband SOCKS proxy is fine for most impacket operations but requires the beacon to run at sleep 0, which is noisy. Ligolo is cleaner for sustained access: you get a real TUN interface and don't need proxychains wrapping every command.
 
 ---
 
