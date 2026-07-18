@@ -130,8 +130,8 @@ Going through this properly, actually implementing stubs and understanding why e
 
 Out of all of this I built two tools:
 
-- [**Hollow**](https://github.com/Chaelsoo/Hollow): a process hollowing loader written in Nim
-- **nimcrypt**: a Nim-based shellcode encryptor
+- [**Hollow**](https://github.com/Chaelsoo/Hollow): a shellcode loader generator written in Go. You give it raw shellcode and an injection profile, it encrypts the payload with AES-256-CBC and spits out a compiled Windows PE with the shellcode baked in, ready to run
+- **nimcrypt**: a Nim-based shellcode encryptor with stager and stageless support, ships with a dropper and AMSI patch
 
 Both were learning exercises first, usable tools second. I'd recommend building your own loader at least once rather than grabbing something off GitHub. You learn things about PE structure, memory permissions, and the Windows execution model that you simply don't get from running someone else's binary.
 
