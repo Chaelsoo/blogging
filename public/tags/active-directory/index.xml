@@ -6,7 +6,18 @@
     <description>Recent content in Active-Directory on kanyo&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Fri, 19 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/active-directory/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 18 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/tags/active-directory/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>My HTB ProLabs Journey</title>
+      <link>http://localhost:1313/blogs/prolabs/</link>
+      <pubDate>Sat, 18 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/prolabs/</guid>
+      
+      <description>&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/blogs/prolabs/prolabs.png&#34; alt=&#34;HTB ProLabs&#34;&gt;&lt;/p&gt;
+&lt;p&gt;At some point I got tired of doing standalone boxes. I wanted to get comfortable with real C2 frameworks like &lt;a href=&#34;https://github.com/BishopFox/sliver&#34;&gt;Sliver&lt;/a&gt; and &lt;a href=&#34;https://github.com/HavocFramework/Havoc&#34;&gt;Havoc&lt;/a&gt;, learn how to pivot properly with &lt;a href=&#34;https://github.com/nicocha30/ligolo-ng&#34;&gt;ligolo-ng&lt;/a&gt;, and practice in an environment that actually simulates a network rather than a single machine sitting in isolation. I needed a lab with a good number of boxes, a real AD environment, and enough complexity to force me to think operationally.&lt;/p&gt;</description>
+      
+    </item>
+    
     <item>
       <title>HTB: Ghost</title>
       <link>http://localhost:1313/writeups/htb-ghost/</link>
